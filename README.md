@@ -1,33 +1,42 @@
 # GreenTech Project
 
-## 📋 Tổng quan
+## 📋 Overview
 
-Dự án GreenTech là hệ thống thương mại điện tử được xây dựng bằng .NET 8 với kiến trúc 3 lớp:
+GreenTech is an e-commerce system built with .NET 8 using a 3-tier architecture:
 - **DAL**: Data Access Layer (DbContext + Migrations)
 - **BLL**: Business Logic Layer  
-- **Presentation**: 2 ứng dụng web (Razor Pages + MVC)
+- **Presentation**: 2 web applications (Razor Pages + MVC)
 
-## 🛠 Yêu cầu hệ thống
+## 🛠 System Requirements
 
-- .NET 8 SDK
-- SQL Server (2019+)
+- .NET 8 SDK or higher
+- SQL Server (2019+) or SQL Server Express
 - Visual Studio 2022 / VS Code
+- Node.js (for Tailwind CSS in MVC project)
 
-## 🚀 Cách chạy dự án
+## 🚀 How to Run the Project
 
-### Bước 1: Restore packages
+### Step 1: Clone and Setup
+
 ```bash
+# Clone the repository
+git clone <repository-url>
+cd GreenTech
+
+# Restore .NET packages
 dotnet restore
+
+# Restore Node.js packages (for MVC project)
+cd GreenTechMVC
+npm install
+cd ..
 ```
 
-### Bước 2: Build solution
-```bash
-dotnet build
-```
+### Step 2: Configure Database Connection
 
-### Bước 3: Cấu hình Database
+**Edit connection string in both projects:**
 
-**Chỉnh sửa connection string trong `appsettings.json`:**
+**GreenTech/appsettings.json:**
 ```json
 {
   "ConnectionStrings": {
@@ -36,40 +45,33 @@ dotnet build
 }
 ```
 
-### Bước 4: Tạo Database (Code First)
-
-**Tạo migration:**
-```powershell
-Add-Migration InitialCreate -Project DAL -StartupProject GreenTech
+**GreenTechMVC/appsettings.json:**
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=YOUR_SERVER;Database=GreenTechDB;User Id=YOUR_USER;Password=YOUR_PASSWORD;TrustServerCertificate=True;"
+  }
+}
 ```
 
-**Cập nhật database:**
-```powershell
-Update-Database -Project DAL -StartupProject GreenTech
-```
+### Step 3: Build the Solution
 
-### Bước 5: Chạy ứng dụng
-
-**Razor Pages:**
 ```bash
-cd GreenTech
-dotnet run
+# Build entire solution
+dotnet build
+
+# Or build individual projects
+dotnet build DAL
+dotnet build BLL
+dotnet build GreenTech
+dotnet build GreenTechMVC
 ```
 
-**MVC:**
-```bash
-cd GreenTechMVC
-dotnet run
-```
+### Step 4: Setup Database (Code First)
 
-## 🔧 Xử lý lỗi thường gặp
+**Create ApplicationDbContextFactory (Required for migrations):**
 
-### Lỗi 1: "Unable to resolve service for type 'DbContextOptions'"
-
-**Nguyên nhân:** EF Tool không thể tạo DbContext lúc migration.
-
-**Giải pháp:** Tạo `ApplicationDbContextFactory.cs` trong `DAL/Context/`:
-
+Create `DAL/Context/ApplicationDbContextFactory.cs`:
 ```csharp
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
@@ -88,50 +90,134 @@ namespace DAL.Context
 }
 ```
 
-### Lỗi 2: "Database is in single user mode"
+**Create and apply migrations:**
 
-**Nguyên nhân:** Database ở chế độ single user sau migration.
+```powershell
+# Create initial migration
+Add-Migration InitialCreate -Project DAL -StartupProject GreenTech
 
-**Giải pháp:** Chạy SQL sau migration:
+# Update database
+Update-Database -Project DAL -StartupProject GreenTech
+```
+
+**Alternative using Terminal:**
+```bash
+# Create migration
+dotnet ef migrations add InitialCreate --project DAL --startup-project GreenTech
+
+# Update database
+dotnet ef database update --project DAL --startup-project GreenTech
+```
+
+### Step 5: Run Applications
+
+**Run Razor Pages Application:**
+```bash
+cd GreenTech
+dotnet run
+```
+Application will be available at: `https://localhost:7xxx` or `http://localhost:5xxx`
+
+**Run MVC Application:**
+```bash
+cd GreenTechMVC
+dotnet run
+```
+Application will be available at: `https://localhost:7xxx` or `http://localhost:5xxx`
+
+## 🔧 Troubleshooting Common Issues
+
+### Issue 1: "Unable to resolve service for type 'DbContextOptions'"
+
+**Cause:** EF Tool cannot create DbContext instance during design-time.
+
+**Solution:** Create `ApplicationDbContextFactory.cs` as shown in Step 4 above.
+
+### Issue 2: "Database is in single user mode"
+
+**Cause:** Database is in single user mode after migration.
+
+**Solution:** Run this SQL after migration:
 ```sql
 ALTER DATABASE GreenTechDB SET MULTI_USER;
 ```
 
-### Lỗi 3: "Cannot drop database because it is currently in use"
+### Issue 3: "Cannot drop database because it is currently in use"
 
-**Giải pháp:**
+**Solution:**
 ```sql
--- Kill connections và đặt multi-user
+-- Kill connections and set multi-user
 ALTER DATABASE GreenTechDB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
 ALTER DATABASE GreenTechDB SET MULTI_USER;
 ```
 
+### Issue 4: "TrustServerCertificate" Error
+
+**Solution:** Add `TrustServerCertificate=True` to connection string:
+```
+Server=YOUR_SERVER;Database=GreenTechDB;User Id=YOUR_USER;Password=YOUR_PASSWORD;TrustServerCertificate=True;
+```
+
+### Issue 5: "Login failed"
+
+**Check:**
+- Username and password are correct
+- SQL Server is running
+- SQL Server Authentication is enabled
+- User has permission to create database
+
 ## 📝 Development Workflow
 
-### Thêm Entity mới:
-1. Tạo model trong `DAL/Models/`
-2. Thêm DbSet vào `ApplicationDbContext`
-3. Tạo migration: `Add-Migration AddNewEntity -Project DAL -StartupProject GreenTech`
-4. Cập nhật database: `Update-Database -Project DAL -StartupProject GreenTech`
-5. **Quan trọng:** Chạy `ALTER DATABASE GreenTechDB SET MULTI_USER;`
+### Adding New Entity:
+1. Create model in `DAL/Models/`
+2. Add DbSet to `ApplicationDbContext`
+3. Create migration: `Add-Migration AddNewEntity -Project DAL -StartupProject GreenTech`
+4. Update database: `Update-Database -Project DAL -StartupProject GreenTech`
+5. **Important:** Run `ALTER DATABASE GreenTechDB SET MULTI_USER;`
 
-### Thay đổi Entity:
-1. Chỉnh sửa model
-2. Tạo migration: `Add-Migration UpdateEntity -Project DAL -StartupProject GreenTech`
-3. Cập nhật database: `Update-Database -Project DAL -StartupProject GreenTech`
-4. Chạy `ALTER DATABASE GreenTechDB SET MULTI_USER;`
+### Modifying Entity:
+1. Edit model
+2. Create migration: `Add-Migration UpdateEntity -Project DAL -StartupProject GreenTech`
+3. Update database: `Update-Database -Project DAL -StartupProject GreenTech`
+4. Run `ALTER DATABASE GreenTechDB SET MULTI_USER;`
 
-## 🎯 Lưu ý quan trọng
+### Removing Entity:
+1. Remove DbSet from DbContext
+2. Create migration: `Add-Migration RemoveEntity -Project DAL -StartupProject GreenTech`
+3. Update database: `Update-Database -Project DAL -StartupProject GreenTech`
+4. Run `ALTER DATABASE GreenTechDB SET MULTI_USER;`
 
-- **Luôn chạy** `ALTER DATABASE GreenTechDB SET MULTI_USER;` sau mỗi migration
-- **Kiểm tra connection string** trước khi chạy migration
-- **Backup database** trước khi thay đổi lớn
-- **Sử dụng ApplicationDbContextFactory** để tránh lỗi DbContextOptions
+## 🎯 Important Notes
 
-## 📞 Hỗ trợ
+- **Always run** `ALTER DATABASE GreenTechDB SET MULTI_USER;` after each migration
+- **Check connection string** before running migrations
+- **Backup database** before major changes
+- **Use ApplicationDbContextFactory** to avoid DbContextOptions errors
+- **Node.js packages** are required for MVC project (Tailwind CSS)
 
-Nếu gặp vấn đề:
-1. Kiểm tra connection string
-2. Đảm bảo SQL Server đang chạy
-3. Kiểm tra database có ở multi-user mode không
-4. Xem lại log files để debug
+## 🏗️ Project Structure
+
+```
+GreenTech/
+├── DAL/                    # Data Access Layer (DbContext + Migrations)
+├── BLL/                    # Business Logic Layer
+├── GreenTech/              # Razor Pages Application (Startup Project)
+├── GreenTechMVC/           # MVC Application (Startup Project)
+└── README.md
+```
+
+## 📞 Support
+
+If you encounter issues:
+1. Check connection string in `appsettings.json`
+2. Ensure SQL Server is running
+3. Verify database is in multi-user mode
+4. Check log files for debugging
+5. Ensure `ApplicationDbContextFactory` exists if getting DbContextOptions errors
+
+## 📚 References
+
+- [Entity Framework Core Documentation](https://docs.microsoft.com/en-us/ef/core/)
+- [ASP.NET Core Documentation](https://docs.microsoft.com/en-us/aspnet/core/)
+- [SQL Server Documentation](https://docs.microsoft.com/en-us/sql/)
+- [.NET 8 Documentation](https://docs.microsoft.com/en-us/dotnet/)
