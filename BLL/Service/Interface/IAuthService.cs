@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BLL.Service.Interface
 {
-    public interface IAuthorService
+    public interface IAuthService
     {
     }
 }

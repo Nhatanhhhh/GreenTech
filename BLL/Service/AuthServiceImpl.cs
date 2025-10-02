@@ -2,7 +2,7 @@
 
 namespace BLL.Service
 {
-    public class AuthorServiceImpl : IAuthorService
+    public class AuthServiceImpl : IAuthService
     {
     }
 }
