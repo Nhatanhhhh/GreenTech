@@ -2,7 +2,7 @@
 
 namespace DAL.Repositories
 {
-    public class AuthorRepositoryImpl : IAuthorRepository
+    public class AuthRepositoryImpl : IAuthRepository
     {
     }
 }

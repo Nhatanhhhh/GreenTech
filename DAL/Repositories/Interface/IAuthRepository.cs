@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DAL.Repositories.Interface
 {
-    public interface IAuthorRepository
+    public interface IAuthRepository
     {
     }
 }
