@@ -36,6 +36,8 @@ namespace DAL.Context
         public DbSet<ReviewReply> ReviewReplies { get; set; }
         public DbSet<ReviewVote> ReviewVotes { get; set; }
         public DbSet<ProductRatingStat> ProductRatingStats { get; set; }
+        public DbSet<Cart> Carts { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -83,6 +85,16 @@ namespace DAL.Context
 
             modelBuilder.Entity<Blog>()
                 .HasIndex(b => b.Slug)
+                .IsUnique();
+
+            // Configure unique constraint for Cart (one cart per user)
+            modelBuilder.Entity<Cart>()
+                .HasIndex(c => c.UserId)
+                .IsUnique();
+
+            // Configure composite unique index for CartItem
+            modelBuilder.Entity<CartItem>()
+                .HasIndex(ci => new { ci.CartId, ci.ProductId })
                 .IsUnique();
 
             // Configure self-referencing relationship for Categories
@@ -158,6 +170,31 @@ namespace DAL.Context
                 .WithMany(o => o.WalletTransactions)
                 .HasForeignKey(wt => wt.OrderId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Cart>()
+                .HasOne(c => c.User)
+                .WithOne(u => u.Cart)
+                .HasForeignKey<Cart>(c => c.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Cart>()
+                .HasOne(c => c.Coupon)
+                .WithMany(cp => cp.Carts)
+                .HasForeignKey(c => c.CouponId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Configure CartItem relationships
+            modelBuilder.Entity<CartItem>()
+                .HasOne(ci => ci.Cart)
+                .WithMany(c => c.CartItems)
+                .HasForeignKey(ci => ci.CartId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CartItem>()
+                .HasOne(ci => ci.Product)
+                .WithMany(p => p.CartItems)
+                .HasForeignKey(ci => ci.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Configure decimal precision
             modelBuilder.Entity<User>()
@@ -292,6 +329,22 @@ namespace DAL.Context
             modelBuilder.Entity<Review>()
                 .Property(r => r.Status)
                 .HasConversion<string>();
+
+            modelBuilder.Entity<Cart>()
+                .Property(c => c.Subtotal)
+                .HasPrecision(12, 2);
+
+            modelBuilder.Entity<Cart>()
+                .Property(c => c.DiscountAmount)
+                .HasPrecision(12, 2);
+
+            modelBuilder.Entity<CartItem>()
+                .Property(ci => ci.UnitPrice)
+                .HasPrecision(12, 2);
+
+            modelBuilder.Entity<CartItem>()
+                .Property(ci => ci.Subtotal)
+                .HasPrecision(12, 2);
         }
 
     }
