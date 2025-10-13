@@ -88,5 +88,7 @@ namespace DAL.Models
         public virtual ICollection<Review> Reviews { get; set; }
         public virtual ICollection<ReviewReply> ReviewReplies { get; set; }
         public virtual ICollection<ReviewVote> ReviewVotes { get; set; }
+
+        public virtual Cart Cart { get; set; }
     }
 }
