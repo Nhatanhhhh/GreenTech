@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ dev, main ]
 
+permissions:
+  contents: read         
+  issues: write           
+  pull-requests: write 
+
 env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
   DOTNET_NOLOGO: true
