@@ -409,6 +409,38 @@ namespace DAL.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "carts",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    user_id = table.Column<int>(type: "int", nullable: false),
+                    session_id = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    coupon_id = table.Column<int>(type: "int", nullable: true),
+                    total_items = table.Column<int>(type: "int", nullable: false),
+                    subtotal = table.Column<decimal>(type: "decimal(12,2)", precision: 12, scale: 2, nullable: false),
+                    discount_amount = table.Column<decimal>(type: "decimal(12,2)", precision: 12, scale: 2, nullable: false),
+                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_carts", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_carts_coupons_coupon_id",
+                        column: x => x.coupon_id,
+                        principalTable: "coupons",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_carts_users_user_id",
+                        column: x => x.user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "orders",
                 columns: table => new
                 {
@@ -486,6 +518,41 @@ namespace DAL.Migrations
                         name: "FK_point_transactions_users_user_id",
                         column: x => x.user_id,
                         principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "cart_items",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    cart_id = table.Column<int>(type: "int", nullable: false),
+                    product_id = table.Column<int>(type: "int", nullable: false),
+                    product_sku = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    product_name = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    product_image = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    quantity = table.Column<int>(type: "int", nullable: false),
+                    unit_price = table.Column<decimal>(type: "decimal(12,2)", precision: 12, scale: 2, nullable: false),
+                    subtotal = table.Column<decimal>(type: "decimal(12,2)", precision: 12, scale: 2, nullable: false),
+                    is_available = table.Column<bool>(type: "bit", nullable: false),
+                    added_at = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_cart_items", x => x.id);
+                    table.ForeignKey(
+                        name: "FK_cart_items_carts_cart_id",
+                        column: x => x.cart_id,
+                        principalTable: "carts",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_cart_items_products_product_id",
+                        column: x => x.product_id,
+                        principalTable: "products",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -677,6 +744,28 @@ namespace DAL.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_cart_items_cart_id_product_id",
+                table: "cart_items",
+                columns: new[] { "cart_id", "product_id" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_cart_items_product_id",
+                table: "cart_items",
+                column: "product_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_carts_coupon_id",
+                table: "carts",
+                column: "coupon_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_carts_user_id",
+                table: "carts",
+                column: "user_id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_categories_parent_id",
                 table: "categories",
                 column: "parent_id");
@@ -850,6 +939,9 @@ namespace DAL.Migrations
                 name: "blogs");
 
             migrationBuilder.DropTable(
+                name: "cart_items");
+
+            migrationBuilder.DropTable(
                 name: "notifications");
 
             migrationBuilder.DropTable(
@@ -872,6 +964,9 @@ namespace DAL.Migrations
 
             migrationBuilder.DropTable(
                 name: "wallet_transactions");
+
+            migrationBuilder.DropTable(
+                name: "carts");
 
             migrationBuilder.DropTable(
                 name: "point_earning_rules");

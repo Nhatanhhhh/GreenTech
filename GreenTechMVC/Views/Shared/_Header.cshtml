@@ -1,0 +1,51 @@
+<header class="bg-white shadow">
+    <nav aria-label="Global" class="mx-auto max-w-7xl">
+        <!-- Top bar -->
+        <div class="flex justify-end items-center h-8 text-sm text-gray-700 px-4 lg:px-8 xl:px-10 2xl:px-12">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-phone"></i>
+                <span>Hotline:</span>
+                <span class="font-bold">0912 250 625</span>
+            </div>
+            <div class="flex items-center space-x-2 ml-10">
+                <i class="fa-solid fa-location-dot"></i>
+                <span class="font-bold">Cây Xanh GreenTech</span>
+            </div>
+        </div>
+
+        <!-- Main nav -->
+        <div class="flex items-center justify-between h-20 w-full bg-[#007934] text-white">
+            <!-- Logo -->
+            <a href="/" class="flex items-center">
+                <img class="h-14 w-auto" src="~/images/logo_greentech.png" alt="Logo" />
+            </a>
+
+            <!-- Search -->
+            <div class="hidden md:flex items-center bg-white rounded-full px-4 py-2 w-80">
+                <input type="text" placeholder="Bạn tìm kiếm sản phẩm gì..."
+                    class="flex-1 text-sm text-gray-700 placeholder-gray-500 focus:outline-none" />
+                <button class="text-gray-500 hover:text-green-600">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </div>
+
+            <!-- Menu -->
+            <div class="hidden lg:flex lg:gap-x-8">
+                <a href="/" class="text-lg font-medium hover:text-gray-200">Home</a>
+                <a href="/About" class="text-lg font-medium hover:text-gray-200">About</a>
+                <a href="/Products" class="text-lg font-medium hover:text-gray-200">Products</a>
+                <a href="/Blog" class="text-lg font-medium hover:text-gray-200">Blog</a>
+                <a href="/Contact" class="text-lg font-medium hover:text-gray-200">Contact</a>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-x-4">
+                <a href="/Cart" class="flex items-center gap-x-1 hover:text-gray-200">
+                    <i class="fa-solid fa-cart-shopping"></i> <span class="hidden sm:inline">Cart</span>
+                </a>
+                <a href="/Account/Login" class="hover:text-gray-200">Login</a>
+                <a href="/Account/Register" class="hover:text-gray-200">Register</a>
+            </div>
+        </div>
+    </nav>
+</header>
