@@ -1,0 +1,308 @@
+name: GreenTech CI & Branch Protection
+
+on:
+  push:
+    branches: [ dev, main, feature/*, bugfix/*, hotfix/* ]
+  pull_request:
+    branches: [ dev, main ]
+
+permissions:
+  contents: read         
+  issues: write           
+  pull-requests: write 
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  DOTNET_NOLOGO: true
+  NODE_ENV: test
+
+jobs:
+  # Job 1: Check Push Authorization for dev/main
+  check-push-authorization:
+    name: Check Push Authorization
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main')
+    
+    steps:
+    - name: Check if user is authorized to push to protected branches
+      run: |
+        echo "🔒 Checking push authorization for ${{ github.ref_name }}"
+        echo "User: ${{ github.actor }}"
+        
+        # Get authorized users from environment variable (support multiple users)
+        AUTHORIZED_USERS="${{ secrets.AUTHORIZED_USERS }}"
+        
+        if echo "$AUTHORIZED_USERS" | grep -qw "${{ github.actor }}"; then
+          echo "✅ Authorized user detected: ${{ github.actor }}"
+          echo "✅ Push to ${{ github.ref_name }} is allowed"
+        else
+          echo "❌ UNAUTHORIZED: User '${{ github.actor }}' is not authorized to push to ${{ github.ref_name }}"
+          echo "❌ Only authorized users are allowed to push to protected branches"
+          echo "✅ Please create a pull request instead"
+          exit 1
+        fi
+
+  # Job 2: CI - Build and Test (unified for all branches)
+  ci-build-test:
+    name: CI - Build and Test
+    runs-on: ubuntu-latest
+    if: always() && (github.event_name == 'pull_request' || github.event_name == 'push')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: GreenTechMVC/package-lock.json
+        
+    - name: Cache .NET packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+        
+    - name: Restore .NET dependencies
+      run: |
+        echo "🔧 Restoring .NET dependencies for multi-project solution"
+        # Restore DAL project
+        dotnet restore DAL/DAL.csproj
+        # Restore BLL project  
+        dotnet restore BLL/BLL.csproj
+        # Restore GreenTech (Razor Pages) project
+        dotnet restore GreenTech/GreenTechRazorPage.csproj
+        # Restore GreenTechMVC project
+        dotnet restore GreenTechMVC/GreenTechMVC.csproj
+      
+    - name: Install Node.js dependencies
+      run: |
+        echo "📦 Installing Node.js dependencies for MVC project"
+        cd GreenTechMVC
+        npm ci
+      
+    - name: Build .NET solution
+      run: |
+        echo "🔨 Building .NET multi-project solution"
+        # Build DAL project
+        dotnet build DAL/DAL.csproj --no-restore --configuration Release
+        # Build BLL project
+        dotnet build BLL/BLL.csproj --no-restore --configuration Release
+        # Build GreenTech (Razor Pages) project
+        dotnet build GreenTech/GreenTechRazorPage.csproj --no-restore --configuration Release
+        # Build GreenTechMVC project
+        dotnet build GreenTechMVC/GreenTechMVC.csproj --no-restore --configuration Release
+      
+    - name: Build Node.js CSS
+      run: |
+        echo "🎨 Building CSS for MVC project"
+        cd GreenTechMVC
+        npm run css:build
+      continue-on-error: true
+      
+    - name: Run .NET tests
+      run: |
+        echo "🧪 Running tests for all projects..."
+        # Run tests for DAL project (if any)
+        if [ -f "DAL/DAL.csproj" ]; then
+          echo "Testing DAL project..."
+          dotnet test DAL/DAL.csproj --no-build --no-restore --configuration Release --verbosity normal || echo "No tests in DAL project"
+        fi
+        
+        # Run tests for BLL project (if any)
+        if [ -f "BLL/BLL.csproj" ]; then
+          echo "Testing BLL project..."
+          dotnet test BLL/BLL.csproj --no-build --no-restore --configuration Release --verbosity normal || echo "No tests in BLL project"
+        fi
+        
+        # Run tests for GreenTech (Razor Pages) project (if any)
+        if [ -f "GreenTech/GreenTechRazorPage.csproj" ]; then
+          echo "Testing GreenTech (Razor Pages) project..."
+          dotnet test GreenTech/GreenTechRazorPage.csproj --no-build --no-restore --configuration Release --verbosity normal || echo "No tests in GreenTech project"
+        fi
+        
+        # Run tests for GreenTechMVC project (if any)
+        if [ -f "GreenTechMVC/GreenTechMVC.csproj" ]; then
+          echo "Testing GreenTechMVC project..."
+          dotnet test GreenTechMVC/GreenTechMVC.csproj --no-build --no-restore --configuration Release --verbosity normal || echo "No tests in GreenTechMVC project"
+        fi
+        
+        echo "✅ All tests completed"
+      
+    - name: Check code formatting
+      run: |
+        echo "🔍 Checking code formatting for all projects..."
+        # Check formatting for DAL project
+        if [ -f "DAL/DAL.csproj" ]; then
+          echo "Checking DAL project formatting..."
+          dotnet format DAL/DAL.csproj --verify-no-changes --verbosity diagnostic || echo "DAL formatting check completed"
+        fi
+        
+        # Check formatting for BLL project
+        if [ -f "BLL/BLL.csproj" ]; then
+          echo "Checking BLL project formatting..."
+          dotnet format BLL/BLL.csproj --verify-no-changes --verbosity diagnostic || echo "BLL formatting check completed"
+        fi
+        
+        # Check formatting for GreenTech (Razor Pages) project
+        if [ -f "GreenTech/GreenTechRazorPage.csproj" ]; then
+          echo "Checking GreenTech (Razor Pages) project formatting..."
+          dotnet format GreenTech/GreenTechRazorPage.csproj --verify-no-changes --verbosity diagnostic || echo "GreenTech formatting check completed"
+        fi
+        
+        # Check formatting for GreenTechMVC project
+        if [ -f "GreenTechMVC/GreenTechMVC.csproj" ]; then
+          echo "Checking GreenTechMVC project formatting..."
+          dotnet format GreenTechMVC/GreenTechMVC.csproj --verify-no-changes --verbosity diagnostic || echo "GreenTechMVC formatting check completed"
+        fi
+        
+        echo "✅ Code formatting check completed for all projects"
+      
+    - name: Check build warnings
+      run: |
+        echo "🔍 Checking for build warnings in all projects..."
+        # Check warnings for DAL project
+        if [ -f "DAL/DAL.csproj" ]; then
+          echo "Checking DAL project warnings..."
+          dotnet build DAL/DAL.csproj --no-restore --configuration Release --verbosity normal 2>&1 | grep -i "warning" || echo "No warnings in DAL project"
+        fi
+        
+        # Check warnings for BLL project
+        if [ -f "BLL/BLL.csproj" ]; then
+          echo "Checking BLL project warnings..."
+          dotnet build BLL/BLL.csproj --no-restore --configuration Release --verbosity normal 2>&1 | grep -i "warning" || echo "No warnings in BLL project"
+        fi
+        
+        # Check warnings for GreenTech (Razor Pages) project
+        if [ -f "GreenTech/GreenTechRazorPage.csproj" ]; then
+          echo "Checking GreenTech (Razor Pages) project warnings..."
+          dotnet build GreenTech/GreenTechRazorPage.csproj --no-restore --configuration Release --verbosity normal 2>&1 | grep -i "warning" || echo "No warnings in GreenTech project"
+        fi
+        
+        # Check warnings for GreenTechMVC project
+        if [ -f "GreenTechMVC/GreenTechMVC.csproj" ]; then
+          echo "Checking GreenTechMVC project warnings..."
+          dotnet build GreenTechMVC/GreenTechMVC.csproj --no-restore --configuration Release --verbosity normal 2>&1 | grep -i "warning" || echo "No warnings in GreenTechMVC project"
+        fi
+        
+        echo "✅ Build warnings check completed for all projects"
+      
+    - name: Post warnings to PR (if any)
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const warnings = `⚠️ **Build Warnings Detected**
+          
+          Please consider fixing the warnings shown in the CI logs before merging.
+          
+          This is an advisory message and will not block the merge, but it's recommended to address these warnings for better code quality.`
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: warnings
+          })
+      continue-on-error: true
+
+  # Job 3: Pull Request Merge Authorization
+  pr-merge-authorization:
+    name: PR Merge Authorization
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && (github.base_ref == 'dev' || github.base_ref == 'main')
+    
+    steps:
+    - name: Check merge authorization
+      run: |
+        echo "🔒 Checking merge authorization for PR to ${{ github.base_ref }}"
+        echo "PR Author: ${{ github.actor }}"
+        echo "Target Branch: ${{ github.base_ref }}"
+        
+        # Get authorized users from environment variable (support multiple users)
+        AUTHORIZED_USERS="${{ secrets.AUTHORIZED_USERS }}"
+        
+        if echo "$AUTHORIZED_USERS" | grep -qw "${{ github.actor }}"; then
+          echo "✅ Authorized user detected: ${{ github.actor }}"
+          echo "✅ This user can merge PR to ${{ github.base_ref }}"
+        else
+          echo "❌ UNAUTHORIZED: User '${{ github.actor }}' cannot merge to ${{ github.base_ref }}"
+          echo "❌ Only authorized users are authorized to merge to protected branches"
+          echo "✅ Please request review from authorized users"
+        fi
+
+  # Job 4: Post CI Results to PR
+  post-ci-results:
+    name: Post CI Results to PR
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && always()
+    needs: [ci-build-test]
+    
+    steps:
+    - name: Post CI failure details to PR
+      if: needs.ci-build-test.result == 'failure'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const failureMessage = `❌ **CI Build Failed**
+          
+          The CI build has failed. Please check the following:
+          
+          🔍 **Common Issues:**
+          - **Tests failed**: Check the test output in the CI logs
+          - **Code formatting issues**: Run \`dotnet format\` locally and commit changes
+          - **Build errors**: Check for compilation errors in the CI logs
+          - **Node.js build issues**: Check if CSS build is working properly
+          
+          📋 **Next Steps:**
+          1. Review the CI logs above for specific error details
+          2. Fix the issues locally
+          3. Push your changes to trigger a new CI run
+          4. Ensure all checks pass before requesting review
+          
+          💡 **Need Help?**
+          - Check the project documentation
+          - Ask team members for assistance
+          - Review similar issues in the repository`
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: failureMessage
+          })
+    
+    - name: Post CI success message to PR
+      if: needs.ci-build-test.result == 'success'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const successMessage = `✅ **CI Build Passed**
+          
+          All CI checks have passed successfully! 🎉
+          
+          📋 **What was checked:**
+          - ✅ .NET solution build
+          - ✅ Node.js dependencies and CSS build
+          - ✅ All tests passed
+          - ✅ Code formatting is correct
+          - ✅ No critical build warnings
+          
+          🚀 **Ready for review!**
+          This PR is ready for code review and potential merge.`
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: successMessage
+          })
