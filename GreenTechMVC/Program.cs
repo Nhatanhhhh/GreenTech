@@ -1,17 +1,41 @@
-using DAL.Context;
+﻿using DAL.Context;
+using GreenTechMVC.DI;
 using Microsoft.EntityFrameworkCore;
+using DotNetEnv;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Load file .env
+Env.Load();
+var connString = Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__DEFAULTCONNECTION");
+
+builder.Configuration
+    .AddEnvironmentVariables();
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 
 // Add DbContext
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-    )
+if (string.IsNullOrEmpty(connString))
+{
+    throw new InvalidOperationException("Not found CONNECTIONSTRINGS__DEFAULTCONNECTION in .env");
+}
+
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(connString)
 );
+
+builder.Services.AddApplicationServices();
 
 var app = builder.Build();
 
@@ -26,6 +50,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
+app.UseSession();
 app.UseRouting();
 
 app.UseAuthorization();
