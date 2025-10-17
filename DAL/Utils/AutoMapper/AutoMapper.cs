@@ -99,25 +99,6 @@ namespace DAL.Utils.AutoMapper
             return userDTO;
         }
 
-        private static string FormatFullname(string fullname)
-        {
-            if (string.IsNullOrWhiteSpace(fullname))
-            {
-                return fullname;
-            }
-
-            var words = fullname.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < words.Length; i++)
-            {
-                if (words[i].Length > 0)
-                {
-                    words[i] = char.ToUpper(words[i][0]) + words[i].Substring(1).ToLower();
-                }
-            }
-
-            return string.Join(' ', words);
-        }
-
         /// <summary>
         /// Convert CouponTemplate to CouponTemplateDTO
         /// </summary>
@@ -181,6 +162,25 @@ namespace DAL.Utils.AutoMapper
                 ValidDays = dto.ValidDays,
                 CreatedAt = dto.CreatedAt
             };
+        }
+
+        private static string FormatFullname(string fullname)
+        {
+            if (string.IsNullOrWhiteSpace(fullname))
+            {
+                return fullname;
+            }
+
+            var words = fullname.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < words.Length; i++)
+            {
+                if (words[i].Length > 0)
+                {
+                    words[i] = char.ToUpper(words[i][0]) + words[i].Substring(1).ToLower();
+                }
+            }
+
+            return string.Join(' ', words);
         }
 
         private static string FormatDateTime(DateTime dateTime)
