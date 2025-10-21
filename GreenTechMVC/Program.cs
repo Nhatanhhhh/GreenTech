@@ -1,4 +1,5 @@
 ﻿using DAL.Context;
+using BLL.Config;
 using GreenTechMVC.DI;
 using Microsoft.EntityFrameworkCore;
 using DotNetEnv;
@@ -30,10 +31,23 @@ if (string.IsNullOrEmpty(connString))
     throw new InvalidOperationException("Not found CONNECTIONSTRINGS__DEFAULTCONNECTION in .env");
 }
 
-
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connString)
 );
+
+builder.Services.Configure<CloudinarySettings>(settings =>
+{
+    settings.CloudName = Environment.GetEnvironmentVariable("CLOUDINARY_CLOUD_NAME");
+    settings.ApiKey = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY");
+    settings.ApiSecret = Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET");
+
+    if (string.IsNullOrEmpty(settings.CloudName) ||
+        string.IsNullOrEmpty(settings.ApiKey) ||
+        string.IsNullOrEmpty(settings.ApiSecret))
+    {
+        Console.WriteLine("[WARNING] Cloudinary settings are missing in .env or environment variables. File upload might fail.");
+    }
+});
 
 builder.Services.AddApplicationServices();
 
