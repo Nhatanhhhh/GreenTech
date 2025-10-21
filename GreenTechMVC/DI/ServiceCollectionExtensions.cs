@@ -33,6 +33,7 @@ namespace GreenTechMVC.DI
         {
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ICouponTemplateService, CouponTemplateService>();
+            services.AddScoped<IFileStorageService, CloudinaryStorageService>();
             // Add another service at here
             // services.AddScoped<IUserService, UserService>();
             // services.AddScoped<IProductService, ProductService>();

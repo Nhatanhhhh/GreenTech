@@ -1,6 +1,7 @@
 ﻿using BLL.Service.Interface;
 using DAL.DTOs.User;
 using DAL.Models.Enum;
+using DAL.Models;
 using DAL.Repositories.Interface;
 using DAL.Utils.AutoMapper;
 using DAL.Utils.CryptoUtil;
@@ -61,7 +62,7 @@ namespace BLL.Service
             return Task.CompletedTask;
         }
 
-        private void SaveUserSession(DAL.Models.User user)
+        private void SaveUserSession(User user)
         {
             var session = _httpContextAccessor.HttpContext?.Session
                 ?? throw new InvalidOperationException("Session không khả dụng");
