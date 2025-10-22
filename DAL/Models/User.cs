@@ -52,7 +52,7 @@ namespace DAL.Models
 
         [Column("avatar")]
         [MaxLength(255)]
-        public string Avatar { get; set; }
+        public string? Avatar { get; set; }
 
         [Column("points")]
         public int Points { get; set; } = 0;

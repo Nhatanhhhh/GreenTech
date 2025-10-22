@@ -33,7 +33,8 @@ namespace DAL.Utils.AutoMapper
                 Avatar = user.Avatar,
                 Points = user.Points,
                 WalletBalance = user.WalletBalance,
-                Status = user.Status.ToString()
+                Status = user.Status.ToString(),
+                Roles = user.UserRoles?.Select(ur => ur.Role.RoleName.ToString()).ToList() ?? new List<string>()
             };
         }
 

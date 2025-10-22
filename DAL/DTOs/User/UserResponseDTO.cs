@@ -15,5 +15,6 @@ namespace DAL.DTOs.User
         public int Points { get; set; }
         public decimal WalletBalance { get; set; }
         public string Status { get; set; }
+        public List<string> Roles { get; set; } = new List<string>();
     }
 }

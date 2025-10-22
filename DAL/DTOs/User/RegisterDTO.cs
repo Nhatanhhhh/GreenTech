@@ -54,13 +54,13 @@ namespace DAL.DTOs.User
 
         [StringLength(150, ErrorMessage = "Địa chỉ cụ thể không được vượt quá 150 ký tự")]
         [Display(Name = "Địa chỉ cụ thể")]
-        public string SpecificAddress { get; set; }
+        public string? SpecificAddress { get; set; }
 
         // Optional fields with validation
         [Url(ErrorMessage = "URL avatar không hợp lệ")]
         [StringLength(255, ErrorMessage = "URL avatar không được vượt quá 255 ký tự")]
         [Display(Name = "Avatar")]
-        public string Avatar { get; set; }
+        public string? Avatar { get; set; }
 
         // Agreement checkbox (thường dùng trong frontend)
         [Range(typeof(bool), "true", "true", ErrorMessage = "Bạn phải đồng ý với điều khoản sử dụng")]

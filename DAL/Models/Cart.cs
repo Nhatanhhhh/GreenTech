@@ -16,7 +16,7 @@ namespace DAL.Models
 
         [Column("session_id")]
         [MaxLength(255)]
-        public string SessionId { get; set; }
+        public string? SessionId { get; set; }
 
         [Column("coupon_id")]
         public int? CouponId { get; set; }
