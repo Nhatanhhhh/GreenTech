@@ -1,5 +1,9 @@
-﻿@{
+﻿@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
 
+@{
+    var isAuthenticated = HttpContextAccessor.HttpContext?.Session.GetString("IsAuthenticated") == "true";
+    var userName = HttpContextAccessor.HttpContext?.Session.GetString("UserName") ?? "Khách";
 }
 <header class="w-auto bg-white">
     <!-- Top Contact Bar -->
@@ -24,24 +28,26 @@
         <!-- Logo -->
         <div class="flex items-center">
             <div>
-                <img src="~/images/logo_greentech.png" alt="GreenTech Logo" class="h-[50px]">
+                <a asp-controller="Home" asp-action="Index">
+                    <img src="~/images/logo_greentech.png" alt="GreenTech Logo" class="h-[50px]">
+                </a>
             </div>
         </div>
 
 
         <!-- Search Box -->
-        <div class="relative">
-            <div class="h-9 w-[355px] rounded-[11px] bg-[#f2f2f2] shadow-inner"></div>
-            <i class="fas fa-search -translate-y-1/2 absolute left-3 top-1/2 transform text-gray-500"></i>
-            <span
-                class="absolute left-[50px] top-1/2 transform -translate-y-1/2 text-[#707070] text-sm font-['Roboto']">
-                Bạn tìm kiếm sản phẩm gì...
-            </span>
+        <div class="relative w-[355px]">
+            <i class="fas fa-search absolute left-3 top-6 -translate-y-1/2 transform text-gray-500 z-10"></i>
+
+            <input type="text" placeholder="Bạn tìm kiếm sản phẩm gì..." class="relative h-9 w-full rounded-[11px] bg-[#f2f2f2] shadow-inner
+                pl-10 pr-4 text-sm font-['Roboto'] text-black
+                placeholder:text-sm placeholder:font-['Roboto'] placeholder:text-[#707070]
+                focus:outline-none focus:ring-1 focus:ring-blue-500" />
         </div>
 
         <!-- Main Navigation -->
         <nav class="flex items-center gap-8">
-            <a href="#"
+            <a asp-controller="Home" asp-action="Index"
                 class="text-white text-[15px] font-['Roboto_Condensed'] hover:text-green-300 transition-colors">TRANG
                 CHỦ</a>
             <a href="#"
@@ -78,17 +84,40 @@
 
             <!-- Sign In/ Sign Up -->
             <div class="ml-8 flex items-center gap-3">
-                <a href="#"
-                    class="text-white text-sm font-['Roboto_Condensed'] hover:text-green-300 transition-colors duration-200">
-                    <i class="fas fa-user mr-1"></i>
-                    Đăng nhập
-                </a>
-                <span class="text-white opacity-50">|</span>
-                <a href="#"
-                    class="text-white text-sm font-['Roboto_Condensed'] hover:text-green-300 transition-colors duration-200">
-                    <i class="fa fa-user-plus"></i>
-                    Đăng ký
-                </a>
+                @if (isAuthenticated)
+                {
+                    // --- Signed in ---
+                    <a asp-controller="Profile" asp-action="Index"
+                        class="text-white text-sm font-['Roboto_Condensed'] hover:text-green-300 transition-colors duration-200">
+                        <i class="fas fa-user mr-1"></i>
+                        Xin chào, @userName
+                    </a>
+                    <span class="text-white opacity-50">|</span>
+
+                    <form asp-controller="Auth" asp-action="Logout" method="post" class="inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit"
+                            class="text-white text-sm font-['Roboto_Condensed'] hover:text-green-300 transition-colors duration-200 bg-transparent border-none p-0 cursor-pointer">
+                            <i class="fas fa-sign-out-alt mr-1"></i>
+                            Đăng xuất
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    // --- Not Sign in ---
+                    <a asp-controller="Auth" asp-action="Login"
+                        class="text-white text-sm font-['Roboto_Condensed'] hover:text-green-300 transition-colors duration-200">
+                        <i class="fas fa-user mr-1"></i>
+                        Đăng nhập
+                    </a>
+                    <span class="text-white opacity-50">|</span>
+                    <a asp-controller="Auth" asp-action="Register"
+                        class="text-white text-sm font-['Roboto_Condensed'] hover:text-green-300 transition-colors duration-200">
+                        <i class="fa fa-user-plus"></i>
+                        Đăng ký
+                    </a>
+                }
             </div>
         </div>
     </div>
