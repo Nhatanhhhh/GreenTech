@@ -31,5 +31,61 @@ namespace DAL.Repositories
                 return false;
             }
         }
+        public bool UpdateReview(int reviewId, string content, int rating)
+        {
+            try
+            {
+                var review = _context.Reviews.FirstOrDefault(r => r.Id == reviewId);
+                if (review == null) return false;
+
+                review.Content = content;
+                review.Rating = rating;
+                review.UpdatedAt = DateTime.Now;
+
+                _context.Reviews.Update(review);
+                _context.SaveChanges();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        public bool DeleteReview(int reviewId)
+        {
+            try
+            {
+                var review = _context.Reviews.FirstOrDefault(r => r.Id == reviewId);
+                if (review == null) return false;
+
+                _context.Reviews.Remove(review);
+                _context.SaveChanges();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        public bool UploadReviewMedia(int reviewId, List<string> mediaUrls)
+        {
+            try
+            {
+                var review = _context.Reviews.FirstOrDefault(r => r.Id == reviewId);
+                if (review == null) return false;
+                if (mediaUrls == null || mediaUrls.Count == 0 || mediaUrls.Count > 5)
+                    return false;
+                review.MediaUrls = string.Join(";", mediaUrls);
+                review.UpdatedAt = DateTime.Now;
+                _context.Reviews.Update(review);
+                _context.SaveChanges();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
     }
 }
