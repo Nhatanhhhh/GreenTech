@@ -37,15 +37,17 @@ public class AuthController : Controller
 
                 if (userResponse.Roles.Contains(RoleName.ROLE_ADMIN.ToString()))
                 {
-                    string adminAppUrl = _configuration["ADMIN_APP_URL"] ?? "/";
-                    if (string.IsNullOrEmpty(adminAppUrl) || adminAppUrl == "/")
-                    {
-                        Console.WriteLine(
-                            "[Warning] ADMIN_APP_URL is not configured in .env file."
-                        );
-                        return RedirectToAction("Index", "Home");
-                    }
-                    return Redirect(adminAppUrl);
+                    // Get user ID from session
+                    var userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                    var userEmail = HttpContext.Session.GetString("UserEmail") ?? "";
+                    var userName = HttpContext.Session.GetString("UserName") ?? "";
+                    var userRoles = HttpContext.Session.GetString("UserRoles") ?? "";
+                    
+                    // Build admin app URL with session data
+                    var adminAppUrl = "https://localhost:7142/Auth/SyncSession";
+                    var redirectUrl = $"{adminAppUrl}?userId={userId}&email={Uri.EscapeDataString(userEmail)}&userName={Uri.EscapeDataString(userName)}&roles={Uri.EscapeDataString(userRoles)}";
+                    
+                    return Redirect(redirectUrl);
                 }
                 else
                 {

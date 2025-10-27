@@ -1,0 +1,89 @@
+@page
+@model GreenTech.Pages.Suppliers.DeleteModel
+@{
+    ViewData["Title"] = "Xóa nhà cung cấp";
+}
+
+<div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-900">Xóa nhà cung cấp</h1>
+    <p class="text-gray-600 mt-2">Xác nhận xóa nhà cung cấp này</p>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-red-700">
+                    Bạn có chắc chắn muốn xóa nhà cung cấp này không? Hành động này không thể hoàn tác.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="border border-gray-200 rounded-lg p-4 mb-6">
+        <dl class="grid grid-cols-1 gap-4">
+            <div class="col-span-2">
+                <dt class="text-sm font-medium text-gray-500">Mã nhà cung cấp</dt>
+                <dd class="mt-1 text-sm text-gray-900 font-semibold">@Model.Supplier.Code</dd>
+            </div>
+            <div class="col-span-2">
+                <dt class="text-sm font-medium text-gray-500">Tên nhà cung cấp</dt>
+                <dd class="mt-1 text-sm text-gray-900">@Model.Supplier.Name</dd>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.Supplier.ContactPerson))
+            {
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Người liên hệ</dt>
+                    <dd class="mt-1 text-sm text-gray-900">@Model.Supplier.ContactPerson</dd>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(Model.Supplier.Phone))
+            {
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Điện thoại</dt>
+                    <dd class="mt-1 text-sm text-gray-900">@Model.Supplier.Phone</dd>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(Model.Supplier.Email))
+            {
+                <div class="col-span-2">
+                    <dt class="text-sm font-medium text-gray-500">Email</dt>
+                    <dd class="mt-1 text-sm text-gray-900">@Model.Supplier.Email</dd>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(Model.Supplier.Address))
+            {
+                <div class="col-span-2">
+                    <dt class="text-sm font-medium text-gray-500">Địa chỉ</dt>
+                    <dd class="mt-1 text-sm text-gray-900">@Model.Supplier.Address</dd>
+                </div>
+            }
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Trạng thái</dt>
+                <dd class="mt-1">
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full @(Model.Supplier.IsActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")">
+                        @(Model.Supplier.IsActive ? "Hoạt động" : "Không hoạt động")
+                    </span>
+                </dd>
+            </div>
+        </dl>
+    </div>
+
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm mb-4"></div>
+        <div class="flex gap-3">
+            <button type="submit" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Xóa nhà cung cấp</button>
+            <a asp-page="./Index" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Hủy</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

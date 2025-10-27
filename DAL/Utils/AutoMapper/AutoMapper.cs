@@ -269,6 +269,7 @@ namespace DAL.Utils.AutoMapper
                 EndDate = banner.EndDate,
                 ClickCount = banner.ClickCount,
                 CreatedBy = banner.CreatedBy,
+                CreatedByName = banner.Creator?.FullName ?? "N/A",
                 CreatedAt = banner.CreatedAt,
                 UpdatedAt = banner.UpdatedAt,
             };
