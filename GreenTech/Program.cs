@@ -1,18 +1,55 @@
 using DAL.Context;
 using Microsoft.EntityFrameworkCore;
+using DotNetEnv;
+using BLL.Config;
+using GreenTech.DI;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Load file .env
+Env.Load();
+var connString = Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__DEFAULTCONNECTION");
+
+builder.Configuration
+    .AddEnvironmentVariables();
+
 // Add services to the container.
 builder.Services.AddRazorPages();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 // Add DbContext
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-    )
+if (string.IsNullOrEmpty(connString))
+{
+    throw new InvalidOperationException("Not found CONNECTIONSTRINGS__DEFAULTCONNECTION in .env");
+}
+
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(connString)
 );
 
+builder.Services.Configure<CloudinarySettings>(settings =>
+{
+    settings.CloudName = Environment.GetEnvironmentVariable("CLOUDINARY_CLOUD_NAME") ?? string.Empty;
+    settings.ApiKey = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY") ?? string.Empty;
+    settings.ApiSecret = Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET") ?? string.Empty;
+
+    if (string.IsNullOrEmpty(settings.CloudName) ||
+        string.IsNullOrEmpty(settings.ApiKey) ||
+        string.IsNullOrEmpty(settings.ApiSecret))
+    {
+        Console.WriteLine("[WARNING] Cloudinary settings are missing in .env or environment variables. File upload might fail.");
+    }
+});
+
+builder.Services.AddApplicationServices();
 
 var app = builder.Build();
 
@@ -27,6 +64,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
+app.UseSession();
 app.UseRouting();
 
 app.UseAuthorization();

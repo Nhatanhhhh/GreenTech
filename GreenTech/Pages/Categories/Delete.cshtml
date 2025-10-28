@@ -1,0 +1,55 @@
+@page "{id:int}"
+@model GreenTech.Pages.Categories.DeleteModel
+@{
+    ViewData["Title"] = "Xóa danh mục";
+}
+
+<div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-900">Xóa danh mục</h1>
+    <p class="text-gray-600 mt-2">Xác nhận xóa danh mục này</p>
+</div>
+
+@if (Model.Category == null)
+{
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p class="text-red-800">Không tìm thấy danh mục này.</p>
+        <a asp-page="./Index" class="text-red-600 hover:underline mt-2 inline-block">Quay lại danh sách</a>
+    </div>
+}
+else
+{
+    <div class="bg-white rounded-lg shadow-sm border border-red-200 p-6">
+        <div class="mb-6">
+            <div class="flex items-center gap-4">
+                <img src="@(Model.Category.Image ?? "/images/no-image.png")" alt="@Model.Category.Name" class="w-24 h-24 object-cover rounded-lg">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">@Model.Category.Name</h2>
+                    <p class="text-gray-600">Slug: @Model.Category.Slug</p>
+                    <p class="text-gray-600">Sản phẩm: @Model.Category.ProductsCount</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <p class="text-yellow-800">
+                <strong>⚠️ Cảnh báo:</strong> @if (Model.Category.ProductsCount > 0) { 
+                    <text>Danh mục này có @Model.Category.ProductsCount sản phẩm. Nếu có sản phẩm, danh mục sẽ được vô hiệu hóa thay vì xóa.</text>
+                } else { 
+                    <text>Bạn sắp xóa danh mục này. Hành động này không thể hoàn tác.</text>
+                }
+            </p>
+        </div>
+
+        <form method="post">
+            <div class="flex gap-3">
+                <button type="submit" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    Xác nhận xóa
+                </button>
+                <a asp-page="./Index" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Hủy
+                </a>
+            </div>
+        </form>
+    </div>
+}
+

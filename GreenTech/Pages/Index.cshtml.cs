@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using GreenTech.Filters;
 
 namespace GreenTech.Pages
 {
+    [AdminAuthorize]
     public class IndexModel : PageModel
     {
         private readonly ILogger<IndexModel> _logger;

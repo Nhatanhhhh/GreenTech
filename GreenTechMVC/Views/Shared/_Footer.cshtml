@@ -1,0 +1,285 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+
+}
+
+<footer class="bg-[#E9E9E9] text-black relative">
+    <!-- Header Text -->
+    <div class="flex flex-col items-center py-12 px-4">
+        <div class="flex justify-center items-center">
+            <img src="~/images/frame.png" class="mr-1" alt="frame" />
+            <h1 class="text-3xl font-sfu">ĐỐI TÁC CỦA CÂY XANH HALUTA</h1>
+        </div>
+        <div class="flex justify-center items-center mt-3">
+            <div class="w-28 h-1 flex-shrink bg-[#005424]"></div>
+        </div>
+    </div>
+
+    <!-- Carousel Container -->
+    <div id="partner-carousel" class="relative overflow-hidden max-w-full mx-auto mb-16">
+        <!-- Carousel Track -->
+        <div class="flex transition-transform duration-1000 ease-in-out" id="carousel-track">
+            <!-- Item 1 -->
+            <div
+                class="min-w-[18%] flex-shrink-0 flex items-center justify-center py-1 px-6 ml-24 mr-14 rounded-md border-solid border-2 border-[#C4C4C4]">
+                <img src="~/images/flc_group.png" class="h-8 md:h-12 w-auto object-contain" alt="FLC Group">
+            </div>
+
+            <!-- Item 2 -->
+            <div
+                class="min-w-[18%] flex-shrink-0 flex items-center justify-center py-1 px-6 ml-24 mr-14 rounded-md border-solid border-2 border-[#C4C4C4]">
+                <img src="~/images/unicons.png" class="h-8 md:h-12 w-auto object-contain" alt="Unicons">
+            </div>
+
+            <!-- Item 3 -->
+            <div
+                class="min-w-[18%] flex-shrink-0 flex items-center justify-center py-1 px-6 ml-24 mr-14 rounded-md border-solid border-2 border-[#C4C4C4]">
+                <img src="~/images/vinaconex.png" class="h-8 md:h-12 w-auto object-contain" alt="Vinaconex">
+            </div>
+
+            <!-- Item 4 -->
+            <div
+                class="min-w-[18%] flex-shrink-0 flex items-center justify-center py-1 px-6 ml-24 mr-14 rounded-md border-solid border-2 border-[#C4C4C4]">
+                <img src="~/images/newtecons.png" class="h-8 md:h-12 w-auto object-contain" alt="Newtecons">
+            </div>
+
+            <!-- Duplicate items for infinite loop -->
+            <div
+                class="min-w-[18%] flex-shrink-0 flex items-center justify-center py-1 px-6 ml-24 mr-14 rounded-md border-solid border-2 border-[#C4C4C4]">
+                <img src="~/images/flc_group.png" class="h-8 md:h-12 w-auto object-contain" alt="FLC Group">
+            </div>
+
+            <div
+                class="min-w-[18%] flex-shrink-0 flex items-center justify-center py-1 px-6 ml-24 mr-14 rounded-md border-solid border-2 border-[#C4C4C4]">
+                <img src="~/images/unicons.png" class="h-8 md:h-12 w-auto object-contain" alt="Unicons">
+            </div>
+
+            <div
+                class="min-w-[18%] flex-shrink-0 flex items-center justify-center py-1 px-6 ml-24 mr-14 rounded-md border-solid border-2 border-[#C4C4C4]">
+                <img src="~/images/vinaconex.png" class="h-8 md:h-12 w-auto object-contain" alt="Vinaconex">
+            </div>
+
+            <div
+                class="min-w-[18%] flex-shrink-0 flex items-center justify-center py-1 px-6 ml-24 mr-14 rounded-md border-solid border-2 border-[#C4C4C4]">
+                <img src="~/images/newtecons.png" class="h-8 md:h-12 w-auto object-contain" alt="Newtecons">
+            </div>
+        </div>
+
+        <!-- Navigation Buttons - Transparent Background -->
+        <button type="button" id="prev-btn"
+            class="absolute top-1/2 left-0 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-transparent hover:bg-white/20 transition-all">
+            <svg class="w-6 h-6 text-[#007934]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+            </svg>
+        </button>
+        <button type="button" id="next-btn"
+            class="absolute top-1/2 right-0 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-transparent hover:bg-white/20 transition-all">
+            <svg class="w-6 h-6 text-[#007934]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+            </svg>
+        </button>
+    </div>
+
+    <div class="bg-[#007934] py-4 text-white">
+        <div class="container mx-auto max-w-7xl px-4">
+            <div class="flex flex-wrap justify-center items-center gap-4 md:gap-8">
+                <div class="flex items-center justify-center gap-3 py-2">
+                    <img class="w-10 h-10 flex-shrink-0" src="~/images/XMLID_1364.png" alt="quality_product">
+                    <span class="font-semibold uppercase text-sm items-center">SẢN PHẨM CHẤT LƯỢNG</span>
+                </div>
+                <span class="hidden md:block text-xl"> | </span>
+                <div class="flex items-center justify-center gap-3 py-2">
+                    <img class="w-10 h-10 flex-shrink-0" src="~/images/Group_780.png" alt="service">
+                    <span class="font-semibold uppercase text-sm items-center">DỊCH VỤ CHUYÊN NGHIỆP</span>
+                </div>
+                <span class="hidden md:block text-xl"> | </span>
+                <div class="flex items-center justify-center gap-3 py-2">
+                    <img class="w-10 h-10 flex-shrink-0" src="~/images/truck_1.png" alt="car">
+                    <span class="font-semibold uppercase text-sm items-center">GIAO HÀNG TOÀN QUỐC</span>
+                </div>
+                <span class="hidden md:block text-xl"> | </span>
+                <div class="flex items-center justify-center gap-3 py-2">
+                    <img class="w-10 h-10 flex-shrink-0" src="~/images/shield_1.png" alt="free">
+                    <span class="font-semibold uppercase text-sm items-center">MIỄN PHÍ BẢO HÀNH</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact buttons -->
+    <div class="bg-[#E9E9E9] text-black py-12 px-4">
+        <div class="container mx-auto max-w-7xl">
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8 text-sm">
+
+                <div class="lg:col-span-2">
+                    <div class="mb-4">
+                        <img src="~/images/black_logo.png" alt="logo" />
+                    </div>
+
+                    <p class="font-semibold text-black">HOTLINE BÁN HÀNG</p>
+                    <p class="text-3xl font-bold text-[#005424] my-1">0912 250 625</p>
+                    <p class="text-xs text-gray-600 mb-4">(08:00-17:00 / từ T2 đến T7)</p>
+
+                    <p class="font-semibold text-black">CHĂM SÓC KHÁCH HÀNG</p>
+                    <p class="text-3xl font-bold text-[#005424] my-1">0912 250 625</p>
+                    <p class="text-xs text-gray-600">(24/7 / tất cả các ngày trong tuần)</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-black uppercase mb-4">Chăm sóc khách hàng</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-700 hover:text-[#005424] transition">Chính sách bảo hành</a>
+                        </li>
+                        <li><a href="#" class="text-gray-700 hover:text-[#005424] transition">Chính sách đổi trả sản
+                                phẩm</a></li>
+                        <li><a href="#" class="text-gray-700 hover:text-[#005424] transition">Hỏi đáp Mua hàng
+                                Online</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-black uppercase mb-4">Cửa hàng</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-700 hover:text-[#005424] transition">Thư viện</a></li>
+                        <li><a href="#" class="text-gray-700 hover:text-[#005424] transition">Trung tâm kiến thức</a>
+                        </li>
+                        <li><a href="#" class="text-gray-700 hover:text-[#005424] transition">Tin tức Haluta</a></li>
+                        <li><a href="#" class="text-gray-700 hover:text-[#005424] transition">Sản phẩm khuyến mại</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-black uppercase mb-4">Về chúng tôi</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-700 hover:text-[#005424] transition">Giới thiệu công ty</a>
+                        </li>
+                        <li><a href="#" class="text-gray-700 hover:text-[#005424] transition">Hệ thống cửa hàng</a></li>
+                        <li><a href="#" class="text-gray-700 hover:text-[#005424] transition">Tuyển dụng</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-black uppercase mb-4">Liên hệ</h4>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-2 text-gray-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor" class="w-4 h-4 text-gray-600 mt-1 flex-shrink-0">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                            </svg>
+                            <span>TCL, 3 Nội Thành Tây, P. An, Quảng Nam</span>
+                        </li>
+                        <li class="flex items-start gap-2 text-gray-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor" class="w-4 h-4 text-gray-600 mt-1 flex-shrink-0">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-1.09 1.09c-1.133-.52-2.16-1.141-3.12-2.1l-1.09 1.09a.75.75 0 0 1-1.173.417l-1.106-4.423a1.125 1.125 0 0 1-1.091-.852V4.5A2.25 2.25 0 0 0 4.5 2.25H2.25Z" />
+                            </svg>
+                            <span>093 467 55 30</span>
+                        </li>
+                        <li class="flex items-start gap-2 text-gray-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor" class="w-4 h-4 text-gray-600 mt-1 flex-shrink-0">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                            </svg>
+                            <span>contact@phamquyluan.com</span>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Copyright -->
+    <div class="border-t border-gray-700 pt-6 text-center">
+        <p class="text-black">Copyright © 2019 HALUTA.vn. Công ty cổ phần HALUTA, Mã số thuế: 0123456789</p>
+    </div>
+</footer>
+
+
+<!-- JavaScript for Carousel -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const track = document.getElementById('carousel-track');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        let currentSlide = 0;
+        const totalItems = 4;
+        let autoPlayInterval;
+
+        function updateCarousel() {
+            const slideWidth = 25;
+            track.style.transform = `translateX(-${currentSlide * slideWidth}%)`;
+        }
+
+        function nextSlide() {
+            currentSlide++;
+            updateCarousel();
+
+            if (currentSlide >= totalItems) {
+                setTimeout(() => {
+                    track.style.transition = 'none';
+                    currentSlide = 0;
+                    track.style.transform = `translateX(0%)`;
+                    setTimeout(() => {
+                        track.style.transition = 'transform 500ms ease-in-out';
+                    }, 50);
+                }, 500);
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide === 0) {
+                track.style.transition = 'none';
+                currentSlide = totalItems;
+                track.style.transform = `translateX(-${currentSlide * 25}%)`;
+                setTimeout(() => {
+                    track.style.transition = 'transform 500ms ease-in-out';
+                    currentSlide--;
+                    updateCarousel();
+                }, 50);
+            } else {
+                currentSlide--;
+                updateCarousel();
+            }
+        }
+
+        function startAutoPlay() {
+            autoPlayInterval = setInterval(nextSlide, 3000);
+        }
+
+        function stopAutoPlay() {
+            clearInterval(autoPlayInterval);
+        }
+
+        // Event listeners
+        nextBtn.addEventListener('click', () => {
+            stopAutoPlay();
+            nextSlide();
+            startAutoPlay();
+        });
+
+        prevBtn.addEventListener('click', () => {
+            stopAutoPlay();
+            prevSlide();
+            startAutoPlay();
+        });
+
+        // Pause on hover
+        const carousel = document.getElementById('partner-carousel');
+        carousel.addEventListener('mouseenter', stopAutoPlay);
+        carousel.addEventListener('mouseleave', startAutoPlay);
+
+        // Start auto play
+        startAutoPlay();
+    });
+</script>
