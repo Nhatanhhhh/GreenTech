@@ -1,0 +1,309 @@
+@model DAL.DTOs.User.RegisterDTO
+@{
+    ViewData["Title"] = "Đăng ký";
+}
+
+<div class="container mx-auto max-w-lg py-12 px-4">
+    <div class="bg-white p-8 rounded-lg shadow-md border border-gray-200">
+
+        <div class="flex justify-center mb-6">
+            <img src="~/images/logo_greentech.png" alt="GreenTech Logo" class="h-12">
+        </div>
+
+        <h2 class="text-2xl font-bold text-center text-[#007934] mb-6 font-['Roboto_Condensed'] uppercase">
+            Đăng ký tài khoản
+        </h2>
+
+        <form asp-controller="Auth" asp-action="Register" method="post" class="space-y-4">
+            @Html.AntiForgeryToken()
+
+            @* Display general errors (e.g., Email already exists) *@
+            <div asp-validation-summary="ModelOnly"
+                 class="text-red-600 bg-red-100 border border-red-400 rounded p-3 text-sm mb-4" role="alert"></div>
+
+            @* Hidden input to keep returnUrl (if any) *@
+            <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+
+            <div class="form-group">
+                <label asp-for="FullName" class="block text-sm font-medium text-gray-700 mb-1 font-['Roboto']">
+                    Họ và tên <span class="text-red-500 ml-1">*</span>
+                </label>
+                <input asp-for="FullName" type="text"
+                       class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
+                              focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                       placeholder="Nguyễn Văn A">
+                <span asp-validation-for="FullName" class="mt-1 text-xs text-red-600"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Email" class="block text-sm font-medium text-gray-700 mb-1 font-['Roboto']">
+                    Email <span class="text-red-500 ml-1">*</span>
+                </label>
+                <input asp-for="Email" type="email"
+                       class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
+                              focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                       placeholder="you@example.com">
+                <span asp-validation-for="Email" class="mt-1 text-xs text-red-600"></span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @* --- PASSWORD (WITH TOGGLE EYE) --- *@
+                <div class="form-group">
+                    <label asp-for="Password"
+                           class="block text-sm font-medium text-gray-700 mb-1 font-['Roboto']">
+                        Mật khẩu <span class="text-red-500 ml-1">*</span>
+                    </label>
+                    <div class="relative">
+                        <input asp-for="Password" type="password"
+                               class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
+                                      focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm pr-10"
+                               placeholder="********">
+                        <span class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
+                              onclick="togglePassword(this)">
+                            <i class="fas fa-eye text-gray-400" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <span asp-validation-for="Password" class="mt-1 text-xs text-red-600"></span>
+                </div>
+
+                @* --- CONFIRM PASSWORD (WITH TOGGLE EYE) --- *@
+                <div class="form-group">
+                    <label asp-for="ConfirmPassword"
+                           class="block text-sm font-medium text-gray-700 mb-1 font-['Roboto']">
+                        Xác nhận mật khẩu <span class="text-red-500 ml-1">*</span>
+                    </label>
+                    <div class="relative">
+                        <input asp-for="ConfirmPassword" type="password"
+                               class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
+                                      focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm pr-10"
+                               placeholder="********">
+                        <span class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
+                              onclick="togglePassword(this)">
+                            <i class="fas fa-eye text-gray-400" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <span asp-validation-for="ConfirmPassword" class="mt-1 text-xs text-red-600"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Phone" class="block text-sm font-medium text-gray-700 mb-1 font-['Roboto']">
+                    Số điện thoại <span class="text-red-500 ml-1">*</span>
+                </label>
+                <input asp-for="Phone" type="tel"
+                       class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
+                              focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                       placeholder="0912345678">
+                <span asp-validation-for="Phone" class="mt-1 text-xs text-red-600"></span>
+            </div>
+
+            <hr class="my-4" />
+            <p class="text-lg font-medium text-gray-800">Địa chỉ nhận hàng</p>
+
+            @* --- ADDRESS DROPDOWNS (UPDATED) --- *@
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="form-group">
+                    <label asp-for="Province"
+                           class="block text-sm font-medium text-gray-700 mb-1 font-['Roboto']">
+                        Tỉnh/Thành phố <span class="text-red-500 ml-1">*</span>
+                    </label>
+                    <select asp-for="Province" id="province-select"
+                            class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
+                                   focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white cursor-pointer">
+                        <option value="">-- Tỉnh/Thành phố --</option>
+                    </select>
+                    <span asp-validation-for="Province" class="mt-1 text-xs text-red-600"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="District"
+                           class="block text-sm font-medium text-gray-700 mb-1 font-['Roboto']">
+                        Quận/Huyện <span class="text-red-500 ml-1">*</span>
+                    </label>
+                    <select asp-for="District" id="district-select"
+                            class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
+                                   focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white cursor-pointer
+                                   disabled:bg-gray-100 disabled:text-gray-500" disabled>
+                        <option value="">-- Quận/Huyện --</option>
+                    </select>
+                    <span asp-validation-for="District" class="mt-1 text-xs text-red-600"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Ward" class="block text-sm font-medium text-gray-700 mb-1 font-['Roboto']">
+                        Phường/Xã <span class="text-red-500 ml-1">*</span>
+                    </label>
+                    <select asp-for="Ward" id="ward-select"
+                            class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
+                                   focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white cursor-pointer
+                                   disabled:bg-gray-100 disabled:text-gray-500" disabled>
+                        <option value="">-- Phường/Xã --</option>
+                    </select>
+                    <span asp-validation-for="Ward" class="mt-1 text-xs text-red-600"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="SpecificAddress"
+                       class="block text-sm font-medium text-gray-700 mb-1 font-['Roboto']">
+                    Địa chỉ cụ thể
+                </label>
+                <input asp-for="SpecificAddress" type="text"
+                       class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
+                              focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                       placeholder="Số nhà, tên đường...">
+                <span asp-validation-for="SpecificAddress" class="mt-1 text-xs text-red-600"></span>
+            </div>
+            @* --- END OF ADDRESS SECTION --- *@
+
+            <div class="form-group">
+                <div class="flex items-center">
+                    <input asp-for="AgreeToTerms" type="checkbox"
+                           class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded cursor-pointer">
+                    <label asp-for="AgreeToTerms"
+                           class="ml-2 block text-sm text-gray-900 font-['Roboto'] cursor-pointer">
+                        Tôi đồng ý với <a href="#" class="text-green-600 hover:text-green-800">Điều khoản Dịch vụ</a> <span class="text-red-500 ml-1">*</span>
+                    </label>
+                </div>
+                <span asp-validation-for="AgreeToTerms" class="mt-1 text-xs text-red-600"></span>
+            </div>
+
+            <div>
+                <button type="submit"
+                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#007934]
+                               hover:bg-[#005a28] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out font-['Roboto_Condensed'] uppercase cursor-pointer">
+                    Đăng Ký
+                </button>
+            </div>
+        </form>
+
+        <div class="mt-6 text-center">
+            <p class="text-sm text-gray-600 font-['Roboto']">
+                Đã có tài khoản?
+                <a asp-controller="Auth" asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]"
+                   class="font-medium text-green-600 hover:text-green-800">
+                    Đăng nhập ngay
+                </a>
+            </p>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    @* --- SCRIPT FOR PASSWORD TOGGLE --- *@
+    <script>
+        function togglePassword(el) {
+            // Find the input element (the preceding sibling of the span)
+            const input = el.previousElementSibling;
+            // Find the <i> icon tag inside the span
+            const icon = el.querySelector('i');
+
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            } else {
+                input.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            }
+        }
+    </script>
+
+    @* --- SCRIPT FOR VIETNAM ADDRESS API --- *@
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const provinceSelect = document.getElementById("province-select");
+            const districtSelect = document.getElementById("district-select");
+            const wardSelect = document.getElementById("ward-select");
+            const apiHost = "https://provinces.open-api.vn/api/";
+
+            // Helper function to fetch data
+            async function fetchApi(endpoint) {
+                try {
+                    const response = await fetch(apiHost + endpoint);
+                    if (!response.ok) throw new Error("Network response was not ok");
+                    return await response.json();
+                } catch (error) {
+                    console.error("Failed to fetch API:", error);
+                    return null;
+                }
+            }
+
+            // Reset and disable dropdowns
+            function resetDropdown(selectElement, defaultText) {
+                selectElement.innerHTML = `<option value="">-- ${defaultText} --</option>`;
+                selectElement.disabled = true;
+            }
+
+            // Load Provinces
+            async function loadProvinces() {
+                const provinces = await fetchApi("p/");
+                if (!provinces) return;
+
+                // Sort provinces alphabetically
+                provinces.sort((a, b) => a.name.localeCompare(b.name));
+
+                provinces.forEach(province => {
+                    const option = new Option(province.name, province.name);
+                    option.setAttribute("data-code", province.code);
+                    provinceSelect.add(option);
+                });
+            }
+
+            // Event: Province selection changed
+            provinceSelect.addEventListener("change", async function () {
+                const selectedOption = this.options[this.selectedIndex];
+                const provinceCode = selectedOption.getAttribute("data-code");
+
+                resetDropdown(districtSelect, "Chọn Quận/Huyện");
+                resetDropdown(wardSelect, "Chọn Phường/Xã");
+
+                if (!provinceCode) return;
+
+                const provinceData = await fetchApi(`p/${provinceCode}?depth=2`);
+                if (!provinceData || !provinceData.districts) return;
+
+                // Sort districts alphabetically
+                provinceData.districts.sort((a, b) => a.name.localeCompare(b.name));
+
+                provinceData.districts.forEach(district => {
+                    const option = new Option(district.name, district.name);
+                    option.setAttribute("data-code", district.code);
+                    districtSelect.add(option);
+                });
+                districtSelect.disabled = false;
+            });
+
+            // Event: District selection changed
+            districtSelect.addEventListener("change", async function () {
+                const selectedOption = this.options[this.selectedIndex];
+                const districtCode = selectedOption.getAttribute("data-code");
+
+                resetDropdown(wardSelect, "Chọn Phường/Xã");
+
+                if (!districtCode) return;
+
+                const districtData = await fetchApi(`d/${districtCode}?depth=2`);
+                if (!districtData || !districtData.wards) return;
+
+                // Sort wards alphabetically
+                districtData.wards.sort((a, b) => a.name.localeCompare(b.name));
+
+                districtData.wards.forEach(ward => {
+                    // The 'value' of the option is what gets sent to the server
+                    // Since your DTO expects a string (Ward name), we set ward.name as the value
+                    const option = new Option(ward.name, ward.name);
+                    wardSelect.add(option);
+                });
+                wardSelect.disabled = false;
+            });
+
+            // Initial load
+            loadProvinces();
+        });
+    </script>
+}

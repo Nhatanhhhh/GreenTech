@@ -1,0 +1,114 @@
+@page
+@model GreenTech.Pages.CouponTemplates.IndexModel
+@{
+    ViewData["Title"] = "Quản lý Template Coupon";
+}
+
+<div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-900">Quản lý Template Coupon</h1>
+    <p class="text-gray-600 mt-2">Quản lý mẫu mã giảm giá</p>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-semibold text-gray-900">Danh sách Template</h2>
+        <a asp-page="/CouponTemplates/Create" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Thêm template
+        </a>
+    </div>
+
+    <!-- Search and Filter -->
+    <form method="get" class="mb-6 flex items-center space-x-4">
+        <div class="relative flex-1">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+            <input type="text" asp-for="QueryParams.Search" placeholder="Tìm kiếm tên, mô tả..." class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 sm:text-sm">
+        </div>
+        <select asp-for="QueryParams.IsActive" class="block w-auto pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-lg">
+            <option value="">Tất cả</option>
+            <option value="true">Hoạt động</option>
+            <option value="false">Không hoạt động</option>
+        </select>
+        <select asp-for="QueryParams.SortBy" class="block w-auto pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-lg">
+            <option value="name">Theo tên</option>
+            <option value="pointscost">Theo điểm</option>
+            <option value="createdat">Theo ngày tạo</option>
+        </select>
+        <button type="submit" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">Lọc</button>
+    </form>
+
+    <!-- Templates Table -->
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loại giảm giá</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giá trị</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chi phí điểm</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Đơn tối thiểu</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                    <th class="relative px-6 py-3"><span class="sr-only">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                @if (Model.Templates != null && Model.Templates.Any())
+                {
+                    @foreach (var template in Model.Templates)
+                    {
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-gray-900">@template.Name</div>
+                                <div class="text-xs text-gray-500">@template.Description</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                @if (template.DiscountType.ToString() == "PERCENT")
+                                {
+                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Phần trăm</span>
+                                }
+                                else
+                                {
+                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">Số tiền</span>
+                                }
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                @if (template.DiscountType.ToString() == "PERCENT")
+                                {
+                                    @($"{template.DiscountValue.ToString("0.##")}%")
+                                }
+                                else
+                                {
+                                    @($"{template.DiscountValue.ToString("N0")} đ")
+                                }
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@($"{template.PointsCost} điểm")</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@($"{template.MinOrderAmount.ToString("N0")} đ")</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full @(template.IsActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")">
+                                    @(template.IsActive ? "Hoạt động" : "Không hoạt động")
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a asp-page="./Edit" asp-route-id="@template.Id" class="text-indigo-600 hover:text-indigo-900 mr-3">Sửa</a>
+                                <a asp-page="./Delete" asp-route-id="@template.Id" class="text-red-600 hover:text-red-900">Xóa</a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">Không tìm thấy template nào.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+

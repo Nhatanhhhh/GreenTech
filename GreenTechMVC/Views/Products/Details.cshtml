@@ -1,0 +1,116 @@
+@using DAL.DTOs.Product
+@{
+    ViewData["Title"] = ViewBag.Product?.Name ?? "Chi tiết sản phẩm";
+    var product = ViewBag.Product as ProductResponseDTO;
+    var relatedProducts = ViewBag.RelatedProducts as IEnumerable<ProductResponseDTO> ?? new List<ProductResponseDTO>();
+}
+
+@if (product != null)
+{
+    <div class="container mx-auto px-4 py-8">
+        <!-- Product Details -->
+        <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            <!-- Product Images -->
+            <div class="rounded-lg bg-white p-4 shadow-md">
+                <img src="@(!string.IsNullOrEmpty(product.Image) ? product.Image : "/images/no-image.png")"
+                    alt="@product.Name" class="w-full rounded-lg">
+
+                @if (product.ProductImages.Any())
+                {
+                    <div class="mt-4 grid grid-cols-4 gap-2">
+                        @foreach (var img in product.ProductImages.Take(4))
+                        {
+                            <img src="@img.ImageUrl" alt="@img.AltText" class="h-20 w-full rounded object-cover">
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Product Info -->
+            <div class="rounded-lg bg-white p-6 shadow-md">
+                <h1 class="mb-4 text-3xl font-bold text-gray-800">@product.Name</h1>
+
+                <div class="mb-4">
+                    <span class="text-3xl font-bold text-green-600">@product.SellPrice.ToString("N0") đ</span>
+                    @if (product.CostPrice > 0 && product.CostPrice != product.SellPrice)
+                    {
+                        <span class="ml-2 text-lg text-gray-500 line-through">@product.CostPrice.ToString("N0") đ</span>
+                    }
+                </div>
+
+                <div class="mb-6 border-t border-b border-gray-200 py-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-600">Danh mục</p>
+                            <p class="font-semibold">@product.CategoryName</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Nhà cung cấp</p>
+                            <p class="font-semibold">@product.SupplierName</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">SKU</p>
+                            <p class="font-semibold">@product.Sku</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Tồn kho</p>
+                            <p class="font-semibold">@product.Quantity sản phẩm</p>
+                        </div>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(product.ShortDescription))
+                {
+                    <p class="mb-4 text-gray-700">@product.ShortDescription</p>
+                }
+
+                <div class="mb-6 flex items-center gap-4">
+                    <button class="w-full rounded bg-green-600 px-6 py-3 text-white hover:bg-green-700">
+                        <i class="fas fa-cart-plus mr-2"></i>Thêm vào giỏ hàng
+                    </button>
+                </div>
+
+                @if (!string.IsNullOrEmpty(product.Description))
+                {
+                    <div class="border-t border-gray-200 pt-4">
+                        <h3 class="mb-2 font-semibold text-gray-800">Mô tả sản phẩm</h3>
+                        <p class="text-gray-600">@Html.Raw(product.Description)</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Related Products -->
+        @if (relatedProducts.Any())
+        {
+            <div class="mt-12">
+                <h2 class="mb-6 text-2xl font-bold text-gray-800">Sản phẩm liên quan</h2>
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach (var relatedProduct in relatedProducts)
+                    {
+                        <div class="group overflow-hidden rounded-lg bg-white shadow-md transition-all hover:shadow-xl">
+                            <a asp-controller="Products" asp-action="Details" asp-route-id="@relatedProduct.Id">
+                                <img src="@(!string.IsNullOrEmpty(relatedProduct.Image) ? relatedProduct.Image : "/images/no-image.png")"
+                                    alt="@relatedProduct.Name"
+                                    class="h-64 w-full object-cover transition-transform group-hover:scale-110">
+                                <div class="p-4">
+                                    <h3 class="mb-2 text-lg font-semibold text-gray-800">@relatedProduct.Name</h3>
+                                    <span class="text-xl font-bold text-green-600">@relatedProduct.SellPrice.ToString("N0") đ</span>
+                                </div>
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="container mx-auto px-4 py-12 text-center">
+        <p class="text-gray-500">Không tìm thấy sản phẩm.</p>
+        <a asp-controller="Products" asp-action="Index" class="mt-4 inline-block text-green-600 hover:text-green-700">
+            Quay lại danh sách sản phẩm
+        </a>
+    </div>
+}

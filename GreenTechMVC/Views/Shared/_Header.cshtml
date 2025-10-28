@@ -1,51 +1,119 @@
-<header class="bg-white shadow">
-    <nav aria-label="Global" class="mx-auto max-w-7xl">
-        <!-- Top bar -->
-        <div class="flex justify-end items-center h-8 text-sm text-gray-700 px-4 lg:px-8 xl:px-10 2xl:px-12">
-            <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-phone"></i>
-                <span>Hotline:</span>
-                <span class="font-bold">0912 250 625</span>
+﻿@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    var isAuthenticated = HttpContextAccessor.HttpContext?.Session.GetString("IsAuthenticated") == "true";
+    var userName = HttpContextAccessor.HttpContext?.Session.GetString("UserName") ?? "Khách";
+}
+<header class="w-auto bg-white">
+    <!-- Top Contact Bar -->
+    <div class="flex h-12 items-center justify-end px-8">
+        <!-- Contact Info -->
+        <div class="flex items-center text-black">
+            <div class="ml-8 mr-8 flex items-center gap-4">
+                <i class="fas fa-phone"></i>
+                <span class="text-[15px] font-['Roboto_Condensed']">
+                    Hotline: <strong>0912 250 625</strong>
+                </span>
             </div>
-            <div class="flex items-center space-x-2 ml-10">
-                <i class="fa-solid fa-location-dot"></i>
-                <span class="font-bold">Cây Xanh GreenTech</span>
+            <div class="ml-8 mr-8 flex items-center gap-4">
+                <i class="fas fa-map-marker-alt"></i>
+                <span class="text-[15px] font-['Roboto_Condensed']">Cây Xanh Haluta</span>
             </div>
         </div>
+    </div>
 
-        <!-- Main nav -->
-        <div class="flex items-center justify-between h-20 w-full bg-[#007934] text-white">
-            <!-- Logo -->
-            <a href="/" class="flex items-center">
-                <img class="h-14 w-auto" src="~/images/logo_greentech.png" alt="Logo" />
-            </a>
-
-            <!-- Search -->
-            <div class="hidden md:flex items-center bg-white rounded-full px-4 py-2 w-80">
-                <input type="text" placeholder="Bạn tìm kiếm sản phẩm gì..."
-                    class="flex-1 text-sm text-gray-700 placeholder-gray-500 focus:outline-none" />
-                <button class="text-gray-500 hover:text-green-600">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                </button>
-            </div>
-
-            <!-- Menu -->
-            <div class="hidden lg:flex lg:gap-x-8">
-                <a href="/" class="text-lg font-medium hover:text-gray-200">Home</a>
-                <a href="/About" class="text-lg font-medium hover:text-gray-200">About</a>
-                <a href="/Products" class="text-lg font-medium hover:text-gray-200">Products</a>
-                <a href="/Blog" class="text-lg font-medium hover:text-gray-200">Blog</a>
-                <a href="/Contact" class="text-lg font-medium hover:text-gray-200">Contact</a>
-            </div>
-
-            <!-- Actions -->
-            <div class="flex items-center gap-x-4">
-                <a href="/Cart" class="flex items-center gap-x-1 hover:text-gray-200">
-                    <i class="fa-solid fa-cart-shopping"></i> <span class="hidden sm:inline">Cart</span>
+    <!-- Navigation Bar -->
+    <div class="flex h-[70px] items-center justify-between bg-[#007934] px-8">
+        <!-- Logo -->
+        <div class="flex items-center">
+            <div>
+                <a asp-controller="Home" asp-action="Index">
+                    <img src="~/images/logo_greentech.png" alt="GreenTech Logo" class="h-[50px]">
                 </a>
-                <a href="/Account/Login" class="hover:text-gray-200">Login</a>
-                <a href="/Account/Register" class="hover:text-gray-200">Register</a>
             </div>
         </div>
-    </nav>
+
+
+        <!-- Search Box -->
+        <div class="relative w-[355px]">
+            <form method="get" action="@Url.Action("Index", "Products")">
+                <i class="fas fa-search absolute left-3 top-6 -translate-y-1/2 transform text-gray-500 z-10"></i>
+                <input type="text" name="search" id="searchInput" placeholder="Bạn tìm kiếm sản phẩm gì..." class="relative h-9 w-full rounded-[11px] bg-[#f2f2f2] shadow-inner
+                           pl-10 pr-4 text-sm font-['Roboto'] text-black
+                           placeholder:text-sm placeholder:font-['Roboto'] placeholder:text-[#707070]
+                           focus:outline-none focus:ring-1 focus:ring-blue-500" autocomplete="off"
+                    onkeypress="if(event.key === 'Enter') { this.form.submit(); }" />
+            </form>
+        </div>
+
+        <!-- Main Navigation -->
+        <nav class="flex items-center gap-8">
+            <a asp-controller="Home" asp-action="Index"
+                class="text-white text-[15px] font-['Roboto_Condensed'] hover:text-green-300 transition-colors">TRANG
+                CHỦ</a>
+            <a asp-controller="Products" asp-action="Index"
+                class="text-white text-[15px] font-['Roboto_Condensed'] hover:text-green-300 transition-colors">SẢN
+                PHẨM</a>
+            <div class="h-0.5 w-[5px] bg-white opacity-50"></div>
+            <a href="#"
+                class="text-white text-[15px] font-['Roboto_Condensed'] hover:text-green-300 transition-colors">BLOG TƯ
+                VẤN</a>
+            <a href="#"
+                class="text-white text-[15px] font-['Roboto_Condensed'] hover:text-green-300 transition-colors">LIÊN
+                HỆ</a>
+        </nav>
+
+        <!-- Right Section -->
+        <div class="flex items-center justify-between">
+            <!-- Cart Icon -->
+            <div class="flex items-center">
+                <a href="#" class="relative text-white hover:text-green-300">
+                    <i class="fas fa-shopping-cart text-xl"></i>
+                    <span
+                        class="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full border border-white bg-[#219653] text-white text-[10px]">
+                        9+
+                    </span>
+                </a>
+            </div>
+
+            <!-- Sign In/ Sign Up -->
+            <div class="ml-8 flex items-center gap-3">
+                @if (isAuthenticated)
+                {
+                    // --- Signed in ---
+                    <a asp-controller="Profile" asp-action="Index"
+                        class="text-white text-sm font-['Roboto_Condensed'] hover:text-green-300 transition-colors duration-200">
+                        <i class="fas fa-user mr-1"></i>
+                        Xin chào, @userName
+                    </a>
+                    <span class="text-white opacity-50">|</span>
+
+                    <form asp-controller="Auth" asp-action="Logout" method="post" class="inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit"
+                            class="text-white text-sm font-['Roboto_Condensed'] hover:text-green-300 transition-colors duration-200 bg-transparent border-none p-0 cursor-pointer">
+                            <i class="fas fa-sign-out-alt mr-1"></i>
+                            Đăng xuất
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    // --- Not Sign in ---
+                    <a asp-controller="Auth" asp-action="Login"
+                        class="text-white text-sm font-['Roboto_Condensed'] hover:text-green-300 transition-colors duration-200">
+                        <i class="fas fa-user mr-1"></i>
+                        Đăng nhập
+                    </a>
+                    <span class="text-white opacity-50">|</span>
+                    <a asp-controller="Auth" asp-action="Register"
+                        class="text-white text-sm font-['Roboto_Condensed'] hover:text-green-300 transition-colors duration-200">
+                        <i class="fa fa-user-plus"></i>
+                        Đăng ký
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
 </header>
