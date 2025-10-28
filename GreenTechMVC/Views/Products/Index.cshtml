@@ -1,0 +1,149 @@
+@using DAL.DTOs.Product
+@using DAL.DTOs.Category
+@{
+    ViewData["Title"] = "Danh sách sản phẩm";
+    var products = ViewBag.Products as IEnumerable<ProductResponseDTO> ?? new List<ProductResponseDTO>();
+    var categories = ViewBag.Categories as IEnumerable<CategoryDTO> ?? new List<CategoryDTO>();
+    var totalPages = (int)(ViewBag.TotalPages ?? 1);
+    var currentPage = (int)(ViewBag.CurrentPage ?? 1);
+    var searchTerm = ViewBag.SearchTerm as string;
+    var categoryId = ViewBag.CategoryId as int?;
+    var sortBy = ViewBag.SortBy as string ?? "name";
+    var sortOrder = ViewBag.SortOrder as string ?? "asc";
+}
+
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-6 flex items-center justify-between">
+        <h1 class="text-3xl font-bold text-gray-800">Danh sách sản phẩm</h1>
+        <div class="text-gray-600">
+            Hiển thị <span class="font-bold">@products.Count()</span> sản phẩm
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
+        <!-- Sidebar Filters -->
+        <aside class="lg:col-span-1">
+            <div class="rounded-lg bg-white p-6 shadow-md">
+                <h2 class="mb-4 text-lg font-semibold text-gray-800">Bộ lọc</h2>
+
+                <!-- Search -->
+                <div class="mb-6">
+                    <h3 class="mb-2 text-sm font-semibold text-gray-700">Tìm kiếm</h3>
+                    <form method="get" action="@Url.Action("Index")">
+                        <input type="text" name="search" value="@searchTerm" 
+                               placeholder="Tên sản phẩm..." 
+                               class="w-full rounded border border-gray-300 px-3 py-2">
+                        @if (categoryId.HasValue)
+                        {
+                            <input type="hidden" name="categoryId" value="@categoryId.Value">
+                        }
+                        <button type="submit" class="mt-2 w-full rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700">
+                            Tìm kiếm
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Categories -->
+                <div class="mb-6">
+                    <h3 class="mb-2 text-sm font-semibold text-gray-700">Danh mục</h3>
+                    <div class="space-y-2">
+                        <a href="@Url.Action("Index")" 
+                           class="block text-sm @(!categoryId.HasValue ? "font-semibold text-green-600" : "text-gray-600")">
+                            Tất cả
+                        </a>
+                        @foreach (var category in categories)
+                        {
+                            <a href="@Url.Action("Index", new { categoryId = category.Id, search = searchTerm })" 
+                               class="block text-sm @(categoryId == category.Id ? "font-semibold text-green-600" : "text-gray-600")">
+                                @category.Name
+                            </a>
+                        }
+                    </div>
+                </div>
+
+                <!-- Sort -->
+                <div>
+                    <h3 class="mb-2 text-sm font-semibold text-gray-700">Sắp xếp</h3>
+                    <select onchange="location = this.value;" 
+                            class="w-full rounded border border-gray-300 px-3 py-2">
+                        <option value="@Url.Action("Index", new { search = searchTerm, categoryId = categoryId, sortBy = "name", sortOrder = "asc" })" 
+                                selected="@(sortBy == "name" && sortOrder == "asc")">
+                            Tên A-Z
+                        </option>
+                        <option value="@Url.Action("Index", new { search = searchTerm, categoryId = categoryId, sortBy = "name", sortOrder = "desc" })"
+                                selected="@(sortBy == "name" && sortOrder == "desc")">
+                            Tên Z-A
+                        </option>
+                        <option value="@Url.Action("Index", new { search = searchTerm, categoryId = categoryId, sortBy = "price", sortOrder = "asc" })"
+                                selected="@(sortBy == "price" && sortOrder == "asc")">
+                            Giá thấp - cao
+                        </option>
+                        <option value="@Url.Action("Index", new { search = searchTerm, categoryId = categoryId, sortBy = "price", sortOrder = "desc" })"
+                                selected="@(sortBy == "price" && sortOrder == "desc")">
+                            Giá cao - thấp
+                        </option>
+                    </select>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Products Grid -->
+        <main class="lg:col-span-3">
+            @if (products.Any())
+            {
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach (var product in products)
+                    {
+                        <div class="group overflow-hidden rounded-lg bg-white shadow-md transition-all hover:shadow-xl">
+                            <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id">
+                                <div class="relative overflow-hidden">
+                                    <img src="@(!string.IsNullOrEmpty(product.Image) ? product.Image : "/images/no-image.png")" 
+                                         alt="@product.Name" 
+                                         class="h-64 w-full object-cover transition-transform group-hover:scale-110">
+                                    @if (product.IsFeatured)
+                                    {
+                                        <span class="absolute top-2 left-2 rounded bg-red-500 px-2 py-1 text-xs text-white">Nổi bật</span>
+                                    }
+                                </div>
+                                <div class="p-4">
+                                    <h3 class="mb-2 text-lg font-semibold text-gray-800 line-clamp-2">@product.Name</h3>
+                                    <p class="mb-2 text-gray-600 line-clamp-2">@product.ShortDescription</p>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-2xl font-bold text-green-600">@product.SellPrice.ToString("N0") đ</span>
+                                        <button class="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700">
+                                            <i class="fas fa-cart-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    }
+                </div>
+
+                <!-- Pagination -->
+                @if (totalPages > 1)
+                {
+                    <div class="mt-8 flex justify-center">
+                        <nav class="flex gap-2">
+                            @for (int i = 1; i <= totalPages; i++)
+                            {
+                                <a href="@Url.Action("Index", new { page = i, search = searchTerm, categoryId = categoryId, sortBy = sortBy, sortOrder = sortOrder })" 
+                                   class="rounded px-3 py-2 @(i == currentPage ? "bg-green-600 text-white" : "bg-white text-gray-700 hover:bg-gray-100")">
+                                    @i
+                                </a>
+                            }
+                        </nav>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center py-12">
+                    <p class="text-gray-500">Không tìm thấy sản phẩm nào.</p>
+                </div>
+            }
+        </main>
+    </div>
+</div>
+
+

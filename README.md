@@ -137,6 +137,39 @@ dotnet ef migrations add InitialCreate --project DAL --startup-project GreenTech
 dotnet ef database update --project DAL --startup-project GreenTech
 ```
 
+### Database Management Commands
+
+**Drop database and reset:**
+```bash
+# Drop database (force, will lose all data)
+dotnet ef database drop --force --project DAL --startup-project GreenTech
+
+# Remove last migration (before dropping database)
+dotnet ef migrations remove --project DAL --startup-project GreenTech
+
+# Remove specific migration
+dotnet ef migrations remove --project DAL --startup-project GreenTech
+
+# List all migrations
+dotnet ef migrations list --project DAL --startup-project GreenTech
+```
+
+**Complete reset workflow:**
+```bash
+# 1. Drop database (lose all data)
+dotnet ef database drop --force --project DAL --startup-project GreenTech
+
+# 2. Remove all migrations (start fresh)
+# Run multiple times until all migrations are removed
+dotnet ef migrations remove --project DAL --startup-project GreenTech
+
+# 3. Create new migration
+dotnet ef migrations add InitialCreate --project DAL --startup-project GreenTech
+
+# 4. Update database (seed data will be applied)
+dotnet ef database update --project DAL --startup-project GreenTech
+```
+
 ### Step 5: Run Applications
 
 **Run Razor Pages Application:**
@@ -211,21 +244,36 @@ CONNECTIONSTRINGS__DEFAULTCONNECTION=Server=YOUR_SERVER;Database=GreenTechDB;Use
 ### Adding New Entity:
 1. Create model in `DAL/Models/`
 2. Add DbSet to `AppDbContext`
-3. Create migration: `Add-Migration AddNewEntity -Project DAL -StartupProject GreenTech`
-4. Update database: `Update-Database -Project DAL -StartupProject GreenTech`
+3. Create migration: `dotnet ef migrations add AddNewEntity --project DAL --startup-project GreenTech`
+4. Update database: `dotnet ef database update --project DAL --startup-project GreenTech`
 5. **Important:** Run `ALTER DATABASE GreenTechDB SET MULTI_USER;`
 
 ### Modifying Entity:
 1. Edit model
-2. Create migration: `Add-Migration UpdateEntity -Project DAL -StartupProject GreenTech`
-3. Update database: `Update-Database -Project DAL -StartupProject GreenTech`
+2. Create migration: `dotnet ef migrations add UpdateEntity --project DAL --startup-project GreenTech`
+3. Update database: `dotnet ef database update --project DAL --startup-project GreenTech`
 4. Run `ALTER DATABASE GreenTechDB SET MULTI_USER;`
 
 ### Removing Entity:
 1. Remove DbSet from DbContext
-2. Create migration: `Add-Migration RemoveEntity -Project DAL -StartupProject GreenTech`
-3. Update database: `Update-Database -Project DAL -StartupProject GreenTech`
+2. Create migration: `dotnet ef migrations add RemoveEntity --project DAL --startup-project GreenTech`
+3. Update database: `dotnet ef database update --project DAL --startup-project GreenTech`
 4. Run `ALTER DATABASE GreenTechDB SET MULTI_USER;`
+
+### Resetting Database (When Seed Data Changed):
+```bash
+# 1. Drop database (lose all data)
+dotnet ef database drop --force --project DAL --startup-project GreenTech
+
+# 2. Remove all migrations
+dotnet ef migrations remove --project DAL --startup-project GreenTech
+
+# 3. Create new migration with updated seed data
+dotnet ef migrations add InitialCreate --project DAL --startup-project GreenTech
+
+# 4. Update database with new seed data
+dotnet ef database update --project DAL --startup-project GreenTech
+```
 
 ## 🎯 Important Notes
 

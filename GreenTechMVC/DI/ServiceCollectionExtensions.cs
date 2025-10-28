@@ -22,10 +22,10 @@ namespace GreenTechMVC.DI
         {
             services.AddScoped<IAuthRepository, AuthRepository>();
             services.AddScoped<ICouponTemplateRepository, CouponTemplateRepository>();
-            // Add another repository at here
-            // services.AddScoped<IUserRepository, UserRepository>();
-            // services.AddScoped<IProductRepository, ProductRepository>();
-
+            services.AddScoped<IBannerRepository, BannerRepository>();
+            services.AddScoped<IProductRepository, ProductRepository>();
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<IBlogRepository, BlogRepository>();
             return services;
         }
 
@@ -34,10 +34,10 @@ namespace GreenTechMVC.DI
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ICouponTemplateService, CouponTemplateService>();
             services.AddScoped<IFileStorageService, CloudinaryStorageService>();
-            // Add another service at here
-            // services.AddScoped<IUserService, UserService>();
-            // services.AddScoped<IProductService, ProductService>();
-
+            services.AddScoped<IBannerService, BannerService>();
+            services.AddScoped<IProductService, ProductService>();
+            services.AddScoped<ICategoryService, CategoryService>();
+            services.AddScoped<IBlogService, BlogService>();
             return services;
         }
     }
