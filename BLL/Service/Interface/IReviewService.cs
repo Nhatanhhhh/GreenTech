@@ -1,16 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using DAL.DTOs.Review;
+using DAL.Models;
 using System.Threading.Tasks;
+
 
 namespace BLL.Service.Interface
 {
     public interface IReviewService
     {
-        bool CreateReview(int userId, int productId, string content, int rating);
-        bool UpdateReview(int userId, int reviewId, string content, int rating);
-        bool DeleteReview(int userId, int reviewId);
-        bool UploadReviewMedia(int userId, int reviewId, List<string> mediaUrls);
+        Task<Review> CreateReviewAsync(CreateReviewDTO dto);
+        Task<Review?> UpdateReviewAsync(UpdateReviewDTO dto, int userId);
+        Task<bool> DeleteReviewAsync(int reviewId, int userId);
     }
 }

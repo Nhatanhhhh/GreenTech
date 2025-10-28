@@ -1,75 +1,62 @@
 ﻿using BLL.Service.Interface;
-using DAL.Context;
+using DAL.DTOs.Review;
 using DAL.Models;
+using DAL.Models.Enum;
 using DAL.Repositories.Interface;
 using System;
-using System.Linq;
+using System.Threading.Tasks;
 
 namespace BLL.Service
 {
     public class ReviewService : IReviewService
     {
-        private readonly IReviewRepository _reviewRepo;
-        private readonly AppDbContext _context;
+        private readonly IReviewRepository _reviewRepository;
 
-        public ReviewService(IReviewRepository reviewRepo, AppDbContext context)
+        public ReviewService(IReviewRepository reviewRepository)
         {
-            _reviewRepo = reviewRepo;
-            _context = context;
+            _reviewRepository = reviewRepository;
         }
 
-        private bool IsCustomerRole(int userId)
+        public async Task<Review> CreateReviewAsync(CreateReviewDTO dto)
         {
-            var roleName = (from ur in _context.UserRoles
-                            join r in _context.Roles on ur.RoleId equals r.Id
-                            where ur.UserId == userId
-                            select r.RoleName.ToString())
-                            .FirstOrDefault();
-
-            return roleName == "ROLE_CUSTOMER";
-        }
-
-        public bool CreateReview(int userId, int productId, string content, int rating)
-        {
-            if (!IsCustomerRole(userId)) return false;
-            if (string.IsNullOrEmpty(content) || rating < 1 || rating > 5)
-                return false;
-
             var review = new Review
             {
-                UserId = userId,
-                ProductId = productId,
-                Content = content,
-                Rating = rating,
-                CreatedAt = DateTime.Now
+                ProductId = dto.ProductId,
+                UserId = dto.UserId,
+                OrderItemId = dto.OrderItemId,
+                Rating = dto.Rating,
+                Content = dto.Content,
+                MediaUrls = dto.MediaUrls,
+                IsAnonymous = dto.IsAnonymous,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
             };
 
-            return _reviewRepo.AddReview(review);
+            return await _reviewRepository.CreateReviewAsync(review);
         }
 
-        public bool UpdateReview(int userId, int reviewId, string content, int rating)
+        public async Task<Review?> UpdateReviewAsync(UpdateReviewDTO dto, int userId)
         {
-            if (!IsCustomerRole(userId)) return false;
-            if (string.IsNullOrEmpty(content) || rating < 1 || rating > 5)
-                return false;
+            var existing = await _reviewRepository.GetReviewByIdAsync(dto.Id);
+            if (existing == null || existing.UserId != userId)
+                return null;
 
-            return _reviewRepo.UpdateReview(reviewId, content, rating);
+            existing.Rating = dto.Rating;
+            existing.Content = dto.Content;
+            existing.MediaUrls = dto.MediaUrls;
+            existing.IsAnonymous = dto.IsAnonymous;
+            existing.UpdatedAt = DateTime.Now;
+
+            return await _reviewRepository.UpdateReviewAsync(existing);
         }
 
-        public bool DeleteReview(int userId, int reviewId)
+        public async Task<bool> DeleteReviewAsync(int reviewId, int userId)
         {
-            if (!IsCustomerRole(userId)) return false;
-            if (reviewId <= 0) return false;
+            var existing = await _reviewRepository.GetReviewByIdAsync(reviewId);
+            if (existing == null || existing.UserId != userId)
+                return false; // Không có quyền hoặc không tồn tại
 
-            return _reviewRepo.DeleteReview(reviewId);
-        }
-        public bool UploadReviewMedia(int userId, int reviewId, List<string> mediaUrls)
-        {
-            if (!IsCustomerRole(userId)) return false;
-            if (mediaUrls == null || mediaUrls.Count == 0 || mediaUrls.Count > 5)
-                return false;
-
-            return _reviewRepo.UploadReviewMedia(reviewId, mediaUrls);
+            return await _reviewRepository.DeleteReviewAsync(existing);
         }
     }
 }
