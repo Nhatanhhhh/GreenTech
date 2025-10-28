@@ -37,12 +37,14 @@
 
         <!-- Search Box -->
         <div class="relative w-[355px]">
-            <i class="fas fa-search absolute left-3 top-6 -translate-y-1/2 transform text-gray-500 z-10"></i>
-
-            <input type="text" placeholder="Bạn tìm kiếm sản phẩm gì..." class="relative h-9 w-full rounded-[11px] bg-[#f2f2f2] shadow-inner
-                pl-10 pr-4 text-sm font-['Roboto'] text-black
-                placeholder:text-sm placeholder:font-['Roboto'] placeholder:text-[#707070]
-                focus:outline-none focus:ring-1 focus:ring-blue-500" />
+            <form method="get" action="@Url.Action("Index", "Products")">
+                <i class="fas fa-search absolute left-3 top-6 -translate-y-1/2 transform text-gray-500 z-10"></i>
+                <input type="text" name="search" id="searchInput" placeholder="Bạn tìm kiếm sản phẩm gì..." class="relative h-9 w-full rounded-[11px] bg-[#f2f2f2] shadow-inner
+                           pl-10 pr-4 text-sm font-['Roboto'] text-black
+                           placeholder:text-sm placeholder:font-['Roboto'] placeholder:text-[#707070]
+                           focus:outline-none focus:ring-1 focus:ring-blue-500" autocomplete="off"
+                    onkeypress="if(event.key === 'Enter') { this.form.submit(); }" />
+            </form>
         </div>
 
         <!-- Main Navigation -->
@@ -50,16 +52,9 @@
             <a asp-controller="Home" asp-action="Index"
                 class="text-white text-[15px] font-['Roboto_Condensed'] hover:text-green-300 transition-colors">TRANG
                 CHỦ</a>
-            <a href="#"
-                class="text-white text-[15px] font-['Roboto_Condensed'] hover:text-green-300 transition-colors">GIỚI
-                THIỆU</a>
-            <a href="#"
-                class="text-white text-[15px] font-['Roboto_Condensed'] hover:text-green-300 transition-colors">DỰ
-                ÁN</a>
-            <div class="h-0.5 w-[5px] bg-white opacity-50"></div>
-            <a href="#"
-                class="text-white text-[15px] font-['Roboto_Condensed'] hover:text-green-300 transition-colors">CÂY
-                XANH</a>
+            <a asp-controller="Products" asp-action="Index"
+                class="text-white text-[15px] font-['Roboto_Condensed'] hover:text-green-300 transition-colors">SẢN
+                PHẨM</a>
             <div class="h-0.5 w-[5px] bg-white opacity-50"></div>
             <a href="#"
                 class="text-white text-[15px] font-['Roboto_Condensed'] hover:text-green-300 transition-colors">BLOG TƯ

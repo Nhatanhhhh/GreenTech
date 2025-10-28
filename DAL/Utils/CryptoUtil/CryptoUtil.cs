@@ -45,6 +45,74 @@ namespace DAL.Utils.CryptoUtil
         }
 
         /// <summary>
+        /// Hash password using HMACSHA512 with salt
+        /// </summary>
+        /// <param name="password">Plain text password</param>
+        /// <param name="key">HMAC key (if null, uses default key)</param>
+        /// <returns>Base64 encoded hash with salt</returns>
+        public static string HashPasswordHmacSHA512(string password, string key = null)
+        {
+            if (string.IsNullOrEmpty(password))
+                return null;
+
+            // Generate salt
+            byte[] salt = new byte[64 / 8];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(salt);
+            }
+
+            // Use default key if not provided
+            if (string.IsNullOrEmpty(key))
+            {
+                key = "GreenTech2024!@#$%^&*()SecretKey";
+            }
+
+            // Combine password with salt
+            string dataWithSalt = $"{password}{Convert.ToBase64String(salt)}";
+
+            // Compute HMAC-SHA512
+            string hmacHash = HMacBase64Encode(HMACSHA512, key, dataWithSalt);
+
+            // Return salt:hash format
+            return $"{Convert.ToBase64String(salt)}:{hmacHash}";
+        }
+
+        /// <summary>
+        /// Verify password against HMACSHA512 hashed password
+        /// </summary>
+        /// <param name="hashedPassword">Stored hash (format: salt:hash)</param>
+        /// <param name="providedPassword">Password to verify</param>
+        /// <param name="key">HMAC key (if null, uses default key)</param>
+        /// <returns>True if password matches</returns>
+        public static bool VerifyPasswordHmacSHA512(string hashedPassword, string providedPassword, string key = null)
+        {
+            if (string.IsNullOrEmpty(hashedPassword) || string.IsNullOrEmpty(providedPassword))
+                return false;
+
+            var parts = hashedPassword.Split(':');
+            if (parts.Length != 2)
+                return false;
+
+            byte[] salt = Convert.FromBase64String(parts[0]);
+            string storedHash = parts[1];
+
+            // Use default key if not provided
+            if (string.IsNullOrEmpty(key))
+            {
+                key = "GreenTech2024!@#$%^&*()SecretKey";
+            }
+
+            // Combine password with salt
+            string dataWithSalt = $"{providedPassword}{Convert.ToBase64String(salt)}";
+
+            // Compute HMAC-SHA512
+            string computedHash = HMacBase64Encode(HMACSHA512, key, dataWithSalt);
+
+            return storedHash == computedHash;
+        }
+
+        /// <summary>
         /// Verify password against a hashed password
         /// </summary>
         /// <param name="hashedPassword"></param>

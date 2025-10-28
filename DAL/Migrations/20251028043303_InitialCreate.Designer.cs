@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DAL.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251022043639_AllowNullCartSessionId")]
-    partial class AllowNullCartSessionId
+    [Migration("20251028043303_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -100,6 +100,42 @@ namespace DAL.Migrations
                     b.HasIndex("CreatedBy");
 
                     b.ToTable("banners");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            ClickCount = 0,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            CreatedBy = 1,
+                            Description = "Nền tảng mua sắm cây cảnh số 1 Việt Nam",
+                            EndDate = new DateTime(2026, 4, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            ImageUrl = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761619562/Screenshot_2081_gnwkty.png",
+                            IsActive = true,
+                            LinkUrl = "/#",
+                            Position = "HOME_SLIDER",
+                            SortOrder = 1,
+                            StartDate = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Title = "Chào mừng đến với GreenTech",
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 2,
+                            ClickCount = 0,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            CreatedBy = 1,
+                            Description = "Áp dụng cho khách hàng mới",
+                            EndDate = new DateTime(2026, 1, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            ImageUrl = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761618541/Baner_m0uvff.jpg",
+                            IsActive = true,
+                            LinkUrl = "/#",
+                            Position = "HOME_SLIDER",
+                            SortOrder = 2,
+                            StartDate = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Title = "Giảm giá 20% cho đơn đầu tiên",
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc)
+                        });
                 });
 
             modelBuilder.Entity("DAL.Models.Blog", b =>
@@ -200,6 +236,48 @@ namespace DAL.Migrations
                         .IsUnique();
 
                     b.ToTable("blogs");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            AuthorId = 1,
+                            CategoryId = 1,
+                            Content = "Nội dung chi tiết về cách chăm sóc cây cảnh...",
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Excerpt = "Hướng dẫn chi tiết cách chăm sóc cây cảnh trong nhà để cây luôn xanh tươi, khỏe mạnh.",
+                            FeaturedImage = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761618345/cach-cham-soc-cay-xanh-trong-nha-3_jwt3pb.webp",
+                            IsFeatured = true,
+                            IsPublished = true,
+                            PublishedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            SeoDescription = "Tổng hợp những bí quyết chăm sóc cây cảnh trong nhà hiệu quả, giúp không gian sống thêm xanh.",
+                            SeoTitle = "Cách chăm sóc cây cảnh trong nhà - Hướng dẫn chi tiết",
+                            Slug = "cach-cham-soc-cay-canh-trong-nha",
+                            Tags = "cham-soc-cay,cay-trong-nha,meo-hay",
+                            Title = "Cách chăm sóc cây cảnh trong nhà",
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            ViewCount = 0
+                        },
+                        new
+                        {
+                            Id = 2,
+                            AuthorId = 1,
+                            CategoryId = 1,
+                            Content = "Nội dung chi tiết về các loại cây phong thủy...",
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Excerpt = "Khám phá 10 loại cây phong thủy mang lại tài lộc, may mắn cho gia đình.",
+                            FeaturedImage = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761618409/top-19-loai-cay-canh-trong-nha-hop-phong-thuy-va-de-cham-soc-nhat-hien-nay-651645fae15e8c8b38af38ad_flrmui.webp",
+                            IsFeatured = false,
+                            IsPublished = true,
+                            PublishedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            SeoDescription = "Danh sách các loại cây phong thủy nên trồng trong nhà để mang lại may mắn và tài lộc.",
+                            SeoTitle = "Top 10 cây phong thủy - Mang tài lộc vào nhà",
+                            Slug = "top-10-loai-cay-phong-thuy",
+                            Tags = "phong-thuy,cay-phong-thuy,tai-loc",
+                            Title = "Top 10 loại cây phong thủy",
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            ViewCount = 0
+                        });
                 });
 
             modelBuilder.Entity("DAL.Models.Cart", b =>
@@ -254,6 +332,38 @@ namespace DAL.Migrations
                         .IsUnique();
 
                     b.ToTable("carts");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            DiscountAmount = 0m,
+                            Subtotal = 0m,
+                            TotalItems = 0,
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            UserId = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            DiscountAmount = 0m,
+                            Subtotal = 0m,
+                            TotalItems = 0,
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            UserId = 2
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            DiscountAmount = 0m,
+                            Subtotal = 0m,
+                            TotalItems = 0,
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            UserId = 3
+                        });
                 });
 
             modelBuilder.Entity("DAL.Models.CartItem", b =>
@@ -387,6 +497,32 @@ namespace DAL.Migrations
                         .IsUnique();
 
                     b.ToTable("categories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Description = "Các loại cây phù hợp trồng trong nhà, văn phòng.",
+                            Image = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620174/trong-cay-van-phong-cay-trong-van-phong-dep-1_otymq5.jpg",
+                            IsActive = true,
+                            Name = "Cây Trong Nhà",
+                            Slug = "cay-trong-nha",
+                            SortOrder = 1,
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Description = "Các loại cây cảnh, cây ăn quả trồng ngoài trời.",
+                            Image = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620241/147202426979463-collage_tl9zw4.jpg",
+                            IsActive = true,
+                            Name = "Cây Ngoài Trời",
+                            Slug = "cay-ngoai-troi",
+                            SortOrder = 2,
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc)
+                        });
                 });
 
             modelBuilder.Entity("DAL.Models.Coupon", b =>
@@ -474,6 +610,44 @@ namespace DAL.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("coupons");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Code = "WELCOME10",
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            DiscountType = "PERCENT",
+                            DiscountValue = 10m,
+                            EndDate = new DateTime(2025, 12, 27, 3, 25, 6, 233, DateTimeKind.Utc),
+                            IsActive = true,
+                            MinOrderAmount = 500000m,
+                            Name = "Chào mừng giảm 10%",
+                            PointsUsed = 0,
+                            Source = "SYSTEM",
+                            StartDate = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            TemplateId = 1,
+                            UsageLimit = 100,
+                            UsedCount = 0
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Code = "VIP100K",
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            DiscountType = "FIXED_AMOUNT",
+                            DiscountValue = 100000m,
+                            EndDate = new DateTime(2026, 1, 26, 3, 25, 6, 233, DateTimeKind.Utc),
+                            IsActive = true,
+                            MinOrderAmount = 1000000m,
+                            Name = "VIP giảm 100K",
+                            PointsUsed = 0,
+                            Source = "PROMOTION",
+                            StartDate = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            TemplateId = 2,
+                            UsageLimit = 50,
+                            UsedCount = 0
+                        });
                 });
 
             modelBuilder.Entity("DAL.Models.CouponTemplate", b =>
@@ -536,6 +710,38 @@ namespace DAL.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("coupon_templates");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Description = "Áp dụng cho đơn hàng tối thiểu 500.000 VNĐ",
+                            DiscountType = "PERCENT",
+                            DiscountValue = 10m,
+                            IsActive = true,
+                            MinOrderAmount = 500000m,
+                            Name = "Giảm 10% cho đơn hàng trên 500K",
+                            PointsCost = 500,
+                            TotalUsageLimit = 100,
+                            UsageLimitPerUser = 2,
+                            ValidDays = 30
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Description = "Áp dụng cho đơn hàng tối thiểu 1.000.000 VNĐ",
+                            DiscountType = "FIXED_AMOUNT",
+                            DiscountValue = 100000m,
+                            IsActive = true,
+                            MinOrderAmount = 1000000m,
+                            Name = "Giảm 100K cho đơn hàng trên 1 triệu",
+                            PointsCost = 800,
+                            TotalUsageLimit = 50,
+                            UsageLimitPerUser = 1,
+                            ValidDays = 60
+                        });
                 });
 
             modelBuilder.Entity("DAL.Models.Notification", b =>
@@ -593,6 +799,19 @@ namespace DAL.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("notifications");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            IsRead = false,
+                            Message = "Cảm ơn bạn đã đăng ký tài khoản! Bạn có 10.000 điểm thưởng.",
+                            Priority = "MEDIUM",
+                            Title = "Chào mừng đến với GreenTech",
+                            Type = "SYSTEM",
+                            UserId = 2
+                        });
                 });
 
             modelBuilder.Entity("DAL.Models.Order", b =>
@@ -844,6 +1063,33 @@ namespace DAL.Migrations
                     b.HasIndex("CreatedBy");
 
                     b.ToTable("point_earning_rules");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            CreatedBy = 1,
+                            IsActive = true,
+                            MaxPointsPerOrder = 1000,
+                            MinOrderAmount = 0m,
+                            Name = "Quy tắc tích điểm chuẩn",
+                            PointsPerAmount = 1m,
+                            ValidFrom = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            CreatedBy = 1,
+                            IsActive = true,
+                            MaxPointsPerOrder = 2000,
+                            MinOrderAmount = 1000000m,
+                            Name = "Khuyến mãi tích điểm x2",
+                            PointsPerAmount = 2m,
+                            ValidFrom = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            ValidUntil = new DateTime(2026, 1, 28, 3, 25, 6, 233, DateTimeKind.Utc)
+                        });
                 });
 
             modelBuilder.Entity("DAL.Models.PointTransaction", b =>
@@ -1051,6 +1297,116 @@ namespace DAL.Migrations
                     b.HasIndex("SupplierId");
 
                     b.ToTable("products");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CareInstructions = "Tưới nước vừa phải khi đất khô. Tránh ánh nắng trực tiếp quá gắt.",
+                            CategoryId = 1,
+                            CostPrice = 200000m,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Description = "Cây Lưỡi Hổ (Sansevieria trifasciata) là loại cây phổ biến, dễ chăm sóc, có khả năng lọc bỏ các độc tố trong không khí.",
+                            Dimensions = "Chậu 15cm",
+                            Image = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620341/cay-luoi-ho-ten-khoa-hoc-sansevieria-trifasciata_v0kubp.jpg",
+                            IsActive = true,
+                            IsFeatured = true,
+                            Name = "Cây Lưỡi Hổ",
+                            PlantSize = "Nhỏ (30-40cm)",
+                            PointsEarned = 10,
+                            Quantity = 50,
+                            SellPrice = 150000m,
+                            SeoDescription = "Cây Lưỡi Hổ đẹp, giá tốt, phù hợp trang trí nhà cửa, văn phòng. Giúp thanh lọc không khí hiệu quả.",
+                            SeoTitle = "Mua Cây Lưỡi Hổ - Lọc Không Khí, Dễ Chăm Sóc",
+                            ShortDescription = "Cây phong thủy, lọc không khí tốt.",
+                            Sku = "CLH001",
+                            Slug = "cay-luoi-ho",
+                            SupplierId = 1,
+                            Tags = "cay-trong-nha,phong-thuy,loc-khong-khi",
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Weight = 1.5m
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CareInstructions = "Ưa bóng râm, tưới nước 2-3 lần/tuần. Bón phân định kỳ.",
+                            CategoryId = 1,
+                            CostPrice = 350000m,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Description = "Cây Phát Tài (Dracaena fragrans) hay còn gọi là Thiết Mộc Lan, được tin là mang lại may mắn và tài lộc. Cây có sức sống tốt, dễ trồng.",
+                            Dimensions = "Chậu 25cm",
+                            Image = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620487/ca_CC_81ch-cha_CC_86m-so_CC_81c-ca_CC_82y-pha_CC_81t-ta_CC_80i-de_CC_82_CC_89-trong-nha_CC_80_mmkhjo.jpg",
+                            IsActive = true,
+                            IsFeatured = false,
+                            Name = "Cây Phát Tài",
+                            PlantSize = "Trung bình (60-80cm)",
+                            PointsEarned = 30,
+                            Quantity = 30,
+                            SellPrice = 250000m,
+                            SeoDescription = "Bán cây Phát Tài hợp phong thủy, trang trí nội thất sang trọng. Cây dễ chăm, mang lại vượng khí.",
+                            SeoTitle = "Cây Phát Tài (Thiết Mộc Lan) - Mang May Mắn, Tài Lộc",
+                            ShortDescription = "Mang lại may mắn, tài lộc cho gia chủ.",
+                            Sku = "CPT005",
+                            Slug = "cay-phat-tai",
+                            SupplierId = 1,
+                            Tags = "cay-trong-nha,phong-thuy,may-man,tai-loc",
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Weight = 3.0m
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CareInstructions = "Tưới nước khi đất khô. Không cần ánh sáng trực tiếp. Bón phân mỗi tháng một lần.",
+                            CategoryId = 1,
+                            CostPrice = 150000m,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Description = "Cây Trầu Bà (Epipremnum aureum) là một trong những cây lọc không khí tốt nhất. Cây dễ chăm sóc, phù hợp cho người mới bắt đầu.",
+                            Dimensions = "Chậu 12cm",
+                            Image = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761619808/images_vm4li5.jpg",
+                            IsActive = true,
+                            IsFeatured = false,
+                            Name = "Cây Trầu Bà",
+                            PlantSize = "Nhỏ (20-30cm)",
+                            PointsEarned = 8,
+                            Quantity = 80,
+                            SellPrice = 80000m,
+                            SeoDescription = "Cây Trầu Bà đẹp, dễ chăm, giúp thanh lọc không khí trong nhà hiệu quả.",
+                            SeoTitle = "Mua Cây Trầu Bà - Lọc Không Khí Hiệu Quả",
+                            ShortDescription = "Cây lọc không khí tuyệt vời, dễ trồng.",
+                            Sku = "CTB003",
+                            Slug = "cay-trau-ba",
+                            SupplierId = 2,
+                            Tags = "cay-trong-nha,loc-khong-khi,de-cham",
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Weight = 0.8m
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CareInstructions = "Tưới nước 1-2 lần/tuần. Nên đặt nơi có ánh sáng gián tiếp. Lau lá thường xuyên.",
+                            CategoryId = 1,
+                            CostPrice = 150000m,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Description = "Cây Đa Búp Đỏ (Ficus elastica) với lá bóng, xanh mướt, mang lại không gian tươi mát cho phòng làm việc.",
+                            Dimensions = "Chậu 15cm",
+                            Image = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761619886/Cay-da-bup-do_p1whyu.png",
+                            IsActive = true,
+                            IsFeatured = true,
+                            Name = "Cây Đa Búp Đỏ",
+                            PlantSize = "Nhỏ (25-35cm)",
+                            PointsEarned = 10,
+                            Quantity = 60,
+                            SellPrice = 100000m,
+                            SeoDescription = "Cây Đa Búp Đỏ đẹp, dễ chăm, phù hợp trang trí bàn làm việc, phòng khách.",
+                            SeoTitle = "Cây Đa Búp Đỏ - Trang Trí Văn Phòng",
+                            ShortDescription = "Cây để bàn làm việc đẹp mắt.",
+                            Sku = "CDB004",
+                            Slug = "cay-da-bup-do",
+                            SupplierId = 3,
+                            Tags = "cay-de-ban,tin-cay,xanh-mat",
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Weight = 1.2m
+                        });
                 });
 
             modelBuilder.Entity("DAL.Models.ProductImage", b =>
@@ -1095,6 +1451,58 @@ namespace DAL.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("product_images");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            AltText = "Ảnh chi tiết cây Lưỡi Hổ",
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            ImageUrl = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620780/cay-luoi-ho-2_fxisjk.jpg",
+                            IsPrimary = false,
+                            ProductId = 1,
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            AltText = "Chậu cây Lưỡi Hổ",
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            ImageUrl = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620716/chau-cay-hoa-de-ban-2_apigsc.jpg",
+                            IsPrimary = false,
+                            ProductId = 1,
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            Id = 3,
+                            AltText = "Thân cây Phát Tài",
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            ImageUrl = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620845/cay-phat-tai-1-goc-dep_u5pi5c.jpg",
+                            IsPrimary = false,
+                            ProductId = 2,
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = 4,
+                            AltText = "Cây Trầu Bà nhỏ xinh",
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            ImageUrl = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620927/trau-ba-mini_jdnmjk.jpg",
+                            IsPrimary = false,
+                            ProductId = 3,
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = 5,
+                            AltText = "Cây Đa Búp Đỏ đẹp mắt",
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            ImageUrl = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620976/cay-da-bup-do_b7k0h6.jpg",
+                            IsPrimary = false,
+                            ProductId = 4,
+                            SortOrder = 1
+                        });
                 });
 
             modelBuilder.Entity("DAL.Models.ProductRatingStat", b =>
@@ -1147,6 +1555,64 @@ namespace DAL.Migrations
                     b.HasKey("ProductId");
 
                     b.ToTable("product_rating_stats");
+
+                    b.HasData(
+                        new
+                        {
+                            ProductId = 1,
+                            AverageRating = 0m,
+                            LastUpdated = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Star1Count = 0,
+                            Star2Count = 0,
+                            Star3Count = 0,
+                            Star4Count = 0,
+                            Star5Count = 0,
+                            TotalReviews = 0,
+                            WithContentCount = 0,
+                            WithMediaCount = 0
+                        },
+                        new
+                        {
+                            ProductId = 2,
+                            AverageRating = 0m,
+                            LastUpdated = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Star1Count = 0,
+                            Star2Count = 0,
+                            Star3Count = 0,
+                            Star4Count = 0,
+                            Star5Count = 0,
+                            TotalReviews = 0,
+                            WithContentCount = 0,
+                            WithMediaCount = 0
+                        },
+                        new
+                        {
+                            ProductId = 3,
+                            AverageRating = 0m,
+                            LastUpdated = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Star1Count = 0,
+                            Star2Count = 0,
+                            Star3Count = 0,
+                            Star4Count = 0,
+                            Star5Count = 0,
+                            TotalReviews = 0,
+                            WithContentCount = 0,
+                            WithMediaCount = 0
+                        },
+                        new
+                        {
+                            ProductId = 4,
+                            AverageRating = 0m,
+                            LastUpdated = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Star1Count = 0,
+                            Star2Count = 0,
+                            Star3Count = 0,
+                            Star4Count = 0,
+                            Star5Count = 0,
+                            TotalReviews = 0,
+                            WithContentCount = 0,
+                            WithMediaCount = 0
+                        });
                 });
 
             modelBuilder.Entity("DAL.Models.Review", b =>
@@ -1301,6 +1767,26 @@ namespace DAL.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("roles");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            RoleName = "ROLE_ADMIN"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            RoleName = "ROLE_CUSTOMER"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            RoleName = "ROLE_STAFF"
+                        });
                 });
 
             modelBuilder.Entity("DAL.Models.Supplier", b =>
@@ -1377,6 +1863,53 @@ namespace DAL.Migrations
                         .IsUnique();
 
                     b.ToTable("suppliers");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Address = "Khu Công Nghiệp Trà Nóc, Cần Thơ",
+                            Code = "VX001",
+                            ContactPerson = "Ms. Lan",
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Email = "vuonxinh@supplier.com",
+                            IsActive = true,
+                            Name = "Nhà Cung Cấp Vườn Xinh",
+                            PaymentTerms = "30 ngày",
+                            Phone = "02923111222",
+                            TaxCode = "1234567890",
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Address = "12 Đường 3/2, Quận Ninh Kiều, TP. Cần Thơ",
+                            Code = "CXABC001",
+                            ContactPerson = "Mr. Hai",
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Email = "cayxanh@abc.com",
+                            IsActive = true,
+                            Name = "Công ty Cây Xanh ABC",
+                            PaymentTerms = "60 ngày",
+                            Phone = "02923888999",
+                            TaxCode = "9876543210",
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Address = "Đường 30/4, Quận Cai Rang, TP. Cần Thơ",
+                            Code = "NVST001",
+                            ContactPerson = "Ms. Mai",
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Email = "sinhthai@nhavuon.com",
+                            IsActive = true,
+                            Name = "Nhà Vườn Sinh Thái",
+                            PaymentTerms = "45 ngày",
+                            Phone = "02923555777",
+                            TaxCode = "5555555555",
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc)
+                        });
                 });
 
             modelBuilder.Entity("DAL.Models.User", b =>
@@ -1480,6 +2013,65 @@ namespace DAL.Migrations
                         .IsUnique();
 
                     b.ToTable("users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            District = "Ninh Kieu",
+                            Email = "admin@example.com",
+                            EmailVerifiedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            FullName = "Admin User",
+                            Password = "Vm9pY2VzQW5kRnVyaWVz:Sv7Awsgb6kcKRMp6O2tJ9Hcc339MpGiw8Cn+BF+D2vuwF/8V63bLOCxwfkaS4j9TLKIHKeJozDBingSJnXw+qw==",
+                            Phone = "0123456789",
+                            PhoneVerifiedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Points = 0,
+                            Province = "Can Tho",
+                            SpecificAddress = "123 Admin St",
+                            Status = "ACTIVE",
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            WalletBalance = 0m,
+                            Ward = "An Khanh"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            District = "Cai Rang",
+                            Email = "customer@example.com",
+                            EmailVerifiedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            FullName = "Customer User",
+                            Password = "Vm9pY2VzQW5kRnVyaWVz:LNzQLICso8gipi0mT7+EI013y7r9ZKmPb6G0WM5v70zH0nwlN9IQXSuml2XgLALgJaiQt0vtxJBw6Jv4PjWRTA==",
+                            Phone = "0987654321",
+                            PhoneVerifiedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Points = 100,
+                            Province = "Can Tho",
+                            SpecificAddress = "456 Customer Ave",
+                            Status = "ACTIVE",
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            WalletBalance = 50000m,
+                            Ward = "Le Binh"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            District = "Ninh Kieu",
+                            Email = "staff@example.com",
+                            EmailVerifiedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            FullName = "Staff User",
+                            Password = "Vm9pY2VzQW5kRnVyaWVz:WfPffOpZD2DsxmZ2+l1KKUUcpJX9G9hP05R3bWGaYnE8Y811EnH493YgJ6PhGpP6We7DODJ1fum+bGiJUOJ5Pw==",
+                            Phone = "0111222333",
+                            PhoneVerifiedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Points = 0,
+                            Province = "Can Tho",
+                            SpecificAddress = "789 Staff Street",
+                            Status = "ACTIVE",
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            WalletBalance = 0m,
+                            Ward = "Xuan Khanh"
+                        });
                 });
 
             modelBuilder.Entity("DAL.Models.UserRole", b =>
@@ -1497,6 +2089,23 @@ namespace DAL.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("user_roles");
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = 1,
+                            RoleId = 1
+                        },
+                        new
+                        {
+                            UserId = 2,
+                            RoleId = 2
+                        },
+                        new
+                        {
+                            UserId = 3,
+                            RoleId = 3
+                        });
                 });
 
             modelBuilder.Entity("DAL.Models.WalletTransaction", b =>

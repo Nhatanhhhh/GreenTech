@@ -1,8 +1,159 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@using DAL.DTOs.Banner
+@using DAL.DTOs.Product
+@using DAL.DTOs.Category
+@using DAL.DTOs.Blog
+@{
+    ViewData["Title"] = "GreenTech - Cây xanh chất lượng cao";
+    var banners = ViewBag.Banners as IEnumerable<BannerDTO> ?? new List<BannerDTO>();
+    var products = ViewBag.FeaturedProducts as IEnumerable<ProductResponseDTO> ?? new List<ProductResponseDTO>();
+    var categories = ViewBag.Categories as IEnumerable<CategoryDTO> ?? new List<CategoryDTO>();
+    var blogs = ViewBag.Blogs as IEnumerable<BlogResponseDTO> ?? new List<BlogResponseDTO>();
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!-- Hero Banner Section -->
+<section class="relative h-[600px] w-full overflow-hidden">
+    @if (banners.Any())
+    {
+        <div id="bannerCarousel" class="relative h-full">
+            @foreach (var banner in banners)
+            {
+                <div class="banner-slide hidden h-full w-full">
+                    <a href="@banner.LinkUrl">
+                        <img src="@banner.ImageUrl" alt="@banner.Title" class="h-full w-full object-cover">
+                        <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+                            <div class="text-center text-white">
+                                <h2 class="mb-4 text-5xl font-bold">@banner.Title</h2>
+                                <p class="text-xl">@banner.Description</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="flex h-full items-center justify-center bg-gradient-to-r from-green-600 to-green-800">
+            <div class="text-center text-white">
+                <h1 class="mb-4 text-6xl font-bold">Chào mừng đến GreenTech</h1>
+                <p class="text-2xl">Hệ thống cây xanh số 1 Việt Nam</p>
+            </div>
+        </div>
+    }
+</section>
+
+<!-- Featured Categories -->
+<section class="bg-gray-50 py-12">
+    <div class="container mx-auto px-4">
+        <h2 class="mb-8 text-center text-3xl font-bold text-gray-800">Danh mục sản phẩm</h2>
+        <div class="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
+            @foreach (var category in categories.Take(6))
+            {
+                <a asp-controller="Products" asp-action="Index" asp-route-categoryId="@category.Id" 
+                   class="group flex flex-col items-center rounded-lg bg-white p-6 shadow-md transition-all hover:shadow-xl">
+                    <img src="@(!string.IsNullOrEmpty(category.Image) ? category.Image : "/images/no-image.png")" 
+                         alt="@category.Name" 
+                         class="mb-4 h-20 w-20 rounded-full object-cover">
+                    <h3 class="text-center text-sm font-semibold text-gray-800 group-hover:text-green-600">@category.Name</h3>
+                </a>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products -->
+@if (products.Any())
+{
+    <section class="py-12">
+        <div class="container mx-auto px-4">
+            <div class="mb-8 flex items-center justify-between">
+                <h2 class="text-3xl font-bold text-gray-800">Sản phẩm nổi bật</h2>
+                <a asp-controller="Products" asp-action="Index" class="text-green-600 hover:text-green-700">
+                    Xem tất cả <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                @foreach (var product in products)
+                {
+                    <div class="group overflow-hidden rounded-lg bg-white shadow-md transition-all hover:shadow-xl">
+                        <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id">
+                            <div class="relative overflow-hidden">
+                                <img src="@(!string.IsNullOrEmpty(product.Image) ? product.Image : "/images/no-image.png")" 
+                                     alt="@product.Name" 
+                                     class="h-64 w-full object-cover transition-transform group-hover:scale-110">
+                                @if (product.IsFeatured)
+                                {
+                                    <span class="absolute top-2 left-2 rounded bg-red-500 px-2 py-1 text-xs text-white">Nổi bật</span>
+                                }
+                            </div>
+                            <div class="p-4">
+                                <h3 class="mb-2 text-lg font-semibold text-gray-800 line-clamp-2">@product.Name</h3>
+                                <p class="mb-2 text-gray-600 line-clamp-2">@product.ShortDescription</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-2xl font-bold text-green-600">@product.SellPrice.ToString("N0") đ</span>
+                                    <button class="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700">
+                                        <i class="fas fa-cart-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+<!-- Featured Blogs -->
+@if (blogs.Any())
+{
+    <section class="bg-gray-50 py-12">
+        <div class="container mx-auto px-4">
+            <div class="mb-8 flex items-center justify-between">
+                <h2 class="text-3xl font-bold text-gray-800">Bài viết nổi bật</h2>
+                <a href="#" class="text-green-600 hover:text-green-700">
+                    Xem tất cả <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+                @foreach (var blog in blogs)
+                {
+                    <div class="overflow-hidden rounded-lg bg-white shadow-md transition-all hover:shadow-xl">
+                        <a href="#">
+                            <img src="@(!string.IsNullOrEmpty(blog.FeaturedImage) ? blog.FeaturedImage : "/images/no-image.png")" 
+                                 alt="@blog.Title" 
+                                 class="h-48 w-full object-cover">
+                            <div class="p-6">
+                                <span class="text-xs text-gray-500">@blog.PublishedAt?.ToString("dd/MM/yyyy")</span>
+                                <h3 class="mb-2 text-xl font-semibold text-gray-800">@blog.Title</h3>
+                                <p class="mb-4 text-gray-600 line-clamp-3">@blog.Excerpt</p>
+                                <a href="#" class="text-green-600 hover:text-green-700">
+                                    Đọc thêm <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+@section Scripts {
+    <script>
+        // Banner carousel functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const slides = document.querySelectorAll('.banner-slide');
+            if (slides.length > 0) {
+                let currentIndex = 0;
+                slides[0].classList.remove('hidden');
+                
+                setInterval(() => {
+                    slides[currentIndex].classList.add('hidden');
+                    currentIndex = (currentIndex + 1) % slides.length;
+                    slides[currentIndex].classList.remove('hidden');
+                }, 5000);
+            }
+        });
+    </script>
+}

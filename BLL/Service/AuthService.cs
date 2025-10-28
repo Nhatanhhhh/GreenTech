@@ -31,7 +31,8 @@ namespace BLL.Service
             if (await _authRepository.PhoneExistsAsync(registerDTO.Phone))
                 throw new ArgumentException("Số điện thoại đã tồn tại trong hệ thống");
 
-            registerDTO.Password = CryptoUtil.HashPassword(registerDTO.Password);
+            // Hash password using HMACSHA512
+            registerDTO.Password = CryptoUtil.HashPasswordHmacSHA512(registerDTO.Password);
 
             var user = await _authRepository.RegisterAsync(registerDTO);
             return AutoMapper.ToUserResponseDTO(user);
@@ -44,7 +45,8 @@ namespace BLL.Service
             var user = await _authRepository.LoginAsync(loginDTO)
                 ?? throw new UnauthorizedAccessException("Email hoặc mật khẩu không chính xác");
 
-            if (!CryptoUtil.VerifyPassword(user.Password, loginDTO.Password))
+            // Verify password using HMACSHA512
+            if (!CryptoUtil.VerifyPasswordHmacSHA512(user.Password, loginDTO.Password))
                 throw new UnauthorizedAccessException("Email hoặc mật khẩu không chính xác");
 
             if (user.Status != UserStatus.ACTIVE)

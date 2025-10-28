@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace DAL.Migrations
 {
     /// <inheritdoc />
@@ -112,7 +114,7 @@ namespace DAL.Migrations
                     district = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
                     ward = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
                     specific_address = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    avatar = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    avatar = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
                     points = table.Column<int>(type: "int", nullable: false),
                     wallet_balance = table.Column<decimal>(type: "decimal(12,2)", precision: 12, scale: 2, nullable: false),
                     status = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -415,7 +417,7 @@ namespace DAL.Migrations
                     id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     user_id = table.Column<int>(type: "int", nullable: false),
-                    session_id = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    session_id = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
                     coupon_id = table.Column<int>(type: "int", nullable: true),
                     total_items = table.Column<int>(type: "int", nullable: false),
                     subtotal = table.Column<decimal>(type: "decimal(12,2)", precision: 12, scale: 2, nullable: false),
@@ -720,6 +722,149 @@ namespace DAL.Migrations
                         principalTable: "users",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.InsertData(
+                table: "categories",
+                columns: new[] { "id", "created_at", "description", "image", "is_active", "name", "parent_id", "slug", "sort_order", "updated_at" },
+                values: new object[,]
+                {
+                    { 1, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Các loại cây phù hợp trồng trong nhà, văn phòng.", "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620174/trong-cay-van-phong-cay-trong-van-phong-dep-1_otymq5.jpg", true, "Cây Trong Nhà", null, "cay-trong-nha", 1, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc) },
+                    { 2, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Các loại cây cảnh, cây ăn quả trồng ngoài trời.", "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620241/147202426979463-collage_tl9zw4.jpg", true, "Cây Ngoài Trời", null, "cay-ngoai-troi", 2, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc) }
+                });
+
+            migrationBuilder.InsertData(
+                table: "coupon_templates",
+                columns: new[] { "id", "created_at", "description", "discount_type", "discount_value", "is_active", "min_order_amount", "name", "points_cost", "total_usage_limit", "usage_limit_per_user", "valid_days" },
+                values: new object[,]
+                {
+                    { 1, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Áp dụng cho đơn hàng tối thiểu 500.000 VNĐ", "PERCENT", 10m, true, 500000m, "Giảm 10% cho đơn hàng trên 500K", 500, 100, 2, 30 },
+                    { 2, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Áp dụng cho đơn hàng tối thiểu 1.000.000 VNĐ", "FIXED_AMOUNT", 100000m, true, 1000000m, "Giảm 100K cho đơn hàng trên 1 triệu", 800, 50, 1, 60 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "roles",
+                columns: new[] { "id", "created_at", "role_name" },
+                values: new object[,]
+                {
+                    { 1, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "ROLE_ADMIN" },
+                    { 2, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "ROLE_CUSTOMER" },
+                    { 3, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "ROLE_STAFF" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "suppliers",
+                columns: new[] { "id", "address", "code", "contact_person", "created_at", "email", "is_active", "name", "payment_terms", "phone", "tax_code", "updated_at" },
+                values: new object[,]
+                {
+                    { 1, "Khu Công Nghiệp Trà Nóc, Cần Thơ", "VX001", "Ms. Lan", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "vuonxinh@supplier.com", true, "Nhà Cung Cấp Vườn Xinh", "30 ngày", "02923111222", "1234567890", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc) },
+                    { 2, "12 Đường 3/2, Quận Ninh Kiều, TP. Cần Thơ", "CXABC001", "Mr. Hai", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "cayxanh@abc.com", true, "Công ty Cây Xanh ABC", "60 ngày", "02923888999", "9876543210", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc) },
+                    { 3, "Đường 30/4, Quận Cai Rang, TP. Cần Thơ", "NVST001", "Ms. Mai", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "sinhthai@nhavuon.com", true, "Nhà Vườn Sinh Thái", "45 ngày", "02923555777", "5555555555", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc) }
+                });
+
+            migrationBuilder.InsertData(
+                table: "users",
+                columns: new[] { "id", "avatar", "created_at", "district", "email", "email_verified_at", "full_name", "password", "phone", "phone_verified_at", "points", "province", "specific_address", "status", "updated_at", "wallet_balance", "ward" },
+                values: new object[,]
+                {
+                    { 1, null, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Ninh Kieu", "admin@example.com", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Admin User", "Vm9pY2VzQW5kRnVyaWVz:Sv7Awsgb6kcKRMp6O2tJ9Hcc339MpGiw8Cn+BF+D2vuwF/8V63bLOCxwfkaS4j9TLKIHKeJozDBingSJnXw+qw==", "0123456789", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 0, "Can Tho", "123 Admin St", "ACTIVE", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 0m, "An Khanh" },
+                    { 2, null, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Cai Rang", "customer@example.com", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Customer User", "Vm9pY2VzQW5kRnVyaWVz:LNzQLICso8gipi0mT7+EI013y7r9ZKmPb6G0WM5v70zH0nwlN9IQXSuml2XgLALgJaiQt0vtxJBw6Jv4PjWRTA==", "0987654321", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 100, "Can Tho", "456 Customer Ave", "ACTIVE", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 50000m, "Le Binh" },
+                    { 3, null, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Ninh Kieu", "staff@example.com", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Staff User", "Vm9pY2VzQW5kRnVyaWVz:WfPffOpZD2DsxmZ2+l1KKUUcpJX9G9hP05R3bWGaYnE8Y811EnH493YgJ6PhGpP6We7DODJ1fum+bGiJUOJ5Pw==", "0111222333", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 0, "Can Tho", "789 Staff Street", "ACTIVE", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 0m, "Xuan Khanh" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "banners",
+                columns: new[] { "id", "click_count", "created_at", "created_by", "description", "end_date", "image_url", "is_active", "link_url", "position", "sort_order", "start_date", "title", "updated_at" },
+                values: new object[,]
+                {
+                    { 1, 0, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 1, "Nền tảng mua sắm cây cảnh số 1 Việt Nam", new DateTime(2026, 4, 28, 3, 25, 6, 233, DateTimeKind.Utc), "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761619562/Screenshot_2081_gnwkty.png", true, "/#", "HOME_SLIDER", 1, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Chào mừng đến với GreenTech", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc) },
+                    { 2, 0, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 1, "Áp dụng cho khách hàng mới", new DateTime(2026, 1, 28, 3, 25, 6, 233, DateTimeKind.Utc), "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761618541/Baner_m0uvff.jpg", true, "/#", "HOME_SLIDER", 2, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Giảm giá 20% cho đơn đầu tiên", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc) }
+                });
+
+            migrationBuilder.InsertData(
+                table: "blogs",
+                columns: new[] { "id", "author_id", "category_id", "content", "created_at", "excerpt", "featured_image", "is_featured", "is_published", "published_at", "seo_description", "seo_title", "slug", "tags", "title", "updated_at", "view_count" },
+                values: new object[,]
+                {
+                    { 1, 1, 1, "Nội dung chi tiết về cách chăm sóc cây cảnh...", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Hướng dẫn chi tiết cách chăm sóc cây cảnh trong nhà để cây luôn xanh tươi, khỏe mạnh.", "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761618345/cach-cham-soc-cay-xanh-trong-nha-3_jwt3pb.webp", true, true, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Tổng hợp những bí quyết chăm sóc cây cảnh trong nhà hiệu quả, giúp không gian sống thêm xanh.", "Cách chăm sóc cây cảnh trong nhà - Hướng dẫn chi tiết", "cach-cham-soc-cay-canh-trong-nha", "cham-soc-cay,cay-trong-nha,meo-hay", "Cách chăm sóc cây cảnh trong nhà", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 0 },
+                    { 2, 1, 1, "Nội dung chi tiết về các loại cây phong thủy...", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Khám phá 10 loại cây phong thủy mang lại tài lộc, may mắn cho gia đình.", "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761618409/top-19-loai-cay-canh-trong-nha-hop-phong-thuy-va-de-cham-soc-nhat-hien-nay-651645fae15e8c8b38af38ad_flrmui.webp", false, true, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Danh sách các loại cây phong thủy nên trồng trong nhà để mang lại may mắn và tài lộc.", "Top 10 cây phong thủy - Mang tài lộc vào nhà", "top-10-loai-cay-phong-thuy", "phong-thuy,cay-phong-thuy,tai-loc", "Top 10 loại cây phong thủy", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 0 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "carts",
+                columns: new[] { "id", "coupon_id", "created_at", "discount_amount", "session_id", "subtotal", "total_items", "updated_at", "user_id" },
+                values: new object[,]
+                {
+                    { 1, null, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 0m, null, 0m, 0, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 1 },
+                    { 2, null, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 0m, null, 0m, 0, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 2 },
+                    { 3, null, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 0m, null, 0m, 0, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 3 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "coupons",
+                columns: new[] { "id", "code", "created_at", "discount_type", "discount_value", "end_date", "is_active", "min_order_amount", "name", "points_used", "source", "start_date", "template_id", "usage_limit", "used_count", "user_id" },
+                values: new object[,]
+                {
+                    { 1, "WELCOME10", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "PERCENT", 10m, new DateTime(2025, 12, 27, 3, 25, 6, 233, DateTimeKind.Utc), true, 500000m, "Chào mừng giảm 10%", 0, "SYSTEM", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 1, 100, 0, null },
+                    { 2, "VIP100K", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "FIXED_AMOUNT", 100000m, new DateTime(2026, 1, 26, 3, 25, 6, 233, DateTimeKind.Utc), true, 1000000m, "VIP giảm 100K", 0, "PROMOTION", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 2, 50, 0, null }
+                });
+
+            migrationBuilder.InsertData(
+                table: "notifications",
+                columns: new[] { "id", "created_at", "is_read", "message", "priority", "read_at", "reference_id", "title", "type", "user_id" },
+                values: new object[] { 1, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), false, "Cảm ơn bạn đã đăng ký tài khoản! Bạn có 10.000 điểm thưởng.", "MEDIUM", null, null, "Chào mừng đến với GreenTech", "SYSTEM", 2 });
+
+            migrationBuilder.InsertData(
+                table: "point_earning_rules",
+                columns: new[] { "id", "created_at", "created_by", "is_active", "max_points_per_order", "min_order_amount", "name", "points_per_amount", "valid_from", "valid_until" },
+                values: new object[,]
+                {
+                    { 1, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 1, true, 1000, 0m, "Quy tắc tích điểm chuẩn", 1m, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), null },
+                    { 2, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 1, true, 2000, 1000000m, "Khuyến mãi tích điểm x2", 2m, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), new DateTime(2026, 1, 28, 3, 25, 6, 233, DateTimeKind.Utc) }
+                });
+
+            migrationBuilder.InsertData(
+                table: "products",
+                columns: new[] { "id", "care_instructions", "category_id", "cost_price", "created_at", "description", "dimensions", "image", "is_active", "is_featured", "name", "plant_size", "points_earned", "quantity", "sell_price", "seo_description", "seo_title", "short_description", "sku", "slug", "supplier_id", "tags", "updated_at", "weight" },
+                values: new object[,]
+                {
+                    { 1, "Tưới nước vừa phải khi đất khô. Tránh ánh nắng trực tiếp quá gắt.", 1, 200000m, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Cây Lưỡi Hổ (Sansevieria trifasciata) là loại cây phổ biến, dễ chăm sóc, có khả năng lọc bỏ các độc tố trong không khí.", "Chậu 15cm", "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620341/cay-luoi-ho-ten-khoa-hoc-sansevieria-trifasciata_v0kubp.jpg", true, true, "Cây Lưỡi Hổ", "Nhỏ (30-40cm)", 10, 50, 150000m, "Cây Lưỡi Hổ đẹp, giá tốt, phù hợp trang trí nhà cửa, văn phòng. Giúp thanh lọc không khí hiệu quả.", "Mua Cây Lưỡi Hổ - Lọc Không Khí, Dễ Chăm Sóc", "Cây phong thủy, lọc không khí tốt.", "CLH001", "cay-luoi-ho", 1, "cay-trong-nha,phong-thuy,loc-khong-khi", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 1.5m },
+                    { 2, "Ưa bóng râm, tưới nước 2-3 lần/tuần. Bón phân định kỳ.", 1, 350000m, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Cây Phát Tài (Dracaena fragrans) hay còn gọi là Thiết Mộc Lan, được tin là mang lại may mắn và tài lộc. Cây có sức sống tốt, dễ trồng.", "Chậu 25cm", "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620487/ca_CC_81ch-cha_CC_86m-so_CC_81c-ca_CC_82y-pha_CC_81t-ta_CC_80i-de_CC_82_CC_89-trong-nha_CC_80_mmkhjo.jpg", true, false, "Cây Phát Tài", "Trung bình (60-80cm)", 30, 30, 250000m, "Bán cây Phát Tài hợp phong thủy, trang trí nội thất sang trọng. Cây dễ chăm, mang lại vượng khí.", "Cây Phát Tài (Thiết Mộc Lan) - Mang May Mắn, Tài Lộc", "Mang lại may mắn, tài lộc cho gia chủ.", "CPT005", "cay-phat-tai", 1, "cay-trong-nha,phong-thuy,may-man,tai-loc", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 3.0m },
+                    { 3, "Tưới nước khi đất khô. Không cần ánh sáng trực tiếp. Bón phân mỗi tháng một lần.", 1, 150000m, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Cây Trầu Bà (Epipremnum aureum) là một trong những cây lọc không khí tốt nhất. Cây dễ chăm sóc, phù hợp cho người mới bắt đầu.", "Chậu 12cm", "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761619808/images_vm4li5.jpg", true, false, "Cây Trầu Bà", "Nhỏ (20-30cm)", 8, 80, 80000m, "Cây Trầu Bà đẹp, dễ chăm, giúp thanh lọc không khí trong nhà hiệu quả.", "Mua Cây Trầu Bà - Lọc Không Khí Hiệu Quả", "Cây lọc không khí tuyệt vời, dễ trồng.", "CTB003", "cay-trau-ba", 2, "cay-trong-nha,loc-khong-khi,de-cham", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 0.8m },
+                    { 4, "Tưới nước 1-2 lần/tuần. Nên đặt nơi có ánh sáng gián tiếp. Lau lá thường xuyên.", 1, 150000m, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "Cây Đa Búp Đỏ (Ficus elastica) với lá bóng, xanh mướt, mang lại không gian tươi mát cho phòng làm việc.", "Chậu 15cm", "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761619886/Cay-da-bup-do_p1whyu.png", true, true, "Cây Đa Búp Đỏ", "Nhỏ (25-35cm)", 10, 60, 100000m, "Cây Đa Búp Đỏ đẹp, dễ chăm, phù hợp trang trí bàn làm việc, phòng khách.", "Cây Đa Búp Đỏ - Trang Trí Văn Phòng", "Cây để bàn làm việc đẹp mắt.", "CDB004", "cay-da-bup-do", 3, "cay-de-ban,tin-cay,xanh-mat", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 1.2m }
+                });
+
+            migrationBuilder.InsertData(
+                table: "user_roles",
+                columns: new[] { "role_id", "user_id" },
+                values: new object[,]
+                {
+                    { 1, 1 },
+                    { 2, 2 },
+                    { 3, 3 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "product_images",
+                columns: new[] { "id", "alt_text", "created_at", "image_url", "is_primary", "product_id", "sort_order" },
+                values: new object[,]
+                {
+                    { 1, "Ảnh chi tiết cây Lưỡi Hổ", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620780/cay-luoi-ho-2_fxisjk.jpg", false, 1, 1 },
+                    { 2, "Chậu cây Lưỡi Hổ", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620716/chau-cay-hoa-de-ban-2_apigsc.jpg", false, 1, 2 },
+                    { 3, "Thân cây Phát Tài", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620845/cay-phat-tai-1-goc-dep_u5pi5c.jpg", false, 2, 1 },
+                    { 4, "Cây Trầu Bà nhỏ xinh", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620927/trau-ba-mini_jdnmjk.jpg", false, 3, 1 },
+                    { 5, "Cây Đa Búp Đỏ đẹp mắt", new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620976/cay-da-bup-do_b7k0h6.jpg", false, 4, 1 }
+                });
+
+            migrationBuilder.InsertData(
+                table: "product_rating_stats",
+                columns: new[] { "product_id", "average_rating", "last_updated", "star_1_count", "star_2_count", "star_3_count", "star_4_count", "star_5_count", "total_reviews", "with_content_count", "with_media_count" },
+                values: new object[,]
+                {
+                    { 1, 0m, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 0, 0, 0, 0, 0, 0, 0, 0 },
+                    { 2, 0m, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 0, 0, 0, 0, 0, 0, 0, 0 },
+                    { 3, 0m, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 0, 0, 0, 0, 0, 0, 0, 0 },
+                    { 4, 0m, new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc), 0, 0, 0, 0, 0, 0, 0, 0 }
                 });
 
             migrationBuilder.CreateIndex(
