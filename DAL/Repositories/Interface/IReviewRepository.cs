@@ -15,4 +15,3 @@ namespace DAL.Repositories.Interface
         bool UploadReviewMedia(int reviewId, List<string> mediaUrls);
     }
 }
- 
