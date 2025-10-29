@@ -1,9 +1,11 @@
 ﻿using BLL.Service.Interface;
 using DAL.DTOs.Review;
 using DAL.Models;
-using DAL.Models.Enum;
 using DAL.Repositories.Interface;
+using Microsoft.AspNetCore.Http;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BLL.Service
@@ -11,10 +13,12 @@ namespace BLL.Service
     public class ReviewService : IReviewService
     {
         private readonly IReviewRepository _reviewRepository;
+        private readonly IFileStorageService _fileStorageService;
 
-        public ReviewService(IReviewRepository reviewRepository)
+        public ReviewService(IReviewRepository reviewRepository, IFileStorageService fileStorageService)
         {
             _reviewRepository = reviewRepository;
+            _fileStorageService = fileStorageService;
         }
 
         public async Task<Review> CreateReviewAsync(CreateReviewDTO dto)
@@ -54,9 +58,41 @@ namespace BLL.Service
         {
             var existing = await _reviewRepository.GetReviewByIdAsync(reviewId);
             if (existing == null || existing.UserId != userId)
-                return false; // Không có quyền hoặc không tồn tại
+                return false;
 
             return await _reviewRepository.DeleteReviewAsync(existing);
+        }
+
+        // 🚀 Upload Review Media
+        public async Task<Review?> UploadReviewMediaAsync(int reviewId, int userId, List<IFormFile> files)
+        {
+            var review = await _reviewRepository.GetReviewByIdAsync(reviewId);
+            if (review == null || review.UserId != userId)
+                return null;
+
+            if (files == null || files.Count == 0)
+                throw new ArgumentException("No files provided for upload.");
+
+            var uploadedUrls = new List<string>();
+
+            foreach (var file in files)
+            {
+                // subFolder đặt tên để dễ quản lý trên Cloudinary
+                var url = await _fileStorageService.SaveFileAsync(file, "reviews");
+                uploadedUrls.Add(url);
+            }
+
+            // Gộp URL cũ + mới
+            var currentUrls = string.IsNullOrEmpty(review.MediaUrls)
+                ? new List<string>()
+                : review.MediaUrls.Split(';').ToList();
+
+            currentUrls.AddRange(uploadedUrls);
+            review.MediaUrls = string.Join(';', currentUrls);
+            review.UpdatedAt = DateTime.Now;
+
+            await _reviewRepository.UpdateReviewAsync(review);
+            return review;
         }
     }
 }

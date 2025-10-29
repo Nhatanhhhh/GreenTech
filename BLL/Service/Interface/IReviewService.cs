@@ -1,7 +1,8 @@
 ﻿using DAL.DTOs.Review;
 using DAL.Models;
+using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-
 
 namespace BLL.Service.Interface
 {
@@ -10,5 +11,6 @@ namespace BLL.Service.Interface
         Task<Review> CreateReviewAsync(CreateReviewDTO dto);
         Task<Review?> UpdateReviewAsync(UpdateReviewDTO dto, int userId);
         Task<bool> DeleteReviewAsync(int reviewId, int userId);
+        Task<Review?> UploadReviewMediaAsync(int reviewId, int userId, List<IFormFile> files);
     }
 }
