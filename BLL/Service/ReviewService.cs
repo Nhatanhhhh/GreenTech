@@ -58,5 +58,9 @@ namespace BLL.Service
 
             return await _reviewRepository.DeleteReviewAsync(existing);
         }
+         public async Task<Review?> ToggleReviewStatusAsync(int id)
+        {
+            return await _reviewRepository.ToggleReviewStatusAsync(id);
+        }
     }
 }
