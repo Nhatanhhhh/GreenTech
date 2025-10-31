@@ -1,5 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using DAL.Context;
+using DAL.Models.Enum;
 using DAL.Repositories.Review.Interface;
 using Microsoft.EntityFrameworkCore;
 using ReviewModel = DAL.Models.Review;
@@ -39,14 +41,17 @@ namespace DAL.Repositories.Review
             _context.Reviews.Remove(review);
             return await _context.SaveChangesAsync() > 0;
         }
-        public async Task<Review?> ToggleReviewStatusAsync(int id)
+
+        public async Task<ReviewModel?> ToggleReviewStatusAsync(int id)
         {
             var review = await _context.Reviews.FirstOrDefaultAsync(r => r.Id == id);
-            if (review == null) return null;
+            if (review == null)
+                return null;
 
-            review.Status = review.Status == ReviewStatus.APPROVED
-                ? ReviewStatus.HIDDEN
-                : ReviewStatus.APPROVED;
+            review.Status =
+                review.Status == ReviewStatus.APPROVED
+                    ? ReviewStatus.HIDDEN
+                    : ReviewStatus.APPROVED;
 
             review.UpdatedAt = DateTime.Now;
 
