@@ -39,5 +39,21 @@ namespace DAL.Repositories.Review
             _context.Reviews.Remove(review);
             return await _context.SaveChangesAsync() > 0;
         }
+        public async Task<Review?> ToggleReviewStatusAsync(int id)
+        {
+            var review = await _context.Reviews.FirstOrDefaultAsync(r => r.Id == id);
+            if (review == null) return null;
+
+            review.Status = review.Status == ReviewStatus.APPROVED
+                ? ReviewStatus.HIDDEN
+                : ReviewStatus.APPROVED;
+
+            review.UpdatedAt = DateTime.Now;
+
+            _context.Reviews.Update(review);
+            await _context.SaveChangesAsync();
+
+            return review;
+        }
     }
 }
