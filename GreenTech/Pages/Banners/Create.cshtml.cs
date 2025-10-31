@@ -1,10 +1,10 @@
-using BLL.Service.Interface;
+using BLL.Service.Banner.Interface;
 using DAL.DTOs.Banner;
 using GreenTech.Filters;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Http;
 
 namespace GreenTech.Pages.Banners
 {
@@ -23,14 +23,17 @@ namespace GreenTech.Pages.Banners
         [BindProperty]
         public CreateBannerDTO Banner { get; set; } = new CreateBannerDTO();
 
-        public SelectList Positions { get; set; } = new SelectList(new List<SelectListItem>
-        {
-            new SelectListItem { Value = "HEADER", Text = "Header" },
-            new SelectListItem { Value = "HOME_SLIDER", Text = "Home Slider" },
-            new SelectListItem { Value = "SIDEBAR", Text = "Sidebar" },
-            new SelectListItem { Value = "FOOTER", Text = "Footer" },
-            new SelectListItem { Value = "POPUP", Text = "Popup" }
-        });
+        public SelectList Positions { get; set; } =
+            new SelectList(
+                new List<SelectListItem>
+                {
+                    new SelectListItem { Value = "HEADER", Text = "Header" },
+                    new SelectListItem { Value = "HOME_SLIDER", Text = "Home Slider" },
+                    new SelectListItem { Value = "SIDEBAR", Text = "Sidebar" },
+                    new SelectListItem { Value = "FOOTER", Text = "Footer" },
+                    new SelectListItem { Value = "POPUP", Text = "Popup" },
+                }
+            );
 
         public IActionResult OnGet()
         {
@@ -69,4 +72,3 @@ namespace GreenTech.Pages.Banners
         }
     }
 }
-

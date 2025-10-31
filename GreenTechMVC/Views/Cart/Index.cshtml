@@ -1,0 +1,417 @@
+@model DAL.DTOs.Cart.CartResponseDTO
+
+@{
+    ViewData["Title"] = "Giỏ hàng";
+}
+
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">Giỏ hàng của bạn</h1>
+
+        @if (Model.CartItems.Any())
+        {
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Cart Items -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h2 class="text-xl font-semibold text-gray-900">Sản phẩm trong giỏ hàng</h2>
+                        </div>
+
+                        <div class="divide-y divide-gray-200">
+                            @foreach (var item in Model.CartItems)
+                            {
+                                <div class="p-6 cart-item" data-cart-item-id="@item.Id">
+                                    <div class="flex items-center space-x-4">
+                                        <!-- Product Image -->
+                                        <div class="flex-shrink-0">
+                                            <img src="@item.ProductImage" alt="@item.ProductName"
+                                                class="w-20 h-20 object-cover rounded-lg">
+                                        </div>
+
+                                        <!-- Product Info -->
+                                        <div class="flex-1 min-w-0">
+                                            <h3 class="text-lg font-medium text-gray-900 truncate">
+                                                @item.ProductName
+                                            </h3>
+                                            <p class="text-sm text-gray-500">SKU: @item.ProductSku</p>
+                                            <p class="text-lg font-semibold text-green-600">
+                                                @item.UnitPrice.ToString("N0") ₫
+                                            </p>
+                                        </div>
+
+                                        <!-- Quantity Controls -->
+                                        <div class="flex items-center space-x-2">
+                                            <button type="button"
+                                                class="quantity-btn decrease-btn bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-3 rounded"
+                                                data-cart-item-id="@item.Id">
+                                                -
+                                            </button>
+                                            <input type="number"
+                                                class="quantity-input w-16 text-center border border-gray-300 rounded py-2"
+                                                value="@item.Quantity" min="1" data-cart-item-id="@item.Id">
+                                            <button type="button"
+                                                class="quantity-btn increase-btn bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-3 rounded"
+                                                data-cart-item-id="@item.Id">
+                                                +
+                                            </button>
+                                        </div>
+
+                                        <!-- Subtotal -->
+                                        <div class="text-right">
+                                            <p class="text-lg font-semibold text-gray-900 item-subtotal">
+                                                @item.Subtotal.ToString("N0") ₫
+                                            </p>
+                                        </div>
+
+                                        <!-- Remove Button -->
+                                        <div class="flex-shrink-0">
+                                            <button type="button"
+                                                class="remove-item-btn text-red-600 hover:text-red-800 font-medium"
+                                                data-cart-item-id="@item.Id">
+                                                Xóa
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Clear Cart Button -->
+                        <div class="px-6 py-4 border-t border-gray-200">
+                            <button type="button" class="clear-cart-btn text-red-600 hover:text-red-800 font-medium">
+                                Xóa toàn bộ giỏ hàng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Tóm tắt đơn hàng</h2>
+
+                        <div class="space-y-3 mb-6">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Tổng sản phẩm:</span>
+                                <span class="font-medium" id="total-items">@Model.TotalItems</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Tạm tính:</span>
+                                <span class="font-medium" id="subtotal">@Model.Subtotal.ToString("N0") ₫</span>
+                            </div>
+                            @if (Model.DiscountAmount > 0)
+                            {
+                                <div class="flex justify-between text-green-600">
+                                    <span>Giảm giá:</span>
+                                    <span>-@Model.DiscountAmount.ToString("N0") ₫</span>
+                                </div>
+                            }
+                            <hr class="border-gray-200">
+                            <div class="flex justify-between text-lg font-semibold">
+                                <span>Tổng cộng:</span>
+                                <span class="text-green-600" id="total">@Model.Total.ToString("N0") ₫</span>
+                            </div>
+                        </div>
+
+                        <button type="button" id="btnProceedCheckout"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200">
+                            Tiến hành thanh toán
+                        </button>
+
+                        <p class="text-sm text-gray-500 mt-4 text-center">
+                            Miễn phí vận chuyển cho đơn hàng từ 500.000 ₫
+                        </p>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Empty Cart -->
+            <div class="text-center py-16">
+                <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                    <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01">
+                        </path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-semibold text-gray-900 mb-4">Giỏ hàng trống</h2>
+                <p class="text-gray-600 mb-8">Bạn chưa có sản phẩm nào trong giỏ hàng</p>
+                <a href="@Url.Action("Index", "Products")"
+                    class="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200">
+                    Tiếp tục mua sắm
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Delete item modal -->
+    <div id="modalRemoveItem" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+            <h3 class="mb-2 text-lg font-semibold text-gray-900">Xóa sản phẩm</h3>
+            <p class="mb-6 text-gray-600">Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?</p>
+            <div class="flex justify-end gap-3">
+                <button type="button"
+                    class="btn-cancel-remove rounded border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-100">Hủy</button>
+                <button type="button"
+                    class="btn-confirm-remove rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700">Xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clear cart modal -->
+    <div id="modalClearCart" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+            <h3 class="mb-2 text-lg font-semibold text-gray-900">Xóa toàn bộ giỏ hàng</h3>
+            <p class="mb-6 text-gray-600">Bạn có chắc chắn muốn xóa toàn bộ sản phẩm trong giỏ hàng?</p>
+            <div class="flex justify-end gap-3">
+                <button type="button"
+                    class="btn-cancel-clear rounded border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-100">Hủy</button>
+                <button type="button" class="btn-confirm-clear rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700">Xóa
+                    tất cả</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            // Proceed to checkout: verify wallet balance first
+            $('#btnProceedCheckout').on('click', function () {
+                $.ajax({
+                    url: '@Url.Action("ProceedToCheckout", "Cart")',
+                    type: 'POST',
+                    success: function (response) {
+                        if (response.success) {
+                            if (response.nextUrl) {
+                                window.location.href = response.nextUrl;
+                            } else {
+                                showNotification(response.message || 'Đủ số dư, tiếp tục thanh toán', 'success');
+                            }
+                        } else if (response.needTopUp) {
+                            const topUpUrl = response.redirectUrl || '@Url.Action("TopUp", "Wallet")';
+                            window.location.href = topUpUrl;
+                        } else {
+                            showNotification(response.message || 'Không thể tiếp tục thanh toán', 'error');
+                        }
+                    },
+                    error: function () {
+                        showNotification('Có lỗi xảy ra khi kiểm tra số dư ví', 'error');
+                    }
+                });
+            });
+            // Realtime: update totals when receiving SignalR payload
+            window.onCartRealtimeUpdate = function (payload) {
+                if (!payload) return;
+                if (typeof payload.totalItems === 'number') {
+                    $('#total-items').text(payload.totalItems);
+                }
+                if (typeof payload.total === 'number') {
+                    var n = Number(payload.total || 0);
+                    $('#subtotal').text(n.toLocaleString() + ' ₫');
+                    $('#total').text(n.toLocaleString() + ' ₫');
+                }
+            };
+            // Quantity controls
+            $('.quantity-btn').click(function () {
+                const cartItemId = $(this).data('cart-item-id');
+                const isIncrease = $(this).hasClass('increase-btn');
+                const quantityInput = $(`input[data-cart-item-id="${cartItemId}"]`);
+                let currentQuantity = parseInt(quantityInput.val());
+
+                if (isIncrease) {
+                    currentQuantity++;
+                } else {
+                    if (currentQuantity > 1) {
+                        currentQuantity--;
+                    }
+                }
+
+                updateCartItem(cartItemId, currentQuantity);
+            });
+
+            // Quantity input change
+            $('.quantity-input').change(function () {
+                const cartItemId = $(this).data('cart-item-id');
+                const quantity = parseInt($(this).val());
+
+                if (quantity < 1) {
+                    $(this).val(1);
+                    return;
+                }
+
+                updateCartItem(cartItemId, quantity);
+            });
+
+            // Remove item (open modal)
+            let pendingRemoveCartItemId = null;
+            $('.remove-item-btn').click(function () {
+                pendingRemoveCartItemId = $(this).data('cart-item-id');
+                openModal('#modalRemoveItem');
+            });
+
+            // Clear cart (open modal)
+            $('.clear-cart-btn').click(function () {
+                openModal('#modalClearCart');
+            });
+
+            // Modal helpers
+            function openModal(selector) {
+                const $m = $(selector);
+                $m.removeClass('hidden');
+            }
+            function closeModal(selector) {
+                const $m = $(selector);
+                $m.addClass('hidden');
+            }
+
+            // Modal bindings
+            $(document).on('click', '.btn-cancel-remove', function () { closeModal('#modalRemoveItem'); });
+            $(document).on('click', '.btn-confirm-remove', function () {
+                if (pendingRemoveCartItemId != null) {
+                    removeCartItem(pendingRemoveCartItemId);
+                    pendingRemoveCartItemId = null;
+                }
+                closeModal('#modalRemoveItem');
+            });
+            $(document).on('click', '.btn-cancel-clear', function () { closeModal('#modalClearCart'); });
+            $(document).on('click', '.btn-confirm-clear', function () {
+                clearCart();
+                closeModal('#modalClearCart');
+            });
+
+            // Update cart item function
+            function updateCartItem(cartItemId, quantity) {
+                $.ajax({
+                    url: '@Url.Action("UpdateCartItem", "Cart")',
+                    type: 'POST',
+                    data: {
+                        cartItemId: cartItemId,
+                        quantity: quantity
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            // Update UI silently
+                            updateCartUI(response);
+                            // Update the specific row's quantity and subtotal if provided
+                            if (typeof response.itemQuantity === 'number') {
+                                const $input = $(`input[data-cart-item-id="${cartItemId}"]`);
+                                $input.val(response.itemQuantity);
+                            }
+                            if (typeof response.itemSubtotal === 'number') {
+                                const $row = $(`.cart-item[data-cart-item-id="${cartItemId}"]`);
+                                $row.find('.item-subtotal').text(response.itemSubtotal.toLocaleString() + ' ₫');
+                            }
+                        } else {
+                            showNotification(response.message, 'error');
+                        }
+                    },
+                    error: function () {
+                        showNotification('Có lỗi xảy ra khi cập nhật giỏ hàng', 'error');
+                    }
+                });
+            }
+
+            // Remove cart item function
+            function removeCartItem(cartItemId) {
+                $.ajax({
+                    url: '@Url.Action("RemoveCartItem", "Cart")',
+                    type: 'POST',
+                    data: {
+                        cartItemId: cartItemId
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            // Remove item from UI
+                            $(`.cart-item[data-cart-item-id="${cartItemId}"]`).fadeOut(300, function () {
+                                $(this).remove();
+                                updateCartUI(response);
+                            });
+                        } else {
+                            showNotification(response.message, 'error');
+                        }
+                    },
+                    error: function () {
+                        showNotification('Có lỗi xảy ra khi xóa sản phẩm', 'error');
+                    }
+                });
+            }
+
+            // Clear cart function
+            function clearCart() {
+                $.ajax({
+                    url: '@Url.Action("ClearCart", "Cart")',
+                    type: 'POST',
+                    success: function (response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            showNotification(response.message, 'error');
+                        }
+                    },
+                    error: function () {
+                        showNotification('Có lỗi xảy ra khi xóa giỏ hàng', 'error');
+                    }
+                });
+            }
+
+            // Update cart UI
+            function updateCartUI(response) {
+                $('#total-items').text(response.totalItems);
+                $('#subtotal').text(response.cartTotal.toLocaleString() + ' ₫');
+                $('#total').text(response.cartTotal.toLocaleString() + ' ₫');
+            }
+
+            // Realtime subscription hook (set in layout)
+            window.onCartRealtimeUpdate = function (payload) {
+                if (!payload) return;
+                // Update totals
+                if (typeof payload.totalItems === 'number') {
+                    $('#total-items').text(payload.totalItems);
+                }
+                if (typeof payload.total === 'number') {
+                    var n = Number(payload.total || 0);
+                    $('#subtotal').text(n.toLocaleString() + ' ₫');
+                    $('#total').text(n.toLocaleString() + ' ₫');
+                }
+                // Update specific row if provided
+                if (typeof payload.cartItemId === 'number') {
+                    const id = payload.cartItemId;
+                    if (typeof payload.itemQuantity === 'number') {
+                        const $input = $(`input[data-cart-item-id="${id}"]`);
+                        $input.val(payload.itemQuantity);
+                    }
+                    if (typeof payload.itemSubtotal === 'number') {
+                        const $row = $(`.cart-item[data-cart-item-id="${id}"]`);
+                        $row.find('.item-subtotal').text(Number(payload.itemSubtotal).toLocaleString() + ' ₫');
+                    }
+                }
+            };
+
+            // Show notification
+            function showNotification(message, type) {
+                const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+                const alertHtml = `
+                        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                            ${message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `;
+
+                // Remove existing alerts
+                $('.alert').remove();
+
+                // Add new alert
+                $('body').prepend(alertHtml);
+
+                // Auto remove after 3 seconds
+                setTimeout(function () {
+                    $('.alert').fadeOut();
+                }, 3000);
+            }
+        });
+    </script>
+}

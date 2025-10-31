@@ -1,4 +1,4 @@
-using BLL.Service.Interface;
+using BLL.Service.CouponTemplate.Interface;
 using DAL.DTOs.CouponTemplate;
 using GreenTech.Filters;
 using Microsoft.AspNetCore.Mvc;
@@ -16,8 +16,10 @@ namespace GreenTech.Pages.CouponTemplates
             _couponTemplateService = couponTemplateService;
         }
 
-        public IEnumerable<CouponTemplateDTO> Templates { get; set; } = new List<CouponTemplateDTO>();
-        public CouponTemplateQueryParams QueryParams { get; set; } = new CouponTemplateQueryParams();
+        public IEnumerable<CouponTemplateDTO> Templates { get; set; } =
+            new List<CouponTemplateDTO>();
+        public CouponTemplateQueryParams QueryParams { get; set; } =
+            new CouponTemplateQueryParams();
 
         public async Task OnGetAsync(CouponTemplateQueryParams queryParams)
         {

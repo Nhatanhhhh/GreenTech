@@ -1,4 +1,4 @@
-using BLL.Service.Interface;
+using BLL.Service.Auth.Interface;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 

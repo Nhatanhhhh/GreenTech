@@ -1,4 +1,4 @@
-using BLL.Service.Interface;
+using BLL.Service.Banner.Interface;
 using DAL.DTOs.Banner;
 using GreenTech.Filters;
 using Microsoft.AspNetCore.Mvc;

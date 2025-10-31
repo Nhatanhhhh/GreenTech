@@ -1,4 +1,4 @@
-using BLL.Service.Interface;
+using BLL.Service.Category.Interface;
 using DAL.DTOs.Category;
 using GreenTech.Filters;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +20,8 @@ namespace GreenTech.Pages.Categories
         [BindProperty]
         public CreateCategoryDTO Category { get; set; } = new CreateCategoryDTO();
 
-        public SelectList ParentCategories { get; set; } = new SelectList(new List<SelectListItem>());
+        public SelectList ParentCategories { get; set; } =
+            new SelectList(new List<SelectListItem>());
 
         public async Task<IActionResult> OnGetAsync()
         {
@@ -56,4 +57,3 @@ namespace GreenTech.Pages.Categories
         }
     }
 }
-

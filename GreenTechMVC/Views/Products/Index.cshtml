@@ -110,7 +110,7 @@
                                     <p class="mb-2 text-gray-600 line-clamp-2">@product.ShortDescription</p>
                                     <div class="flex items-center justify-between">
                                         <span class="text-2xl font-bold text-green-600">@product.SellPrice.ToString("N0") đ</span>
-                                        <button class="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700">
+                                        <button type="button" class="js-add-to-cart rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700" data-product-id="@product.Id" onclick="event.preventDefault();">
                                             <i class="fas fa-cart-plus"></i>
                                         </button>
                                     </div>
@@ -147,3 +147,37 @@
 </div>
 
 
+@section Scripts {
+    <script>
+        // Wire up list page Add to Cart with login redirect handling
+        function postAddToCart(productId) {
+            return $.ajax({
+                url: '@Url.Action("AddToCart", "Cart")',
+                type: 'POST',
+                data: {
+                    productId: String(productId),
+                    quantity: 1
+                }
+            });
+        }
+
+        $(document).on('click', '.js-add-to-cart', function (e) {
+            e.preventDefault();
+            var productId = $(this).data('product-id');
+            if (!productId) return;
+            postAddToCart(productId)
+                .done(function (res) {
+                    if (res && res.success) {
+                        if (window.updateCartCount) window.updateCartCount();
+                    } else if (res) {
+                        if (res.message && res.message.toLowerCase().indexOf('đăng nhập') !== -1) {
+                            window.location.href = '@Url.Action("Login", "Auth")';
+                        } else if (res.message) {
+                            alert(res.message);
+                        }
+                    }
+                })
+                .fail(function () { /* ignore */ });
+        });
+    </script>
+}

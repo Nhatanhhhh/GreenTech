@@ -65,7 +65,7 @@
                 }
 
                 <div class="mb-6 flex items-center gap-4">
-                    <button class="w-full rounded bg-green-600 px-6 py-3 text-white hover:bg-green-700">
+                    <button type="button" id="btnAddToCart" data-product-id="@product.Id" class="w-full rounded bg-green-600 px-6 py-3 text-white hover:bg-green-700">
                         <i class="fas fa-cart-plus mr-2"></i>Thêm vào giỏ hàng
                     </button>
                 </div>
@@ -113,4 +113,42 @@ else
             Quay lại danh sách sản phẩm
         </a>
     </div>
+}
+
+@section Scripts {
+    <script>
+        (function(){
+            function postAddToCart(productId, quantity) {
+                return $.ajax({
+                    url: '@Url.Action("AddToCart", "Cart")',
+                    type: 'POST',
+                    data: {
+                        productId: String(productId),
+                        quantity: quantity || 1
+                    }
+                });
+            }
+
+            var $btn = $('#btnAddToCart');
+            if ($btn.length) {
+                $btn.on('click', function(){
+                    var productId = $(this).data('product-id');
+                    if (!productId) return;
+                    postAddToCart(productId, 1)
+                        .done(function (res) {
+                            if (res && res.success) {
+                                if (window.updateCartCount) window.updateCartCount();
+                            } else if (res) {
+                                if (res.message && res.message.toLowerCase().indexOf('đăng nhập') !== -1) {
+                                    window.location.href = '@Url.Action("Login", "Auth")';
+                                } else if (res.message) {
+                                    alert(res.message);
+                                }
+                            }
+                        })
+                        .fail(function(){ /* ignore */ });
+                });
+            }
+        })();
+    </script>
 }

@@ -1,4 +1,4 @@
-using BLL.Service.Interface;
+using BLL.Service.Auth.Interface;
 using DAL.DTOs.User;
 using DAL.Models.Enum;
 using Microsoft.AspNetCore.Mvc;
@@ -42,11 +42,12 @@ public class AuthController : Controller
                     var userEmail = HttpContext.Session.GetString("UserEmail") ?? "";
                     var userName = HttpContext.Session.GetString("UserName") ?? "";
                     var userRoles = HttpContext.Session.GetString("UserRoles") ?? "";
-                    
+
                     // Build admin app URL with session data
                     var adminAppUrl = "https://localhost:7142/Auth/SyncSession";
-                    var redirectUrl = $"{adminAppUrl}?userId={userId}&email={Uri.EscapeDataString(userEmail)}&userName={Uri.EscapeDataString(userName)}&roles={Uri.EscapeDataString(userRoles)}";
-                    
+                    var redirectUrl =
+                        $"{adminAppUrl}?userId={userId}&email={Uri.EscapeDataString(userEmail)}&userName={Uri.EscapeDataString(userName)}&roles={Uri.EscapeDataString(userRoles)}";
+
                     return Redirect(redirectUrl);
                 }
                 else

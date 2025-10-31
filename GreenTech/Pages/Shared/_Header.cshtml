@@ -191,3 +191,69 @@
         </div>
     </div>
 </header>
+<script>
+    (function () {
+        const notificationButton = document.getElementById('notification-button');
+        const notificationDropdown = document.getElementById('notification-dropdown');
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userDropdown = document.getElementById('user-dropdown');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarClose = document.getElementById('sidebar-close');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+        function closeAllDropdowns() {
+            if (notificationDropdown) notificationDropdown.classList.add('hidden');
+            if (userDropdown) userDropdown.classList.add('hidden');
+        }
+
+        if (notificationButton && notificationDropdown) {
+            notificationButton.addEventListener('click', function (e) {
+                e.stopPropagation();
+                notificationDropdown.classList.toggle('hidden');
+                if (userDropdown) userDropdown.classList.add('hidden');
+            });
+        }
+
+        if (userMenuButton && userDropdown) {
+            userMenuButton.addEventListener('click', function (e) {
+                e.stopPropagation();
+                userDropdown.classList.toggle('hidden');
+                if (notificationDropdown) notificationDropdown.classList.add('hidden');
+            });
+        }
+
+        document.addEventListener('click', function () {
+            closeAllDropdowns();
+        });
+
+        // Sidebar open/close for mobile
+        function openSidebar() {
+            if (!sidebar) return;
+            sidebar.classList.remove('-translate-x-full');
+            if (sidebarOverlay) sidebarOverlay.classList.remove('hidden');
+        }
+        function closeSidebar() {
+            if (!sidebar) return;
+            sidebar.classList.add('-translate-x-full');
+            if (sidebarOverlay) sidebarOverlay.classList.add('hidden');
+        }
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function (e) {
+                e.preventDefault();
+                openSidebar();
+            });
+        }
+        if (sidebarClose) {
+            sidebarClose.addEventListener('click', function (e) {
+                e.preventDefault();
+                closeSidebar();
+            });
+        }
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', function () {
+                closeSidebar();
+            });
+        }
+    })();
+</script>

@@ -1,4 +1,5 @@
-using BLL.Service.Interface;
+using BLL.Service.Blog.Interface;
+using BLL.Service.Category.Interface;
 using DAL.DTOs.Blog;
 using GreenTech.Filters;
 using Microsoft.AspNetCore.Http;
@@ -15,7 +16,11 @@ namespace GreenTech.Pages.Blogs
         private readonly ICategoryService _categoryService;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public CreateModel(IBlogService blogService, ICategoryService categoryService, IHttpContextAccessor httpContextAccessor)
+        public CreateModel(
+            IBlogService blogService,
+            ICategoryService categoryService,
+            IHttpContextAccessor httpContextAccessor
+        )
         {
             _blogService = blogService;
             _categoryService = categoryService;
@@ -73,4 +78,3 @@ namespace GreenTech.Pages.Blogs
         }
     }
 }
-

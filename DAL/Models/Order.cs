@@ -1,6 +1,6 @@
-﻿using DAL.Models.Enum;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using DAL.Models.Enum;
 
 namespace DAL.Models
 {
