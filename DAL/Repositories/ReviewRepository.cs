@@ -39,5 +39,14 @@ namespace DAL.Repositories
             _context.Reviews.Remove(review);
             return await _context.SaveChangesAsync() > 0;
         }
+        public async Task<IEnumerable<Review>> GetAllReviewsAsync()
+        {
+            return await _context.Reviews
+                .Include(r => r.Product)
+                .Include(r => r.User)
+                .Include(r => r.OrderItem)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+        }
     }
 }
