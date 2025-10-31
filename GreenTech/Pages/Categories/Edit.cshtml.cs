@@ -1,4 +1,4 @@
-using BLL.Service.Interface;
+using BLL.Service.Category.Interface;
 using DAL.DTOs.Category;
 using GreenTech.Filters;
 using Microsoft.AspNetCore.Mvc;
@@ -24,7 +24,8 @@ namespace GreenTech.Pages.Categories
         public UpdateCategoryDTO Category { get; set; } = new UpdateCategoryDTO();
 
         public CategoryDTO? CategoryDetails { get; set; }
-        public SelectList ParentCategories { get; set; } = new SelectList(new List<SelectListItem>());
+        public SelectList ParentCategories { get; set; } =
+            new SelectList(new List<SelectListItem>());
 
         public async Task<IActionResult> OnGetAsync()
         {
@@ -42,7 +43,7 @@ namespace GreenTech.Pages.Categories
                 Image = CategoryDetails.Image,
                 Description = CategoryDetails.Description,
                 IsActive = CategoryDetails.IsActive,
-                SortOrder = CategoryDetails.SortOrder
+                SortOrder = CategoryDetails.SortOrder,
             };
 
             await LoadParentCategories();
@@ -86,4 +87,3 @@ namespace GreenTech.Pages.Categories
         }
     }
 }
-

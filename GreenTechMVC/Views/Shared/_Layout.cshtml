@@ -11,6 +11,11 @@
         integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
 
+    <!-- jQuery (required by pages using $.ajax and $(document).ready) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+            crossorigin="anonymous"></script>
+
     <!-- Flowbite CSS -->
     <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
 
@@ -32,6 +37,34 @@
     @await Html.PartialAsync("_Footer")
 
     <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script>
+        // Global SignalR connection for cart updates
+        (function(){
+            if (!window.signalR) return;
+            try {
+                var connection = new signalR.HubConnectionBuilder()
+                    .withUrl('/hubs/cart')
+                    .withAutomaticReconnect()
+                    .build();
+
+                connection.on('CartUpdated', function(payload){
+                    // Filter by current user if available
+                    if (payload && typeof payload.userId === 'number'){
+                        if (typeof window.CURRENT_USER_ID === 'number' && window.CURRENT_USER_ID !== payload.userId) {
+                            return;
+                        }
+                    }
+                    if (window.updateCartCount) window.updateCartCount();
+                    if (window.onCartRealtimeUpdate) window.onCartRealtimeUpdate(payload);
+                });
+
+                connection.start().catch(function(){ /* ignore */ });
+                window.__cartHubConnection = connection;
+            } catch(e) { /* ignore */ }
+        })();
+    </script>
 
     @RenderSection("Scripts", required: false)
 </body>

@@ -1,4 +1,4 @@
-using BLL.Service.Interface;
+using BLL.Service.CouponTemplate.Interface;
 using DAL.DTOs.CouponTemplate;
 using GreenTech.Filters;
 using Microsoft.AspNetCore.Mvc;
@@ -51,4 +51,3 @@ namespace GreenTech.Pages.CouponTemplates
         }
     }
 }
-

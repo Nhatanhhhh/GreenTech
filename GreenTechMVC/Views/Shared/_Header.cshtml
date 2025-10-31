@@ -4,6 +4,7 @@
 @{
     var isAuthenticated = HttpContextAccessor.HttpContext?.Session.GetString("IsAuthenticated") == "true";
     var userName = HttpContextAccessor.HttpContext?.Session.GetString("UserName") ?? "Khách";
+    var currentUserId = HttpContextAccessor.HttpContext?.Session.GetInt32("UserId");
 }
 <header class="w-auto bg-white">
     <!-- Top Contact Bar -->
@@ -68,25 +69,46 @@
         <div class="flex items-center justify-between">
             <!-- Cart Icon -->
             <div class="flex items-center">
-                <a href="#" class="relative text-white hover:text-green-300">
+                <a asp-controller="Cart" asp-action="Index" class="relative text-white hover:text-green-300">
                     <i class="fas fa-shopping-cart text-xl"></i>
-                    <span
-                        class="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full border border-white bg-[#219653] text-white text-[10px]">
-                        9+
+                    <span id="cart-count-badge"
+                        class="absolute -right-2 -top-2 hidden h-5 w-5 items-center justify-center rounded-full border border-white bg-[#219653] text-white text-[10px]">
                     </span>
                 </a>
+            </div>
+
+            <!-- Wallet Dropdown -->
+            <div class="ml-6 relative" id="wallet-menu-root">
+                @if (isAuthenticated)
+                {
+                    <button type="button" id="wallet-button" class="flex items-center gap-2 text-white hover:text-green-300">
+                        <i class="fa-solid fa-wallet"></i>
+                        <span id="wallet-balance-text">-- ₫</span>
+                        <i class="fa-solid fa-chevron-down text-xs opacity-80"></i>
+                    </button>
+                    <div id="wallet-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border z-50">
+                        <div class="px-4 py-3 border-b">
+                            <p class="text-sm text-gray-600">Số dư ví</p>
+                            <p id="wallet-balance-large" class="text-lg font-semibold text-green-700">-- ₫</p>
+                        </div>
+                        <div class="py-2">
+                            <a asp-controller="Wallet" asp-action="TopUp" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Nạp tiền</a>
+                            <a asp-controller="Wallet" asp-action="Index" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Lịch sử ví</a>
+                        </div>
+                    </div>
+                }
             </div>
 
             <!-- Sign In/ Sign Up -->
             <div class="ml-8 flex items-center gap-3">
                 @if (isAuthenticated)
                 {
-                    // --- Signed in ---
-                    <a asp-controller="Profile" asp-action="Index"
-                        class="text-white text-sm font-['Roboto_Condensed'] hover:text-green-300 transition-colors duration-200">
-                        <i class="fas fa-user mr-1"></i>
-                        Xin chào, @userName
-                    </a>
+                    <div class="relative" id="user-menu-root">
+                        <a asp-controller="Profile" asp-action="Index" class="text-white text-sm font-['Roboto_Condensed'] hover:text-green-300 transition-colors duration-200">
+                            <i class="fas fa-user mr-1"></i>
+                            Xin chào, @userName
+                        </a>
+                    </div>
                     <span class="text-white opacity-50">|</span>
 
                     <form asp-controller="Auth" asp-action="Logout" method="post" class="inline">
@@ -117,3 +139,59 @@
         </div>
     </div>
 </header>
+<script>
+    // Update cart count badge with distinct product count (jQuery AJAX)
+    function updateCartCount() {
+        $.ajax({
+            url: '@Url.Action("GetCartCount", "Cart")',
+            type: 'GET',
+            success: function (response) {
+                var badge = document.getElementById('cart-count-badge');
+                if (!badge) return;
+                var count = response && typeof response.count === 'number' ? response.count : 0;
+                if (count > 0) {
+                    badge.textContent = count > 99 ? '99+' : String(count);
+                    badge.classList.remove('hidden');
+                    badge.classList.add('flex');
+                } else {
+                    badge.classList.add('hidden');
+                    badge.classList.remove('flex');
+                    badge.textContent = '';
+                }
+            }
+        });
+    }
+
+    // Expose globally so other pages can trigger a refresh after add-to-cart
+    window.updateCartCount = updateCartCount;
+
+    // Initialize on load
+    $(document).ready(function () {
+        updateCartCount();
+        // Expose current user id for SignalR payload filtering
+        @if (currentUserId.HasValue)
+        {
+            @:window.CURRENT_USER_ID = @currentUserId.Value;
+        }
+
+        // Load wallet balance
+        $.get('@Url.Action("GetBalance","Wallet")', function(resp){
+            if (resp && resp.success){
+                var n = Number(resp.balance || 0);
+                $('#wallet-balance-text').text(n.toLocaleString() + ' ₫');
+                $('#wallet-balance-large').text(n.toLocaleString() + ' ₫');
+            }
+        });
+
+        // Toggle wallet dropdown
+        $(document).on('click', '#wallet-button', function(e){
+            e.stopPropagation();
+            $('#wallet-dropdown').toggleClass('hidden');
+            $('#user-dropdown').addClass('hidden');
+        });
+        // Close when clicking outside (wallet only)
+        $(document).on('click', function(){
+            $('#wallet-dropdown').addClass('hidden');
+        });
+    });
+    </script>

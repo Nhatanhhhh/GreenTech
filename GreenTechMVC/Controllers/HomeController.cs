@@ -1,4 +1,7 @@
-using BLL.Service.Interface;
+using BLL.Service.Banner.Interface;
+using BLL.Service.Blog.Interface;
+using BLL.Service.Category.Interface;
+using BLL.Service.Product.Interface;
 using DAL.DTOs.Banner;
 using DAL.DTOs.Blog;
 using DAL.DTOs.Category;
@@ -20,7 +23,8 @@ namespace GreenTechMVC.Controllers
             IBannerService bannerService,
             IProductService productService,
             ICategoryService categoryService,
-            IBlogService blogService)
+            IBlogService blogService
+        )
         {
             _logger = logger;
             _bannerService = bannerService;
@@ -57,7 +61,7 @@ namespace GreenTechMVC.Controllers
                 IsActive = true,
                 IsFeatured = true,
                 PageNumber = 1,
-                PageSize = 8
+                PageSize = 8,
             };
             var products = await _productService.GetProductsAsync(queryParams);
             return products.ToList();
@@ -70,7 +74,7 @@ namespace GreenTechMVC.Controllers
                 IsPublished = true,
                 IsFeatured = true,
                 PageNumber = 1,
-                PageSize = 3
+                PageSize = 3,
             };
             var blogs = await _blogService.GetBlogsAsync(queryParams);
             return blogs.ToList();

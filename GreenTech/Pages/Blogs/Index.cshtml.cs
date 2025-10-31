@@ -1,4 +1,4 @@
-using BLL.Service.Interface;
+using BLL.Service.Blog.Interface;
 using DAL.DTOs.Blog;
 using GreenTech.Filters;
 using Microsoft.AspNetCore.Mvc;
@@ -27,10 +27,9 @@ namespace GreenTech.Pages.Blogs
         {
             QueryParams.PageNumber = pageNumber;
             QueryParams.PageSize = 10;
-            
+
             Blogs = await _blogService.GetBlogsAsync(QueryParams);
             TotalBlogs = await _blogService.GetBlogsCountAsync(QueryParams);
         }
     }
 }
-

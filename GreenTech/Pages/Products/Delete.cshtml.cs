@@ -1,4 +1,4 @@
-using BLL.Service.Interface;
+using BLL.Service.Product.Interface;
 using GreenTech.Filters;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -52,4 +52,3 @@ namespace GreenTech.Pages.Products
         }
     }
 }
-

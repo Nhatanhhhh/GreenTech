@@ -1,4 +1,4 @@
-using BLL.Service.Interface;
+using BLL.Service.CouponTemplate.Interface;
 using DAL.DTOs.CouponTemplate;
 using DAL.Models.Enum;
 using GreenTech.Filters;
@@ -21,15 +21,16 @@ namespace GreenTech.Pages.CouponTemplates
         [BindProperty]
         public CreateCouponTemplateDTO Template { get; set; } = new CreateCouponTemplateDTO();
 
-        public SelectList DiscountTypes { get; set; } = new SelectList(
-            new List<SelectListItem>
-            {
-                new SelectListItem { Value = "PERCENT", Text = "Phần trăm (%)" },
-                new SelectListItem { Value = "FIXED_AMOUNT", Text = "Số tiền cố định" },
-            },
-            "Value",
-            "Text"
-        );
+        public SelectList DiscountTypes { get; set; } =
+            new SelectList(
+                new List<SelectListItem>
+                {
+                    new SelectListItem { Value = "PERCENT", Text = "Phần trăm (%)" },
+                    new SelectListItem { Value = "FIXED_AMOUNT", Text = "Số tiền cố định" },
+                },
+                "Value",
+                "Text"
+            );
 
         public IActionResult OnGet()
         {

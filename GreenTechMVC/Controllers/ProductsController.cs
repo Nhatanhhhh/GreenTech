@@ -1,6 +1,7 @@
-using BLL.Service.Interface;
-using DAL.DTOs.Product;
+using BLL.Service.Category.Interface;
+using BLL.Service.Product.Interface;
 using DAL.DTOs.Category;
+using DAL.DTOs.Product;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GreenTechMVC.Controllers
@@ -14,7 +15,8 @@ namespace GreenTechMVC.Controllers
         public ProductsController(
             IProductService productService,
             ICategoryService categoryService,
-            ILogger<ProductsController> logger)
+            ILogger<ProductsController> logger
+        )
         {
             _productService = productService;
             _categoryService = categoryService;
@@ -29,7 +31,8 @@ namespace GreenTechMVC.Controllers
             string sortBy = "name",
             string sortOrder = "asc",
             int page = 1,
-            int pageSize = 12)
+            int pageSize = 12
+        )
         {
             var queryParams = new ProductQueryParamsDTO
             {
@@ -39,7 +42,7 @@ namespace GreenTechMVC.Controllers
                 SortBy = sortBy,
                 SortOrder = sortOrder,
                 PageNumber = page,
-                PageSize = pageSize
+                PageSize = pageSize,
             };
 
             var products = await _productService.GetProductsAsync(queryParams);
@@ -73,7 +76,7 @@ namespace GreenTechMVC.Controllers
                 CategoryId = product.CategoryId,
                 IsActive = true,
                 PageNumber = 1,
-                PageSize = 4
+                PageSize = 4,
             };
             var relatedProducts = await _productService.GetProductsAsync(queryParams);
 
@@ -95,5 +98,3 @@ namespace GreenTechMVC.Controllers
         }
     }
 }
-
-

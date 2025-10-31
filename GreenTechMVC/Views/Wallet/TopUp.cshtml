@@ -1,0 +1,53 @@
+@model DAL.DTOs.Wallet.TopUpRequestDTO
+
+@{
+    ViewData["Title"] = "Nạp tiền vào ví";
+}
+
+<div class="max-w-2xl mx-auto mt-8 bg-white rounded-lg shadow p-6">
+    <h1 class="text-2xl font-semibold text-gray-900 mb-6">Nạp tiền vào ví</h1>
+
+    <form asp-action="TopUp" asp-controller="Wallet" method="post" class="space-y-5">
+        @Html.AntiForgeryToken()
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Số tiền (VND)</label>
+            <input asp-for="Amount" type="number" min="10000" step="1000" class="w-full border rounded-lg px-3 py-2" />
+            <span asp-validation-for="Amount" class="text-sm text-red-600"></span>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Cổng thanh toán</label>
+            <select asp-for="Gateway" class="w-full border rounded-lg px-3 py-2">
+                @if (ViewBag.AvailableGateways != null)
+                {
+                    @foreach (var gateway in ViewBag.AvailableGateways)
+                    {
+                        <option value="@gateway.Value">@gateway.DisplayName</option>
+                    }
+                }
+                else
+                {
+                    <option value="VNPAY">VNPay</option>
+                    <option value="MOMO">MoMo</option>
+                }
+            </select>
+            <span asp-validation-for="Gateway" class="text-sm text-red-600"></span>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
+            <input asp-for="Description" class="w-full border rounded-lg px-3 py-2" />
+        </div>
+
+        <div class="pt-2">
+            <button type="submit"
+                class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg">Tiếp tục thanh
+                toán</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

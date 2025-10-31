@@ -1,11 +1,14 @@
 ﻿using DAL.DTOs.Banner;
 using DAL.DTOs.Blog;
+using DAL.DTOs.Cart;
 using DAL.DTOs.Category;
 using DAL.DTOs.CouponTemplate;
 using DAL.DTOs.Product;
 using DAL.DTOs.ProductImage;
+using DAL.DTOs.Review;
 using DAL.DTOs.Supplier;
 using DAL.DTOs.User;
+using DAL.DTOs.Wallet;
 using DAL.Models;
 using DAL.Models.Enum;
 
@@ -34,7 +37,9 @@ namespace DAL.Utils.AutoMapper
                 Points = user.Points,
                 WalletBalance = user.WalletBalance,
                 Status = user.Status.ToString(),
-                Roles = user.UserRoles?.Select(ur => ur.Role.RoleName.ToString()).ToList() ?? new List<string>()
+                Roles =
+                    user.UserRoles?.Select(ur => ur.Role.RoleName.ToString()).ToList()
+                    ?? new List<string>(),
             };
         }
 
@@ -57,7 +62,7 @@ namespace DAL.Utils.AutoMapper
                 SpecificAddress = registerDTO.SpecificAddress,
                 Status = UserStatus.ACTIVE,
                 CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
+                UpdatedAt = DateTime.Now,
             };
         }
 
@@ -69,11 +74,7 @@ namespace DAL.Utils.AutoMapper
         /// <returns>UserRole entity</returns>
         public static UserRole ToUserRole(int userId, int roleId)
         {
-            return new UserRole
-            {
-                UserId = userId,
-                RoleId = roleId
-            };
+            return new UserRole { UserId = userId, RoleId = roleId };
         }
 
         /// <summary>
@@ -89,7 +90,7 @@ namespace DAL.Utils.AutoMapper
                 Subtotal = 0,
                 DiscountAmount = 0,
                 CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
+                UpdatedAt = DateTime.Now,
             };
         }
 
@@ -123,7 +124,7 @@ namespace DAL.Utils.AutoMapper
                 TotalUsageLimit = template.TotalUsageLimit,
                 IsActive = template.IsActive,
                 ValidDays = template.ValidDays,
-                CreatedAt = template.CreatedAt
+                CreatedAt = template.CreatedAt,
             };
         }
 
@@ -144,7 +145,7 @@ namespace DAL.Utils.AutoMapper
                 TotalUsageLimit = createDto.TotalUsageLimit,
                 IsActive = createDto.IsActive,
                 ValidDays = createDto.ValidDays,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.Now,
             };
         }
 
@@ -166,13 +167,14 @@ namespace DAL.Utils.AutoMapper
                 TotalUsageLimit = dto.TotalUsageLimit,
                 IsActive = dto.IsActive,
                 ValidDays = dto.ValidDays,
-                CreatedAt = dto.CreatedAt
+                CreatedAt = dto.CreatedAt,
             };
         }
 
         public static CategoryDTO ToCategoryDTO(Category category)
         {
-            if (category == null) return null;
+            if (category == null)
+                return null;
 
             return new CategoryDTO
             {
@@ -188,13 +190,14 @@ namespace DAL.Utils.AutoMapper
                 UpdatedAt = category.UpdatedAt,
                 ParentCategoryName = category.ParentCategory?.Name,
                 SubCategoriesCount = category.SubCategories?.Count ?? 0,
-                ProductsCount = category.Products?.Count ?? 0
+                ProductsCount = category.Products?.Count ?? 0,
             };
         }
 
         public static Category ToCategory(CreateCategoryDTO createDto)
         {
-            if (createDto == null) return null;
+            if (createDto == null)
+                return null;
 
             return new Category
             {
@@ -206,13 +209,14 @@ namespace DAL.Utils.AutoMapper
                 IsActive = createDto.IsActive,
                 SortOrder = createDto.SortOrder,
                 CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
+                UpdatedAt = DateTime.Now,
             };
         }
 
         public static Category ToCategory(UpdateCategoryDTO updateDto)
         {
-            if (updateDto == null) return null;
+            if (updateDto == null)
+                return null;
 
             return new Category
             {
@@ -223,13 +227,14 @@ namespace DAL.Utils.AutoMapper
                 Description = updateDto.Description,
                 IsActive = updateDto.IsActive,
                 SortOrder = updateDto.SortOrder,
-                UpdatedAt = DateTime.Now
+                UpdatedAt = DateTime.Now,
             };
         }
 
         public static CategoryTreeDTO ToCategoryTreeDTO(Category category)
         {
-            if (category == null) return null;
+            if (category == null)
+                return null;
 
             return new CategoryTreeDTO
             {
@@ -240,11 +245,12 @@ namespace DAL.Utils.AutoMapper
                 IsActive = category.IsActive,
                 SortOrder = category.SortOrder,
                 ProductsCount = category.Products?.Count ?? 0,
-                SubCategories = category.SubCategories?
-                    .OrderBy(c => c.SortOrder)
-                    .ThenBy(c => c.Name)
-                    .Select(ToCategoryTreeDTO)
-                    .ToList() ?? new List<CategoryTreeDTO>()
+                SubCategories =
+                    category
+                        .SubCategories?.OrderBy(c => c.SortOrder)
+                        .ThenBy(c => c.Name)
+                        .Select(ToCategoryTreeDTO)
+                        .ToList() ?? new List<CategoryTreeDTO>(),
             };
         }
 
@@ -253,7 +259,8 @@ namespace DAL.Utils.AutoMapper
         /// </summary>
         public static BannerDTO ToBannerDTO(Banner banner)
         {
-            if (banner == null) return null;
+            if (banner == null)
+                return null;
 
             return new BannerDTO
             {
@@ -289,7 +296,8 @@ namespace DAL.Utils.AutoMapper
         /// </summary>
         public static Banner ToBanner(CreateBannerDTO createDto)
         {
-            if (createDto == null) return null;
+            if (createDto == null)
+                return null;
 
             if (!Enum.TryParse<BannerPosition>(createDto.Position, true, out var bannerPosition))
             {
@@ -317,7 +325,8 @@ namespace DAL.Utils.AutoMapper
         /// <param name="existingBanner">The entity to update</param>
         public static void ApplyUpdatesToBanner(UpdateBannerDTO updateDto, Banner existingBanner)
         {
-            if (updateDto == null || existingBanner == null) return;
+            if (updateDto == null || existingBanner == null)
+                return;
 
             if (!Enum.TryParse<BannerPosition>(updateDto.Position, true, out var bannerPosition))
             {
@@ -340,7 +349,9 @@ namespace DAL.Utils.AutoMapper
             return categories?.Select(ToCategoryDTO) ?? Enumerable.Empty<CategoryDTO>();
         }
 
-        public static IEnumerable<CategoryTreeDTO> ToCategoryTreeDTOs(IEnumerable<Category> categories)
+        public static IEnumerable<CategoryTreeDTO> ToCategoryTreeDTOs(
+            IEnumerable<Category> categories
+        )
         {
             return categories?.Select(ToCategoryTreeDTO) ?? Enumerable.Empty<CategoryTreeDTO>();
         }
@@ -350,7 +361,8 @@ namespace DAL.Utils.AutoMapper
         /// </summary>
         public static ProductResponseDTO ToProductResponseDTO(Product product)
         {
-            if (product == null) return null;
+            if (product == null)
+                return null;
 
             return new ProductResponseDTO
             {
@@ -376,14 +388,18 @@ namespace DAL.Utils.AutoMapper
                 PointsEarned = product.PointsEarned,
                 IsFeatured = product.IsFeatured,
                 IsActive = product.IsActive,
-                ProductImages = product.ProductImages?.Select(ToProductImageDTO).ToList() ?? new List<ProductImageDTO>()
+                ProductImages =
+                    product.ProductImages?.Select(ToProductImageDTO).ToList()
+                    ?? new List<ProductImageDTO>(),
             };
         }
 
         /// <summary>
         /// Converts an IEnumerable of Product entities to a list of ProductResponseDTOs.
         /// </summary>
-        public static IEnumerable<ProductResponseDTO> ToProductResponseDTOs(IEnumerable<Product> products)
+        public static IEnumerable<ProductResponseDTO> ToProductResponseDTOs(
+            IEnumerable<Product> products
+        )
         {
             return products?.Select(ToProductResponseDTO) ?? Enumerable.Empty<ProductResponseDTO>();
         }
@@ -393,7 +409,8 @@ namespace DAL.Utils.AutoMapper
         /// </summary>
         public static Product ToProduct(CreateProductDTO createDto)
         {
-            if (createDto == null) return null;
+            if (createDto == null)
+                return null;
 
             return new Product
             {
@@ -415,16 +432,20 @@ namespace DAL.Utils.AutoMapper
                 IsFeatured = createDto.IsFeatured,
                 IsActive = createDto.IsActive,
                 CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.UtcNow,
             };
         }
 
         /// <summary>
         /// Applies updates from an UpdateProductDTO to an existing Product entity.
         /// </summary>
-        public static void ApplyUpdatesToProduct(UpdateProductDTO updateDto, Product existingProduct)
+        public static void ApplyUpdatesToProduct(
+            UpdateProductDTO updateDto,
+            Product existingProduct
+        )
         {
-            if (updateDto == null || existingProduct == null) return;
+            if (updateDto == null || existingProduct == null)
+                return;
 
             existingProduct.Name = updateDto.Name;
             existingProduct.Description = updateDto.Description;
@@ -450,14 +471,15 @@ namespace DAL.Utils.AutoMapper
         /// </summary>
         public static ProductImageDTO ToProductImageDTO(ProductImage image)
         {
-            if (image == null) return null;
+            if (image == null)
+                return null;
 
             return new ProductImageDTO
             {
                 Id = image.Id,
                 ImageUrl = image.ImageUrl,
                 AltText = image.AltText,
-                IsPrimary = image.IsPrimary
+                IsPrimary = image.IsPrimary,
             };
         }
 
@@ -466,7 +488,8 @@ namespace DAL.Utils.AutoMapper
         /// </summary>
         public static SupplierDTO ToSupplierDTO(Supplier supplier)
         {
-            if (supplier == null) return null;
+            if (supplier == null)
+                return null;
 
             return new SupplierDTO
             {
@@ -481,7 +504,7 @@ namespace DAL.Utils.AutoMapper
                 PaymentTerms = supplier.PaymentTerms,
                 IsActive = supplier.IsActive,
                 CreatedAt = supplier.CreatedAt,
-                UpdatedAt = supplier.UpdatedAt
+                UpdatedAt = supplier.UpdatedAt,
             };
         }
 
@@ -498,7 +521,8 @@ namespace DAL.Utils.AutoMapper
         /// </summary>
         public static Supplier ToSupplier(CreateSupplierDTO createDto)
         {
-            if (createDto == null) return null;
+            if (createDto == null)
+                return null;
 
             return new Supplier
             {
@@ -512,16 +536,20 @@ namespace DAL.Utils.AutoMapper
                 PaymentTerms = createDto.PaymentTerms,
                 IsActive = createDto.IsActive,
                 CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.UtcNow,
             };
         }
 
         /// <summary>
         /// Applies updates from an UpdateSupplierDTO to an existing Supplier entity.
         /// </summary>
-        public static void ApplyUpdatesToSupplier(UpdateSupplierDTO updateDto, Supplier existingSupplier)
+        public static void ApplyUpdatesToSupplier(
+            UpdateSupplierDTO updateDto,
+            Supplier existingSupplier
+        )
         {
-            if (updateDto == null || existingSupplier == null) return;
+            if (updateDto == null || existingSupplier == null)
+                return;
 
             existingSupplier.Name = updateDto.Name;
             existingSupplier.ContactPerson = updateDto.ContactPerson;
@@ -539,7 +567,8 @@ namespace DAL.Utils.AutoMapper
         /// </summary>
         public static BlogResponseDTO ToBlogResponseDTO(Blog blog)
         {
-            if (blog == null) return null;
+            if (blog == null)
+                return null;
 
             return new BlogResponseDTO
             {
@@ -559,7 +588,7 @@ namespace DAL.Utils.AutoMapper
                 IsPublished = blog.IsPublished,
                 PublishedAt = blog.PublishedAt,
                 CreatedAt = blog.CreatedAt,
-                UpdatedAt = blog.UpdatedAt
+                UpdatedAt = blog.UpdatedAt,
             };
         }
 
@@ -576,7 +605,8 @@ namespace DAL.Utils.AutoMapper
         /// </summary>
         public static Blog ToBlog(CreateBlogDTO createDto, int authorId)
         {
-            if (createDto == null) return null;
+            if (createDto == null)
+                return null;
 
             return new Blog
             {
@@ -591,7 +621,7 @@ namespace DAL.Utils.AutoMapper
                 SeoTitle = createDto.SeoTitle,
                 SeoDescription = createDto.SeoDescription,
                 CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.UtcNow,
             };
         }
 
@@ -600,7 +630,8 @@ namespace DAL.Utils.AutoMapper
         /// </summary>
         public static void ApplyUpdatesToBlog(UpdateBlogDTO updateDto, Blog existingBlog)
         {
-            if (updateDto == null || existingBlog == null) return;
+            if (updateDto == null || existingBlog == null)
+                return;
 
             existingBlog.Title = updateDto.Title;
             existingBlog.Excerpt = updateDto.Excerpt;
@@ -612,6 +643,248 @@ namespace DAL.Utils.AutoMapper
             existingBlog.SeoTitle = updateDto.SeoTitle;
             existingBlog.SeoDescription = updateDto.SeoDescription;
             existingBlog.UpdatedAt = DateTime.UtcNow;
+        }
+
+        /// <summary>
+        /// Converts a Cart entity to a CartResponseDTO.
+        /// </summary>
+        public static CartResponseDTO ToCartResponseDTO(Cart cart)
+        {
+            if (cart == null)
+                return null;
+
+            return new CartResponseDTO
+            {
+                Id = cart.Id,
+                UserId = cart.UserId,
+                UserName = cart.User?.FullName,
+                CouponId = cart.CouponId,
+                CouponCode = cart.Coupon?.Code,
+                TotalItems = cart.TotalItems,
+                Subtotal = cart.Subtotal,
+                DiscountAmount = cart.DiscountAmount,
+                Total = cart.Subtotal - cart.DiscountAmount,
+                CreatedAt = cart.CreatedAt,
+                UpdatedAt = cart.UpdatedAt,
+                CartItems =
+                    cart.CartItems?.Select(ToCartItemResponseDTO).ToList()
+                    ?? new List<CartItemResponseDTO>(),
+            };
+        }
+
+        /// <summary>
+        /// Converts a CartItem entity to a CartItemResponseDTO.
+        /// </summary>
+        public static CartItemResponseDTO ToCartItemResponseDTO(CartItem cartItem)
+        {
+            if (cartItem == null)
+                return null;
+
+            return new CartItemResponseDTO
+            {
+                Id = cartItem.Id,
+                CartId = cartItem.CartId,
+                ProductId = cartItem.ProductId,
+                ProductSku = cartItem.ProductSku,
+                ProductName = cartItem.ProductName,
+                ProductImage = cartItem.ProductImage,
+                Quantity = cartItem.Quantity,
+                UnitPrice = cartItem.UnitPrice,
+                Subtotal = cartItem.Subtotal,
+                IsAvailable = cartItem.IsAvailable,
+                AddedAt = cartItem.AddedAt,
+                UpdatedAt = cartItem.UpdatedAt,
+            };
+        }
+
+        /// <summary>
+        /// Converts a list of CartItem entities to a list of CartItemResponseDTOs.
+        /// </summary>
+        public static IEnumerable<CartItemResponseDTO> ToCartItemResponseDTOs(
+            IEnumerable<CartItem> cartItems
+        )
+        {
+            return cartItems?.Select(ToCartItemResponseDTO)
+                ?? Enumerable.Empty<CartItemResponseDTO>();
+        }
+
+        /// <summary>
+        /// Converts a WalletTransaction entity to a TopUpResponseDTO.
+        /// </summary>
+        public static TopUpResponseDTO ToTopUpResponseDTO(
+            WalletTransaction transaction,
+            string payUrl
+        )
+        {
+            if (transaction == null)
+                return null;
+
+            return new TopUpResponseDTO
+            {
+                WalletTransactionId = transaction.Id,
+                GatewayTransactionId = transaction.GatewayTransactionId,
+                Gateway = transaction.PaymentGateway?.ToString() ?? "UNKNOWN",
+                Amount = transaction.Amount,
+                PayUrl = payUrl,
+            };
+        }
+
+        /// <summary>
+        /// Converts a WalletTransaction entity to a WalletTransactionDTO.
+        /// </summary>
+        public static WalletTransactionDTO ToWalletTransactionDTO(WalletTransaction transaction)
+        {
+            if (transaction == null)
+                return null;
+
+            return new WalletTransactionDTO
+            {
+                Id = transaction.Id,
+                UserId = transaction.UserId,
+                TransactionType = transaction.TransactionType.ToString(),
+                Amount = transaction.Amount,
+                PaymentGateway = transaction.PaymentGateway?.ToString(),
+                GatewayTransactionId = transaction.GatewayTransactionId,
+                OrderId = transaction.OrderId,
+                Status = transaction.Status.ToString(),
+                Description = transaction.Description,
+                BalanceBefore = transaction.BalanceBefore,
+                BalanceAfter = transaction.BalanceAfter,
+                ProcessedAt = transaction.ProcessedAt,
+                CreatedAt = transaction.CreatedAt,
+            };
+        }
+
+        /// <summary>
+        /// Converts a list of WalletTransaction entities to a list of WalletTransactionDTOs.
+        /// </summary>
+        public static IEnumerable<WalletTransactionDTO> ToWalletTransactionDTOs(
+            IEnumerable<WalletTransaction> transactions
+        )
+        {
+            return transactions?.Select(ToWalletTransactionDTO)
+                ?? Enumerable.Empty<WalletTransactionDTO>();
+        }
+
+        /// <summary>
+        /// Creates a TopUpRequestDTO from parameters.
+        /// </summary>
+        public static TopUpRequestDTO ToTopUpRequestDTO(
+            int userId,
+            decimal amount,
+            PaymentGateway gateway,
+            string? description
+        )
+        {
+            return new TopUpRequestDTO
+            {
+                UserId = userId,
+                Amount = amount,
+                Gateway = gateway.ToString(),
+                Description = description,
+            };
+        }
+
+        /// <summary>
+        /// Converts a TopUpRequestDTO to a WalletTransaction entity.
+        /// </summary>
+        public static WalletTransaction ToWalletTransaction(
+            TopUpRequestDTO request,
+            PaymentGateway gateway,
+            string gatewayTransactionId
+        )
+        {
+            if (request == null)
+                return null;
+
+            return new WalletTransaction
+            {
+                UserId = request.UserId,
+                TransactionType = TransactionType.TOP_UP,
+                Amount = request.Amount,
+                PaymentGateway = gateway,
+                GatewayTransactionId = gatewayTransactionId,
+                OrderId = null,
+                Status = TransactionStatus.PENDING,
+                Description = request.Description,
+                CreatedAt = DateTime.UtcNow,
+            };
+        }
+
+        /// <summary>
+        /// Creates a complete WalletTransaction for top-up with all required fields.
+        /// </summary>
+        public static WalletTransaction ToTopUpWalletTransaction(
+            int userId,
+            decimal amount,
+            PaymentGateway gateway,
+            string gatewayTransactionId,
+            string? description,
+            decimal currentBalance
+        )
+        {
+            var request = ToTopUpRequestDTO(userId, amount, gateway, description);
+            var transaction = ToWalletTransaction(request, gateway, gatewayTransactionId);
+
+            // Set balance fields
+            transaction.BalanceBefore = currentBalance;
+            transaction.BalanceAfter = currentBalance; // will update upon confirmation
+
+            return transaction;
+        }
+
+        /// <summary>
+        /// Updates transaction status and related fields.
+        /// </summary>
+        public static void UpdateTransactionStatus(
+            WalletTransaction transaction,
+            TransactionStatus status,
+            decimal? finalAmount = null
+        )
+        {
+            if (transaction == null)
+                return;
+
+            transaction.Status = status;
+            transaction.ProcessedAt = DateTime.UtcNow;
+
+            if (finalAmount.HasValue)
+            {
+                transaction.BalanceAfter = finalAmount.Value;
+            }
+        }
+
+        /// <summary>
+        /// Checks if transaction should update user wallet balance.
+        /// </summary>
+        public static bool ShouldUpdateUserBalance(
+            WalletTransaction transaction,
+            TransactionStatus status
+        )
+        {
+            return status == TransactionStatus.SUCCESS
+                && transaction.TransactionType == TransactionType.TOP_UP;
+        }
+
+        /// <summary>
+        /// Chuyển đổi CreateReviewDTO sang Review entity
+        /// </summary>
+        public static Review ToReview(CreateReviewDTO dto)
+        {
+            if (dto == null)
+                return null;
+            return new Review
+            {
+                ProductId = dto.ProductId,
+                UserId = dto.UserId,
+                OrderItemId = dto.OrderItemId,
+                Rating = dto.Rating,
+                Content = dto.Content,
+                MediaUrls = dto.MediaUrls,
+                IsAnonymous = dto.IsAnonymous,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now,
+            };
         }
 
         private static string FormatFullname(string fullname)

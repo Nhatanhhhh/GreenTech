@@ -1,4 +1,4 @@
-using BLL.Service.Interface;
+using BLL.Service.Banner.Interface;
 using DAL.DTOs.Banner;
 using GreenTech.Filters;
 using Microsoft.AspNetCore.Mvc;
@@ -20,16 +20,17 @@ namespace GreenTech.Pages.Banners
         [BindProperty]
         public UpdateBannerDTO Banner { get; set; }
 
-        public SelectList Positions { get; set; } = new SelectList(
-            new List<SelectListItem>
-            {
-                new SelectListItem { Value = "HEADER", Text = "Header" },
-                new SelectListItem { Value = "HOME_SLIDER", Text = "Home Slider" },
-                new SelectListItem { Value = "SIDEBAR", Text = "Sidebar" },
-                new SelectListItem { Value = "FOOTER", Text = "Footer" },
-                new SelectListItem { Value = "POPUP", Text = "Popup" },
-            }
-        );
+        public SelectList Positions { get; set; } =
+            new SelectList(
+                new List<SelectListItem>
+                {
+                    new SelectListItem { Value = "HEADER", Text = "Header" },
+                    new SelectListItem { Value = "HOME_SLIDER", Text = "Home Slider" },
+                    new SelectListItem { Value = "SIDEBAR", Text = "Sidebar" },
+                    new SelectListItem { Value = "FOOTER", Text = "Footer" },
+                    new SelectListItem { Value = "POPUP", Text = "Popup" },
+                }
+            );
 
         public async Task<IActionResult> OnGetAsync(int id)
         {

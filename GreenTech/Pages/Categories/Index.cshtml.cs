@@ -1,4 +1,4 @@
-using BLL.Service.Interface;
+using BLL.Service.Category.Interface;
 using DAL.DTOs.Category;
 using GreenTech.Filters;
 using Microsoft.AspNetCore.Mvc;
@@ -26,4 +26,3 @@ namespace GreenTech.Pages.Categories
         }
     }
 }
-

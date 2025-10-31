@@ -1,6 +1,8 @@
-using BLL.Service.Interface;
-using DAL.DTOs.Product;
+using BLL.Service.Category.Interface;
+using BLL.Service.Product.Interface;
+using BLL.Service.Supplier.Interface;
 using DAL.DTOs.Category;
+using DAL.DTOs.Product;
 using DAL.DTOs.Supplier;
 using GreenTech.Filters;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +18,11 @@ namespace GreenTech.Pages.Products
         private readonly ICategoryService _categoryService;
         private readonly ISupplierService _supplierService;
 
-        public CreateModel(IProductService productService, ICategoryService categoryService, ISupplierService supplierService)
+        public CreateModel(
+            IProductService productService,
+            ICategoryService categoryService,
+            ISupplierService supplierService
+        )
         {
             _productService = productService;
             _categoryService = categoryService;
@@ -32,10 +38,16 @@ namespace GreenTech.Pages.Products
         public async Task OnGetAsync()
         {
             var categories = await _categoryService.GetAllAsync();
-            Categories = categories.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList();
+            Categories = categories
+                .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
+                .ToList();
 
-            var suppliers = await _supplierService.GetSuppliersAsync(new DAL.DTOs.Supplier.SupplierQueryParamsDTO { PageNumber = 1, PageSize = 100 });
-            Suppliers = suppliers.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }).ToList();
+            var suppliers = await _supplierService.GetSuppliersAsync(
+                new DAL.DTOs.Supplier.SupplierQueryParamsDTO { PageNumber = 1, PageSize = 100 }
+            );
+            Suppliers = suppliers
+                .Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name })
+                .ToList();
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -53,11 +65,16 @@ namespace GreenTech.Pages.Products
         private async Task LoadSelectLists()
         {
             var categories = await _categoryService.GetAllAsync();
-            Categories = categories.Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name }).ToList();
+            Categories = categories
+                .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
+                .ToList();
 
-            var suppliers = await _supplierService.GetSuppliersAsync(new DAL.DTOs.Supplier.SupplierQueryParamsDTO { PageNumber = 1, PageSize = 100 });
-            Suppliers = suppliers.Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name }).ToList();
+            var suppliers = await _supplierService.GetSuppliersAsync(
+                new DAL.DTOs.Supplier.SupplierQueryParamsDTO { PageNumber = 1, PageSize = 100 }
+            );
+            Suppliers = suppliers
+                .Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name })
+                .ToList();
         }
     }
 }
-

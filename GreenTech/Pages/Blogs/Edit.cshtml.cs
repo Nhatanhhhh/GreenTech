@@ -1,4 +1,5 @@
-using BLL.Service.Interface;
+using BLL.Service.Blog.Interface;
+using BLL.Service.Category.Interface;
 using DAL.DTOs.Blog;
 using GreenTech.Filters;
 using Microsoft.AspNetCore.Mvc;
@@ -46,7 +47,7 @@ namespace GreenTech.Pages.Blogs
                 IsFeatured = BlogDetails.IsFeatured,
                 IsPublished = BlogDetails.IsPublished,
                 SeoTitle = "",
-                SeoDescription = ""
+                SeoDescription = "",
             };
 
             await LoadCategories();
@@ -83,4 +84,3 @@ namespace GreenTech.Pages.Blogs
         }
     }
 }
-
