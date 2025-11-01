@@ -10,5 +10,6 @@ namespace DAL.Repositories.Review.Interface
         Task<ReviewModel?> UpdateReviewAsync(ReviewModel review);
         Task<bool> DeleteReviewAsync(ReviewModel review);
         Task<ReviewModel?> ToggleReviewStatusAsync(int id);
+        Task<IEnumerable<ReviewModel>> GetAllReviewsAsync();
     }
 }

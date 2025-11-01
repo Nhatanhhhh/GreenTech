@@ -51,5 +51,9 @@ namespace BLL.Service.Review
         {
             return await _reviewRepository.ToggleReviewStatusAsync(id);
         }
+        public async Task<IEnumerable<ReviewModel>> GetAllReviewsAsync()
+        {
+            return await _reviewRepository.GetAllReviewsAsync();
+        }
     }
 }

@@ -22,6 +22,8 @@ using BLL.Service.Product;
 using BLL.Service.Supplier;
 using BLL.Service.Wallet;
 using BLL.Service.Cloudinary;
+using BLL.Service.Review;
+using BLL.Service.Review.Interface;
 using DAL.Repositories.Auth.Interface;
 using DAL.Repositories.Banner.Interface;
 using DAL.Repositories.Blog.Interface;
@@ -42,6 +44,9 @@ using DAL.Repositories.Point;
 using DAL.Repositories.Product;
 using DAL.Repositories.Wallet;
 using DAL.Repositories.Supplier;
+using DAL.Repositories.Review;
+using DAL.Repositories.Review.Interface;
+
 
 namespace GreenTech.DI
 {
@@ -70,6 +75,8 @@ namespace GreenTech.DI
             services.AddScoped<ICartRepository, CartRepository>();
             services.AddScoped<IWalletRepository, WalletRepository>();
             services.AddScoped<IPointsRepository, PointsRepository>();
+            services.AddScoped<IReviewRepository, ReviewRepository>();
+
 
             return services;
         }
@@ -92,6 +99,10 @@ namespace GreenTech.DI
             services.AddSingleton<IPaymentGatewayProcessor, MoMoPaymentProcessor>();
             services.AddSingleton<IPaymentGatewayProcessor, VnPayPaymentProcessor>();
             services.AddSingleton<IPaymentGatewayFactory, PaymentGatewayFactory>();
+
+            // Review
+            services.AddScoped<IReviewService, ReviewService>();
+
 
             return services;
         }

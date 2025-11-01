@@ -60,5 +60,14 @@ namespace DAL.Repositories.Review
 
             return review;
         }
+        public async Task<IEnumerable<ReviewModel>> GetAllReviewsAsync()
+        {
+            return await _context.Reviews
+                .Include(r => r.User)
+                .Include(r => r.Product)
+                .Include(r => r.OrderItem)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+        }
     }
 }
