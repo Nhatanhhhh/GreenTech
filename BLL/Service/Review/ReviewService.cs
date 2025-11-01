@@ -5,16 +5,20 @@ using DAL.DTOs.Review;
 using DAL.Models.Enum;
 using DAL.Repositories.Review.Interface;
 using ReviewModel = DAL.Models.Review;
+using Microsoft.AspNetCore.Http;
+using BLL.Service.Cloudinary.Interface;
 
 namespace BLL.Service.Review
 {
     public class ReviewService : IReviewService
     {
         private readonly IReviewRepository _reviewRepository;
+        private readonly IFileStorageService _fileStorageService;
 
-        public ReviewService(IReviewRepository reviewRepository)
+        public ReviewService(IReviewRepository reviewRepository, IFileStorageService fileStorageService)
         {
-            _reviewRepository = reviewRepository;
+            _reviewRepository = reviewRepository ?? throw new ArgumentNullException(nameof(reviewRepository));
+            _fileStorageService = fileStorageService ?? throw new ArgumentNullException(nameof(fileStorageService));
         }
 
         public async Task<ReviewModel> CreateReviewAsync(CreateReviewDTO dto)
@@ -54,6 +58,29 @@ namespace BLL.Service.Review
         public async Task<IEnumerable<ReviewModel>> GetAllReviewsAsync()
         {
             return await _reviewRepository.GetAllReviewsAsync();
+        }
+        public async Task<string> UploadReviewMediaAsync(int reviewId, IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                throw new ArgumentException("File cannot be null or empty.");
+
+            var review = await _reviewRepository.GetReviewByIdAsync(reviewId);
+            if (review == null)
+                throw new KeyNotFoundException($"Review with ID {reviewId} not found.");
+
+            // Upload file to Cloudinary folder "reviews"
+            var mediaUrl = await _fileStorageService.SaveFileAsync(file, "reviews");
+
+            // ✅ Update existing media list (append if multiple)
+            if (string.IsNullOrEmpty(review.MediaUrls))
+                review.MediaUrls = mediaUrl;
+            else
+                review.MediaUrls += $",{mediaUrl}";
+
+            review.UpdatedAt = DateTime.Now;
+            await _reviewRepository.UpdateReviewAsync(review);
+
+            return mediaUrl;
         }
     }
 }
