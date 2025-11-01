@@ -10,5 +10,7 @@ namespace BLL.Service.Review.Interface
         Task<ReviewModel?> UpdateReviewAsync(UpdateReviewDTO dto, int userId);
         Task<bool> DeleteReviewAsync(int reviewId, int userId);
         Task<IEnumerable<ReviewModel>> GetAllReviewsAsync();
+        Task<ReviewModel?> ToggleReviewStatusAsync(int id);
+
     }
 }
