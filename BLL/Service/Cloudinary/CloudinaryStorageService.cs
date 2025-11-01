@@ -1,5 +1,8 @@
-﻿using BLL.Config;
+﻿using System.Collections.Generic;
+using System.Linq;
+using BLL.Config;
 using BLL.Service.Cloudinary.Interface;
+using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -126,6 +129,143 @@ namespace BLL.Service.Cloudinary
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An unexpected error occurred during file upload.");
+                throw; // Re-throw the exception to be handled by higher-level code
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<string> SaveImageAsync(
+            IFormFile file,
+            string subFolder = "",
+            int? maxWidth = null,
+            int? maxHeight = null,
+            string quality = "auto",
+            string format = "auto"
+        )
+        {
+            if (file == null || file.Length == 0)
+            {
+                throw new ArgumentException("File cannot be null or empty.", nameof(file));
+            }
+
+            // Validate it's an image file
+            var allowedContentTypes = new[]
+            {
+                "image/jpeg",
+                "image/jpg",
+                "image/png",
+                "image/gif",
+                "image/webp",
+            };
+
+            if (
+                !allowedContentTypes.Contains(file.ContentType?.ToLowerInvariant())
+                && !new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" }.Contains(
+                    Path.GetExtension(file.FileName)?.ToLowerInvariant()
+                )
+            )
+            {
+                throw new ArgumentException(
+                    "File must be an image (JPG, JPEG, PNG, GIF, or WEBP).",
+                    nameof(file)
+                );
+            }
+
+            await using var stream = file.OpenReadStream();
+
+            // Generate a unique file name to avoid conflicts
+            var uniqueFileName = $"{Guid.NewGuid()}";
+
+            // Combine subfolder with the unique file name to create the PublicId
+            var publicId = string.IsNullOrWhiteSpace(subFolder)
+                ? uniqueFileName
+                : $"{subFolder.Trim('/')}/{uniqueFileName}";
+
+            // Use ImageUploadParams for image-specific features (transformations, optimization)
+            var uploadParams = new ImageUploadParams()
+            {
+                File = new CloudinaryDotNet.FileDescription(file.FileName, stream),
+                PublicId = publicId,
+                Overwrite = true,
+            };
+
+            // Build transformation string for image optimization
+            var transformations = new List<string>();
+
+            // Add resize if specified
+            if (maxWidth.HasValue || maxHeight.HasValue)
+            {
+                if (maxWidth.HasValue && maxHeight.HasValue)
+                {
+                    transformations.Add($"w_{maxWidth.Value},h_{maxHeight.Value},c_limit"); // Limit size, maintain aspect ratio
+                }
+                else if (maxWidth.HasValue)
+                {
+                    transformations.Add($"w_{maxWidth.Value},c_limit");
+                }
+                else if (maxHeight.HasValue)
+                {
+                    transformations.Add($"h_{maxHeight.Value},c_limit");
+                }
+            }
+
+            // Add quality setting
+            if (!string.IsNullOrWhiteSpace(quality))
+            {
+                transformations.Add($"q_{quality}");
+            }
+
+            // Add format conversion if specified
+            if (!string.IsNullOrWhiteSpace(format) && format.ToLowerInvariant() != "auto")
+            {
+                transformations.Add($"f_{format}");
+            }
+            else if (format.ToLowerInvariant() == "auto")
+            {
+                // Use auto format for best compression (webp when supported)
+                transformations.Add("f_auto");
+            }
+
+            // Add gravity for better cropping if resizing
+            if (maxWidth.HasValue || maxHeight.HasValue)
+            {
+                transformations.Add("g_face"); // Auto face detection for avatars
+            }
+
+            if (transformations.Any())
+            {
+                uploadParams.Transformation = new Transformation(string.Join(",", transformations));
+            }
+
+            try
+            {
+                _logger.LogInformation(
+                    "Uploading image to Cloudinary with PublicId: {PublicId}, Transformations: {Transformations}",
+                    publicId,
+                    uploadParams.Transformation?.ToString() ?? "none"
+                );
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+                if (uploadResult.Error != null)
+                {
+                    _logger.LogError(
+                        "Cloudinary image upload failed: {Error}",
+                        uploadResult.Error.Message
+                    );
+                    throw new Exception(
+                        $"Failed to upload image. Cloudinary error: {uploadResult.Error.Message}"
+                    );
+                }
+
+                _logger.LogInformation(
+                    "Image uploaded successfully. URL: {Url}",
+                    uploadResult.SecureUrl.ToString()
+                );
+                return uploadResult.SecureUrl.ToString();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An unexpected error occurred during image upload.");
                 throw; // Re-throw the exception to be handled by higher-level code
             }
         }

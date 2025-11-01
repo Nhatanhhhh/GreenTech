@@ -1,5 +1,6 @@
-﻿using DAL.Models.Enum;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using DAL.Models.Enum;
+using DAL.ValidationAttributes;
 
 namespace DAL.DTOs.CouponTemplate
 {
@@ -17,7 +18,7 @@ namespace DAL.DTOs.CouponTemplate
         public DiscountType DiscountType { get; set; }
 
         [Required(ErrorMessage = "Giá trị giảm giá là bắt buộc")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "Giá trị giảm giá phải lớn hơn 0")]
+        [DiscountValue]
         public decimal DiscountValue { get; set; }
 
         [Range(0, double.MaxValue, ErrorMessage = "Giá trị đơn hàng tối thiểu không được âm")]

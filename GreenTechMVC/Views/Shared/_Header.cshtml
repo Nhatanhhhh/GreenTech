@@ -5,6 +5,7 @@
     var isAuthenticated = HttpContextAccessor.HttpContext?.Session.GetString("IsAuthenticated") == "true";
     var userName = HttpContextAccessor.HttpContext?.Session.GetString("UserName") ?? "Khách";
     var currentUserId = HttpContextAccessor.HttpContext?.Session.GetInt32("UserId");
+    var userAvatar = HttpContextAccessor.HttpContext?.Session.GetString("UserAvatar");
 }
 <header class="w-auto bg-white">
     <!-- Top Contact Bar -->
@@ -104,9 +105,16 @@
                 @if (isAuthenticated)
                 {
                     <div class="relative" id="user-menu-root">
-                        <a asp-controller="Profile" asp-action="Index" class="text-white text-sm font-['Roboto_Condensed'] hover:text-green-300 transition-colors duration-200">
-                            <i class="fas fa-user mr-1"></i>
-                            Xin chào, @userName
+                        <a asp-controller="Profile" asp-action="Index" class="flex items-center gap-2 text-white text-sm font-['Roboto_Condensed'] hover:text-green-300 transition-colors duration-200">
+                            @if (!string.IsNullOrEmpty(userAvatar))
+                            {
+                                <img src="@userAvatar" alt="@userName" class="h-8 w-8 rounded-full object-cover border-2 border-white" />
+                            }
+                            else
+                            {
+                                <i class="fas fa-user"></i>
+                            }
+                            <span>Xin chào, @userName</span>
                         </a>
                     </div>
                     <span class="text-white opacity-50">|</span>
