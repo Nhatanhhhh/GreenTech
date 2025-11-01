@@ -131,41 +131,48 @@ namespace BLL.Service.Payments
                 }
             }
 
-            // Format: Timestamp + UserId to ensure uniqueness
-            // Alternative: Use simple numeric like demo (DateTime.Now.Ticks or orderId)
-            var txnRef = $"{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}_{userId}";
+            // Format: Timestamp + UserId to ensure uniqueness (như trong demo của VNPay)
+            var txnRef = DateTime.Now.Ticks.ToString(); // Hoặc có thể dùng: $"{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}_{userId}"
 
             // VNPay requires: "Tiếng Việt không dấu và không bao gồm các ký tự đặc biệt"
             var orderInfo = RemoveVietnameseDiacritics(description ?? "Nap tien vao vi GreenTech");
 
-            // Use local time (Vietnam timezone) for VNPay, same as demo
+            // Use local time (Vietnam timezone GMT+7) for VNPay
             // VNPay expects local time in format: yyyyMMddHHmmss
             var createDate = DateTime.Now.ToString("yyyyMMddHHmmss");
 
-            // Calculate amount: multiply by 100 to remove decimal (same as demo)
+            // ExpireDate: Thời gian hết hạn thanh toán (GMT+7), mặc định 15 phút như trong demo
+            var expireDate = DateTime.Now.AddMinutes(15).ToString("yyyyMMddHHmmss");
+
+            // Calculate amount: multiply by 100 to remove decimal
             // Example: 100,000 VND -> 10000000 (multiply by 100)
             var amountInCents = (long)(amount * 100);
 
+            // Sắp xếp tham số theo thứ tự tăng dần của tên tham số (theo doc VNPay)
             var query = new SortedDictionary<string, string>
             {
-                ["vnp_Version"] = "2.1.0",
-                ["vnp_Command"] = "pay",
-                ["vnp_TmnCode"] = tmnCode,
                 ["vnp_Amount"] = amountInCents.ToString(),
+                ["vnp_Command"] = "pay",
+                ["vnp_CreateDate"] = createDate,
                 ["vnp_CurrCode"] = "VND",
-                ["vnp_TxnRef"] = txnRef,
+                ["vnp_ExpireDate"] = expireDate,
+                ["vnp_IpAddr"] = ipAddress,
+                ["vnp_Locale"] = "vn",
                 ["vnp_OrderInfo"] = orderInfo,
                 ["vnp_OrderType"] = "other",
-                ["vnp_Locale"] = "vn",
                 ["vnp_ReturnUrl"] = returnUrl,
-                ["vnp_IpAddr"] = ipAddress,
-                ["vnp_CreateDate"] = createDate,
+                ["vnp_TmnCode"] = tmnCode,
+                ["vnp_TxnRef"] = txnRef,
+                ["vnp_Version"] = "2.1.0",
             };
 
-            // IMPORTANT: For VNPay hash calculation, do NOT URL encode values
-            // Only encode when building final URL
-            var raw = string.Join('&', query.Select(kv => $"{kv.Key}={kv.Value}"));
-            var signData = CryptoUtil.HMacHexStringEncode(CryptoUtil.HMACSHA512, secret, raw);
+            // IMPORTANT: For VNPay hash calculation (version 2.1.0), do NOT URL encode values
+            // Chỉ encode khi build final URL
+            // Theo doc: "Dữ liệu checksum được thành lập dựa trên việc sắp xếp tăng dần của tên tham số (QueryString)"
+            var rawData = string.Join('&', query.Select(kv => $"{kv.Key}={kv.Value}"));
+
+            // Sử dụng HMACSHA512 để tạo SecureHash (theo doc version 2.1.0)
+            var signData = CryptoUtil.HMacHexStringEncode(CryptoUtil.HMACSHA512, secret, rawData);
 
             // Build URL with URL-encoded parameters (for final URL only)
             var urlParams = string.Join(
@@ -181,6 +188,7 @@ namespace BLL.Service.Payments
 
         /// <summary>
         /// Verify VNPay callback/return parameters and secure hash
+        /// Theo doc VNPay: "Merchant/website TMĐT thực hiện kiểm tra sự toàn vẹn của dữ liệu (checksum) trước khi thực hiện các thao tác khác"
         /// </summary>
         public bool VerifyCallback(Dictionary<string, string> callbackParams)
         {
@@ -195,18 +203,26 @@ namespace BLL.Service.Payments
                 return false;
             }
 
-            // Remove vnp_SecureHash from params for signature calculation
+            // Remove vnp_SecureHash và vnp_SecureHashType (nếu có) từ params for signature calculation
+            // Theo doc: version 2.1.0 không gửi vnp_SecureHashType sang VNPay, nhưng có thể nhận về
             var paramsForSign = callbackParams
-                .Where(kv => kv.Key != "vnp_SecureHash")
-                .OrderBy(kv => kv.Key)
+                .Where(kv => kv.Key != "vnp_SecureHash" && kv.Key != "vnp_SecureHashType")
+                .OrderBy(kv => kv.Key) // Sắp xếp tăng dần theo tên tham số (theo doc)
                 .ToDictionary(kv => kv.Key, kv => kv.Value);
 
-            // IMPORTANT: For VNPay hash verification, do NOT URL encode values
-            var raw = string.Join('&', paramsForSign.Select(kv => $"{kv.Key}={kv.Value}"));
+            // IMPORTANT: For VNPay hash verification (version 2.1.0), do NOT URL encode values
+            // Chỉ lấy giá trị raw từ query string, không encode
+            var rawData = string.Join('&', paramsForSign.Select(kv => $"{kv.Key}={kv.Value}"));
 
-            var computedHash = CryptoUtil.HMacHexStringEncode(CryptoUtil.HMACSHA512, secret, raw);
+            // Sử dụng HMACSHA512 để verify (theo doc version 2.1.0)
+            var computedHash = CryptoUtil.HMacHexStringEncode(
+                CryptoUtil.HMACSHA512,
+                secret,
+                rawData
+            );
 
-            return computedHash == receivedHash;
+            // So sánh case-sensitive
+            return string.Equals(computedHash, receivedHash, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -251,10 +267,47 @@ namespace BLL.Service.Payments
                 parsedAmount = amtLong / 100m;
             }
 
-            var finalMessage =
-                message ?? (isSuccess ? "Giao dịch thành công" : "Giao dịch thất bại");
+            // Map VNPay response codes to user-friendly messages
+            var finalMessage = GetVnPayResponseMessage(responseCode, message);
 
             return (isSuccess, txnRef, parsedAmount, finalMessage);
+        }
+
+        /// <summary>
+        /// Map VNPay response codes to user-friendly Vietnamese messages
+        /// </summary>
+        private static string GetVnPayResponseMessage(string? responseCode, string? originalMessage)
+        {
+            if (!string.IsNullOrEmpty(originalMessage))
+            {
+                return originalMessage;
+            }
+
+            if (string.IsNullOrEmpty(responseCode))
+            {
+                return "Không nhận được mã phản hồi từ VNPay";
+            }
+
+            // VNPay Response Code mapping
+            return responseCode switch
+            {
+                "00" => "Giao dịch thành công",
+                "07" =>
+                    "Trừ tiền thành công. Giao dịch bị nghi ngờ (liên quan tới lừa đảo, giao dịch bất thường).",
+                "09" => "Thẻ/Tài khoản chưa đăng ký dịch vụ InternetBanking",
+                "10" => "Xác thực thông tin thẻ/tài khoản không đúng. Quá 3 lần",
+                "11" => "Đã hết hạn chờ thanh toán. Xin vui lòng thực hiện lại giao dịch",
+                "12" => "Thẻ/Tài khoản bị khóa",
+                "13" => "Nhập sai mật khẩu xác thực giao dịch (OTP). Quá 3 lần",
+                "24" => "Giao dịch không thành công do: Khách hàng hủy giao dịch",
+                "51" => "Tài khoản không đủ số dư để thực hiện giao dịch",
+                "65" => "Tài khoản đã vượt quá hạn mức giao dịch trong ngày",
+                "75" => "Ngân hàng thanh toán đang bảo trì",
+                "79" => "Nhập sai mật khẩu thanh toán quá số lần quy định",
+                "99" => "Lỗi không xác định",
+                "70" => "Lỗi xử lý dữ liệu từ phía VNPay. Vui lòng liên hệ hỗ trợ.",
+                _ => $"Mã lỗi không xác định: {responseCode}. Vui lòng liên hệ hỗ trợ.",
+            };
         }
 
         /// <summary>

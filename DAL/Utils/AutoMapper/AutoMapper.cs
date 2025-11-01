@@ -462,7 +462,14 @@ namespace DAL.Utils.AutoMapper
             existingProduct.Tags = updateDto.Tags;
             existingProduct.PointsEarned = updateDto.PointsEarned;
             existingProduct.IsFeatured = updateDto.IsFeatured;
-            existingProduct.IsActive = updateDto.IsActive;
+            // IsActive: Update không được phép chuyển từ Active -> Inactive
+            // Chỉ cho phép restore từ Inactive -> Active nếu product đang inactive
+            if (!existingProduct.IsActive && updateDto.IsActive)
+            {
+                // Restore: cho phép chuyển từ Inactive -> Active
+                existingProduct.IsActive = true;
+            }
+            // Nếu đang Active và cố set thành Inactive, giữ nguyên Active (không cho phép)
             existingProduct.UpdatedAt = DateTime.UtcNow;
         }
 

@@ -1,37 +1,153 @@
 @{
     ViewData["Title"] = "Kết quả thanh toán";
-    var isSuccess = (ViewBag.ResultCode as string) == "0";
+    var isSuccess = ViewBag.Success as bool? ?? false;
+    var resultCode = ViewBag.ResultCode as string ?? ViewBag.ResponseCode as string;
+    var isVnPay = ViewBag.Gateway?.ToString() == "VNPAY";
+    var isMoMo = ViewBag.Gateway?.ToString() == "MOMO";
+    var amount = ViewBag.Amount as decimal?;
 }
 
-<div class="max-w-xl mx-auto mt-10 bg-white rounded-lg shadow p-6 text-center">
-    <div class="mb-4">
+<div class="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-50 flex items-center justify-center px-4 py-12">
+    <div class="max-w-md w-full">
+        <!-- Success/Failure Card -->
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all duration-300 hover:shadow-2xl">
+            <!-- Header Icon -->
+            <div class="bg-gradient-to-r @(isSuccess ? "from-green-500 to-green-600" : "from-red-500 to-red-600") py-12 text-center">
+                @if (isSuccess)
+                {
+                    <div class="inline-flex items-center justify-center w-24 h-24 bg-white rounded-full mb-4 animate-bounce">
+                        <svg class="w-16 h-16 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                }
+                else
+                {
+                    <div class="inline-flex items-center justify-center w-24 h-24 bg-white rounded-full mb-4">
+                        <svg class="w-16 h-16 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </div>
+                }
+                <h1 class="text-3xl font-bold text-white mb-2">
+                    @(isSuccess ? "Thanh toán thành công!" : "Thanh toán thất bại")
+                </h1>
+            </div>
+
+            <!-- Content -->
+            <div class="px-8 py-6">
+                @if (isSuccess)
+                {
+                    <!-- Success Message -->
+                    <div class="text-center mb-6">
+                        @if (amount.HasValue)
+                        {
+                            <p class="text-gray-600 text-lg mb-2">Số tiền đã nạp</p>
+                            <p class="text-4xl font-bold text-green-600 mb-4">
+                                @amount.Value.ToString("N0") <span class="text-2xl">₫</span>
+                            </p>
+                        }
+                        <p class="text-gray-500">Giao dịch của bạn đã được xử lý thành công.</p>
+                    </div>
+                }
+                else
+                {
+                    <!-- Error Message -->
+                    <div class="text-center mb-6">
+                        <p class="text-gray-700 text-lg mb-3">@(ViewBag.Message ?? "Giao dịch không thành công. Vui lòng thử lại.")</p>
+                        @if (!string.IsNullOrEmpty(resultCode) && resultCode != "00")
+                        {
+                            <p class="text-sm text-gray-500">Mã lỗi: <span class="font-mono">@resultCode</span></p>
+                        }
+                    </div>
+                }
+
+                <!-- Payment Gateway Badge -->
+                <div class="flex items-center justify-center mb-6">
+                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+                        @if (isVnPay)
+                        {
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"></path>
+                            </svg>
+                            <span>VNPay</span>
+                        }
+                        else if (isMoMo)
+                        {
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"></path>
+                            </svg>
+                            <span>MoMo</span>
+                        }
+                    </span>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col gap-3">
+                    @if (isSuccess)
+                    {
+                        <a asp-controller="Wallet" asp-action="Index" 
+                           class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg text-center">
+                            Về ví của tôi
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Wallet" asp-action="TopUp" 
+                           class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg text-center">
+                            Thử lại
+                        </a>
+                    }
+                    <a asp-controller="Home" asp-action="Index" 
+                       class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-all duration-200 text-center">
+                        Về Trang chủ
+                    </a>
+                </div>
+            </div>
+
+            <!-- Footer Info (Minimal) -->
+            @if (isSuccess && ViewBag.TransactionRef != null)
+            {
+                <div class="px-8 pb-6 pt-2 border-t border-gray-100">
+                    <p class="text-xs text-gray-400 text-center">
+                        Mã giao dịch: <span class="font-mono">@ViewBag.TransactionRef</span>
+                    </p>
+                </div>
+            }
+        </div>
+
+        <!-- Auto Redirect Notice -->
         @if (isSuccess)
         {
-            <div class="text-green-600 text-3xl font-bold">Thanh toán thành công</div>
-            <div class="text-gray-600 mt-2">Số tiền: @((ViewBag.Amount as string)?.ToString()) ₫</div>
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-500">
+                    <span id="countdown">5</span> giây nữa sẽ tự động chuyển về ví...
+                </p>
+            </div>
         }
-        else
-        {
-            <div class="text-red-600 text-3xl font-bold">Thanh toán thất bại</div>
-        }
-    </div>
-
-    <div class="mt-2 space-y-1 text-left text-sm text-gray-700">
-        <div><span class="font-semibold">Mã đơn hàng:</span> @ViewBag.OrderId</div>
-        <div><span class="font-semibold">Mã giao dịch:</span> @ViewBag.TransId</div>
-        <div><span class="font-semibold">Mô tả:</span> @ViewBag.Message</div>
-        <div><span class="font-semibold">Mã kết quả:</span> @ViewBag.ResultCode</div>
-    </div>
-
-    <div class="mt-6 flex gap-3 justify-center">
-        <a asp-controller="Wallet" asp-action="Index" class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white">Về ví của tôi</a>
-        <a asp-controller="Home" asp-action="Index" class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800">Về Trang chủ</a>
     </div>
 </div>
 
-<script>
-    // Tự động chuyển về ví sau 5 giây
-    setTimeout(function(){ window.location.href = '@Url.Action("Index","Wallet")'; }, 5000);
-</script>
+@if (isSuccess)
+{
+    <script>
+        // Countdown và auto redirect
+        (function() {
+            var countdown = 5;
+            var countdownElement = document.getElementById('countdown');
+            var redirectUrl = '@Url.Action("Index", "Wallet")';
+            var interval = setInterval(function() {
+                countdown--;
+                if (countdownElement) {
+                    countdownElement.textContent = countdown;
+                }
+                if (countdown <= 0) {
+                    clearInterval(interval);
+                    window.location.href = redirectUrl;
+                }
+            }, 1000);
+        })();
+    </script>
+}
 
 
