@@ -1403,6 +1403,114 @@ namespace DAL.Migrations
                             Tags = "cay-de-ban,tin-cay,xanh-mat",
                             UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
                             Weight = 1.2m
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CareInstructions = "Tưới nước đều đặn, tránh úng. Cần ánh sáng đầy đủ, bón phân định kỳ để cây ra hoa nhiều. Cắt tỉa sau mỗi đợt hoa.",
+                            CategoryId = 2,
+                            CostPrice = 400000m,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Description = "Cây Hoa Giấy (Bougainvillea) là loại cây leo có hoa đẹp rực rỡ, nhiều màu sắc. Cây thích hợp trồng ngoài trời, chịu nắng tốt, dễ chăm sóc và có thể cắt tỉa tạo dáng đẹp.",
+                            Dimensions = "Chậu 30cm",
+                            Image = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761983435/cay-hoa-giay-canh-nhieu-mau_gpageh.jpg",
+                            IsActive = true,
+                            IsFeatured = true,
+                            Name = "Cây Hoa Giấy",
+                            PlantSize = "Trung bình (80-120cm)",
+                            PointsEarned = 30,
+                            Quantity = 40,
+                            SellPrice = 300000m,
+                            SeoDescription = "Cây Hoa Giấy đẹp rực rỡ, nhiều màu, dễ trồng ngoài trời. Phù hợp trang trí sân vườn, ban công.",
+                            SeoTitle = "Mua Cây Hoa Giấy - Cây Leo Đẹp, Nhiều Màu Sắc",
+                            ShortDescription = "Cây hoa giấy đẹp rực rỡ, trồng ngoài trời.",
+                            Sku = "CHG005",
+                            Slug = "cay-hoa-giay",
+                            SupplierId = 1,
+                            Tags = "cay-ngoai-troi,hoa-dep,leo,trang-tri",
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Weight = 5.0m
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CareInstructions = "Cần ánh sáng đầy đủ, tưới nước vừa phải. Bón phân định kỳ. Cắt tỉa sau Tết để cây phát triển tốt. Cần chăm sóc đặc biệt trước Tết để hoa nở đúng thời điểm.",
+                            CategoryId = 2,
+                            CostPrice = 800000m,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Description = "Cây Mai Vàng (Ochna integerrima) là loại cây cảnh truyền thống của Việt Nam, đặc biệt phổ biến vào dịp Tết. Cây có hoa vàng đẹp, mang ý nghĩa may mắn, tài lộc.",
+                            Dimensions = "Chậu 40cm",
+                            Image = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761983794/cay-hoa-mai-vang_qhbl3q.jpg",
+                            IsActive = true,
+                            IsFeatured = true,
+                            Name = "Cây Mai Vàng",
+                            PlantSize = "Lớn (100-150cm)",
+                            PointsEarned = 60,
+                            Quantity = 25,
+                            SellPrice = 600000m,
+                            SeoDescription = "Cây Mai Vàng đẹp, hợp phong thủy, chưng Tết truyền thống. Mang lại may mắn, tài lộc cho gia đình.",
+                            SeoTitle = "Mua Cây Mai Vàng - Chưng Tết, Mang May Mắn",
+                            ShortDescription = "Cây mai vàng truyền thống, chưng Tết.",
+                            Sku = "CMV006",
+                            Slug = "cay-mai-vang",
+                            SupplierId = 2,
+                            Tags = "cay-ngoai-troi,mai-vang,tet,phong-thuy",
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Weight = 8.0m
+                        },
+                        new
+                        {
+                            Id = 7,
+                            CareInstructions = "Tưới nước thường xuyên, đặc biệt vào mùa khô. Cần ánh sáng đầy đủ hoặc bán bóng. Bón phân hữu cơ định kỳ. Cắt bỏ lá già để cây đẹp hơn.",
+                            CategoryId = 2,
+                            CostPrice = 500000m,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Description = "Cây Chuối Cảnh (Musa spp.) có lá to, xanh mướt tạo cảnh quan nhiệt đới đẹp mắt. Cây phù hợp trồng ngoài sân vườn, tạo điểm nhấn cho không gian xanh.",
+                            Dimensions = "Chậu 50cm",
+                            Image = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761984589/hoa-lua-180-366280e2-3c49-4bba-8f3f-c9a9cb3cda71_l5tzes.jpg",
+                            IsActive = true,
+                            IsFeatured = false,
+                            Name = "Cây Chuối Cảnh",
+                            PlantSize = "Lớn (120-180cm)",
+                            PointsEarned = 35,
+                            Quantity = 35,
+                            SellPrice = 350000m,
+                            SeoDescription = "Cây Chuối Cảnh đẹp, xanh mướt, phù hợp trang trí sân vườn. Tạo không gian nhiệt đới sinh động.",
+                            SeoTitle = "Cây Chuối Cảnh - Tạo Không Gian Nhiệt Đới Xanh Mát",
+                            ShortDescription = "Cây chuối cảnh nhiệt đới, xanh mát.",
+                            Sku = "CCC007",
+                            Slug = "cay-chuoi-canh",
+                            SupplierId = 3,
+                            Tags = "cay-ngoai-troi,nhiet-doi,xanh-mat,trang-tri-san",
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Weight = 10.0m
+                        },
+                        new
+                        {
+                            Id = 8,
+                            CareInstructions = "Tưới nước đều đặn, không để khô hoàn toàn. Cần ánh sáng tốt. Bón phân định kỳ. Kiểm soát sâu bệnh đặc biệt là mối. Cắt tỉa thân già để cây trẻ đẹp hơn.",
+                            CategoryId = 2,
+                            CostPrice = 450000m,
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Description = "Cây Tre Cảnh (Bambusa spp.) mang vẻ đẹp thanh tao, cổ điển. Theo phong thủy, tre mang lại may mắn, thịnh vượng và bảo vệ gia đình. Cây dễ trồng, chịu được nhiều điều kiện khí hậu.",
+                            Dimensions = "Chậu 35cm",
+                            Image = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761984743/cay-tre-3-638371520309931454_mgmsko.webp",
+                            IsActive = true,
+                            IsFeatured = false,
+                            Name = "Cây Tre Cảnh",
+                            PlantSize = "Trung bình (100-150cm)",
+                            PointsEarned = 32,
+                            Quantity = 30,
+                            SellPrice = 320000m,
+                            SeoDescription = "Cây Tre Cảnh đẹp thanh tao, hợp phong thủy. Mang lại may mắn, thịnh vượng cho gia đình. Dễ trồng, dễ chăm sóc.",
+                            SeoTitle = "Cây Tre Cảnh - Phong Thủy, Thanh Tao, May Mắn",
+                            ShortDescription = "Tre cảnh thanh tao, phong thủy tốt.",
+                            Sku = "CTC008",
+                            Slug = "cay-tre-canh",
+                            SupplierId = 1,
+                            Tags = "cay-ngoai-troi,tre-canh,phong-thuy,thanh-tao",
+                            UpdatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Weight = 7.0m
                         });
                 });
 
@@ -1498,6 +1606,46 @@ namespace DAL.Migrations
                             ImageUrl = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620976/cay-da-bup-do_b7k0h6.jpg",
                             IsPrimary = false,
                             ProductId = 4,
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = 6,
+                            AltText = "Hoa giấy nhiều màu sắc",
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            ImageUrl = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761983631/hoa-giay-5_p7inkl.jpg",
+                            IsPrimary = false,
+                            ProductId = 5,
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = 7,
+                            AltText = "Cây mai vàng nở hoa",
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            ImageUrl = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761986192/A_CC_89nh-C_C3_A2y-Mai-300x300_fey4bn.jpg",
+                            IsPrimary = false,
+                            ProductId = 6,
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = 8,
+                            AltText = "Chuối cảnh trang trí sân vườn",
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            ImageUrl = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761984662/chuoi-canh3jpg_vbbfsa.jpg",
+                            IsPrimary = false,
+                            ProductId = 7,
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = 9,
+                            AltText = "Tre cảnh thanh tao",
+                            CreatedAt = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            ImageUrl = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761984792/cay-tre-canh_grande_b49xkr.jpg",
+                            IsPrimary = false,
+                            ProductId = 8,
                             SortOrder = 1
                         });
                 });
@@ -1599,6 +1747,62 @@ namespace DAL.Migrations
                         new
                         {
                             ProductId = 4,
+                            AverageRating = 0m,
+                            LastUpdated = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Star1Count = 0,
+                            Star2Count = 0,
+                            Star3Count = 0,
+                            Star4Count = 0,
+                            Star5Count = 0,
+                            TotalReviews = 0,
+                            WithContentCount = 0,
+                            WithMediaCount = 0
+                        },
+                        new
+                        {
+                            ProductId = 5,
+                            AverageRating = 0m,
+                            LastUpdated = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Star1Count = 0,
+                            Star2Count = 0,
+                            Star3Count = 0,
+                            Star4Count = 0,
+                            Star5Count = 0,
+                            TotalReviews = 0,
+                            WithContentCount = 0,
+                            WithMediaCount = 0
+                        },
+                        new
+                        {
+                            ProductId = 6,
+                            AverageRating = 0m,
+                            LastUpdated = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Star1Count = 0,
+                            Star2Count = 0,
+                            Star3Count = 0,
+                            Star4Count = 0,
+                            Star5Count = 0,
+                            TotalReviews = 0,
+                            WithContentCount = 0,
+                            WithMediaCount = 0
+                        },
+                        new
+                        {
+                            ProductId = 7,
+                            AverageRating = 0m,
+                            LastUpdated = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
+                            Star1Count = 0,
+                            Star2Count = 0,
+                            Star3Count = 0,
+                            Star4Count = 0,
+                            Star5Count = 0,
+                            TotalReviews = 0,
+                            WithContentCount = 0,
+                            WithMediaCount = 0
+                        },
+                        new
+                        {
+                            ProductId = 8,
                             AverageRating = 0m,
                             LastUpdated = new DateTime(2025, 10, 28, 3, 25, 6, 233, DateTimeKind.Utc),
                             Star1Count = 0,

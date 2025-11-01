@@ -37,6 +37,29 @@ namespace BLL.Service.Cloudinary.Interface
         Task<string> SaveFileAsync(IFormFile file, string subFolder = ""); // subFolder mặc định là "" (root)
 
         /// <summary>
+        /// Saves an image file with optimizations (resize, format conversion, etc.) using Cloudinary's image transformations.
+        /// Optimized for avatar/profile images.
+        /// </summary>
+        /// <param name="file">The IFormFile received from the HTTP request.</param>
+        /// <param name="subFolder">An optional subfolder path within the storage container (e.g., "avatars").</param>
+        /// <param name="maxWidth">Maximum width in pixels for the uploaded image (optional).</param>
+        /// <param name="maxHeight">Maximum height in pixels for the uploaded image (optional).</param>
+        /// <param name="quality">Image quality (auto, auto:best, or 1-100). Default is "auto".</param>
+        /// <param name="format">Output format (jpg, png, webp, auto). Default is "auto" (best format).</param>
+        /// <returns>A task representing the asynchronous operation, containing the publicly accessible URL of the saved image.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if file is null.</exception>
+        /// <exception cref="ArgumentException">Thrown if file is empty or not an image.</exception>
+        /// <exception cref="Exception">Thrown if the upload operation fails.</exception>
+        Task<string> SaveImageAsync(
+            IFormFile file,
+            string subFolder = "",
+            int? maxWidth = null,
+            int? maxHeight = null,
+            string quality = "auto",
+            string format = "auto"
+        );
+
+        /// <summary>
         /// Deletes a file from the configured storage based on its URL.
         /// </summary>
         /// <param name="fileUrl">The publicly accessible URL of the file to delete (obtained from SaveFileAsync).</param>

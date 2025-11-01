@@ -44,7 +44,8 @@ namespace GreenTech.Pages.Products
 
         public async Task<IActionResult> OnGetAsync()
         {
-            ProductDetails = await _productService.GetProductByIdAsync(Id);
+            // Use includeInactive: true để có thể edit cả products đã inactive
+            ProductDetails = await _productService.GetProductByIdAsync(Id, includeInactive: true);
             if (ProductDetails == null)
             {
                 return NotFound();
@@ -54,7 +55,7 @@ namespace GreenTech.Pages.Products
             Product = new UpdateProductDTO
             {
                 Name = ProductDetails.Name,
-                Description = ProductDetails.Description,
+                Description = ProductDetails.Description ?? string.Empty,
                 ShortDescription = ProductDetails.ShortDescription,
                 CategoryId = ProductDetails.CategoryId,
                 SupplierId = ProductDetails.SupplierId,
@@ -67,6 +68,8 @@ namespace GreenTech.Pages.Products
                 IsFeatured = ProductDetails.IsFeatured,
                 IsActive = ProductDetails.IsActive,
                 PointsEarned = ProductDetails.PointsEarned,
+                Dimensions = ProductDetails.Dimensions ?? string.Empty,
+                Weight = ProductDetails.Weight,
             };
 
             // Load dropdown data
@@ -74,12 +77,100 @@ namespace GreenTech.Pages.Products
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnPostUpdateAsync()
         {
-            if (!ModelState.IsValid)
+            // Ensure session is available before checking
+            if (!HttpContext.Session.IsAvailable)
+            {
+                await HttpContext.Session.LoadAsync();
+            }
+
+            // Check authentication before processing
+            var isAuthenticated = HttpContext.Session.GetString("IsAuthenticated");
+            var userRoles = HttpContext.Session.GetString("UserRoles");
+
+            // If session is expired, reload the page with error instead of redirecting to login
+            if (string.IsNullOrEmpty(isAuthenticated) || isAuthenticated != "true")
             {
                 await LoadSelectLists();
+                ProductDetails = await _productService.GetProductByIdAsync(
+                    Id,
+                    includeInactive: true
+                );
+                if (ProductDetails != null)
+                {
+                    Product.Description = ProductDetails.Description ?? string.Empty;
+                    Product.Dimensions = ProductDetails.Dimensions ?? string.Empty;
+                }
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
+                );
+                return Page();
+            }
+
+            if (string.IsNullOrEmpty(userRoles) || !userRoles.Contains("ROLE_ADMIN"))
+            {
+                await LoadSelectLists();
+                ProductDetails = await _productService.GetProductByIdAsync(
+                    Id,
+                    includeInactive: true
+                );
+                if (ProductDetails != null)
+                {
+                    Product.Description = ProductDetails.Description ?? string.Empty;
+                    Product.Dimensions = ProductDetails.Dimensions ?? string.Empty;
+                }
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Bạn không có quyền thực hiện thao tác này."
+                );
+                return Page();
+            }
+
+            // Ensure Description and Dimensions are not null
+            if (Product != null)
+            {
+                Product.Description = Product.Description ?? string.Empty;
+                Product.Dimensions = Product.Dimensions ?? string.Empty;
+            }
+
+            // Đảm bảo logic IsActive: Update không được phép deactivate
+            // Chỉ cho phép restore nếu product đang inactive
+            if (ProductDetails != null && ProductDetails.IsActive && !Product.IsActive)
+            {
+                // Nếu product đang active, không cho phép set thành inactive qua Update
+                Product.IsActive = true;
+                ModelState.AddModelError(
+                    "",
+                    "Không thể vô hiệu hóa sản phẩm qua chức năng Cập nhật. Hãy sử dụng chức năng Xóa."
+                );
+            }
+
+            if (!ModelState.IsValid)
+            {
+                // Log ModelState errors for debugging
+                foreach (var error in ModelState)
+                {
+                    foreach (var errorMessage in error.Value.Errors)
+                    {
+                        Console.WriteLine(
+                            $"Field: {error.Key}, Error: {errorMessage.ErrorMessage}"
+                        );
+                    }
+                }
+
+                await LoadSelectLists();
                 ProductDetails = await _productService.GetProductByIdAsync(Id);
+
+                // Reload Product data if validation fails
+                if (ProductDetails != null)
+                {
+                    Product.Description = ProductDetails.Description ?? string.Empty;
+                    Product.Dimensions = ProductDetails.Dimensions ?? string.Empty;
+                    Product.Weight = ProductDetails.Weight;
+                }
+
                 return Page();
             }
 

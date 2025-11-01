@@ -1,12 +1,12 @@
 ﻿using BLL.Service.Auth.Interface;
 using DAL.DTOs.User;
-using DAL.Models;
 using DAL.Models.Enum;
 using DAL.Repositories.Auth.Interface;
 using DAL.Utils.AutoMapper;
 using DAL.Utils.CryptoUtil;
 using DAL.Utils.ValidationHelper;
 using Microsoft.AspNetCore.Http;
+using UserModel = DAL.Models.User;
 
 namespace BLL.Service.Auth
 {
@@ -65,7 +65,7 @@ namespace BLL.Service.Auth
             return Task.CompletedTask;
         }
 
-        private void SaveUserSession(User user)
+        private void SaveUserSession(UserModel user)
         {
             var session =
                 _httpContextAccessor.HttpContext?.Session
@@ -75,6 +75,12 @@ namespace BLL.Service.Auth
             session.SetString("UserEmail", user.Email);
             session.SetString("UserName", user.FullName);
             session.SetString("IsAuthenticated", "true");
+
+            // Save avatar URL if available
+            if (!string.IsNullOrEmpty(user.Avatar))
+            {
+                session.SetString("UserAvatar", user.Avatar);
+            }
 
             var roles = user.UserRoles?.Select(ur => ur.Role.RoleName.ToString()).ToList();
             if (roles != null && roles.Any())
