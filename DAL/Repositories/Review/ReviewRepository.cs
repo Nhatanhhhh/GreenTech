@@ -54,12 +54,12 @@ namespace DAL.Repositories.Review
                     : ReviewStatus.APPROVED;
 
             review.UpdatedAt = DateTime.Now;
-
             _context.Reviews.Update(review);
             await _context.SaveChangesAsync();
 
             return review;
         }
+
         public async Task<IEnumerable<ReviewModel>> GetAllReviewsAsync()
         {
             return await _context.Reviews
