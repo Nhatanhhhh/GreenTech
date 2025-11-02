@@ -274,6 +274,9 @@ namespace DAL.Context
 
             modelBuilder.Entity<Order>().Property(o => o.PaymentGateway).HasConversion<string>();
 
+            // Allow CancelledReason to be nullable
+            modelBuilder.Entity<Order>().Property(o => o.CancelledReason).IsRequired(false);
+
             modelBuilder.Entity<Notification>().Property(n => n.Type).HasConversion<string>();
 
             modelBuilder.Entity<Notification>().Property(n => n.Priority).HasConversion<string>();

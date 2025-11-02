@@ -22,6 +22,22 @@ builder.Services.AddDistributedMemoryCache();
 builder.Services.AddMemoryCache(); // For OTP service
 builder.Services.AddHttpClient(); // For logout synchronization
 
+// Add CORS to allow requests from Razor Pages project
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(
+        "AllowRazorPages",
+        policy =>
+        {
+            policy
+                .WithOrigins("https://localhost:7142", "http://localhost:5174")
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials();
+        }
+    );
+});
+
 // Configure DataProtection to persist keys in development
 // This prevents warnings about invalid session cookies after app restart
 if (builder.Environment.IsDevelopment())
@@ -113,11 +129,15 @@ app.UseStaticFiles();
 app.UseSession();
 app.UseRouting();
 
+// Enable CORS
+app.UseCors("AllowRazorPages");
+
 app.UseAuthorization();
 
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
 
 // SignalR hubs
 app.MapHub<GreenTechMVC.Hubs.CartHub>("/hubs/cart");
+app.MapHub<GreenTechMVC.Hubs.NotificationHub>("/hubs/notification");
 
 app.Run();

@@ -1,0 +1,683 @@
+@using DAL.Models.Enum
+@model IEnumerable<DAL.DTOs.Order.OrderResponseDTO>
+
+@{
+    ViewData["Title"] = "Đơn hàng của tôi";
+    var selectedStatus = ViewBag.SelectedStatus as OrderStatus?;
+}
+
+<style>
+    @@keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .animate-slide-in {
+        animation: slideInRight 0.3s ease-out;
+    }
+</style>
+
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">Đơn hàng của tôi</h1>
+
+        <!-- Status Filter -->
+        <div class="mb-6 flex flex-wrap gap-2">
+            <a href="@Url.Action("Index", "Orders")"
+                class="px-4 py-2 rounded-lg @(selectedStatus == null ? "bg-green-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200") transition">
+                Tất cả
+            </a>
+            <a href="@Url.Action("Index", "Orders", new { status = OrderStatus.PENDING })"
+                class="px-4 py-2 rounded-lg @(selectedStatus == OrderStatus.PENDING ? "bg-green-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200") transition">
+                Chờ xử lý
+            </a>
+            <a href="@Url.Action("Index", "Orders", new { status = OrderStatus.CONFIRMED })"
+                class="px-4 py-2 rounded-lg @(selectedStatus == OrderStatus.CONFIRMED ? "bg-green-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200") transition">
+                Đã xác nhận
+            </a>
+            <a href="@Url.Action("Index", "Orders", new { status = OrderStatus.PROCESSING })"
+                class="px-4 py-2 rounded-lg @(selectedStatus == OrderStatus.PROCESSING ? "bg-green-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200") transition">
+                Đang xử lý
+            </a>
+            <a href="@Url.Action("Index", "Orders", new { status = OrderStatus.SHIPPED })"
+                class="px-4 py-2 rounded-lg @(selectedStatus == OrderStatus.SHIPPED ? "bg-green-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200") transition">
+                Đang giao
+            </a>
+            <a href="@Url.Action("Index", "Orders", new { status = OrderStatus.DELIVERED })"
+                class="px-4 py-2 rounded-lg @(selectedStatus == OrderStatus.DELIVERED ? "bg-green-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200") transition">
+                Đã giao
+            </a>
+            <a href="@Url.Action("Index", "Orders", new { status = OrderStatus.CANCELLED })"
+                class="px-4 py-2 rounded-lg @(selectedStatus == OrderStatus.CANCELLED ? "bg-green-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200") transition">
+                Đã hủy
+            </a>
+        </div>
+
+        @if (Model != null && Model.Any())
+        {
+            <div class="space-y-4">
+                @foreach (var order in Model)
+                {
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden order-card" data-order-id="@order.Id">
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900">
+                                        Đơn hàng #@order.OrderNumber
+                                    </h3>
+                                    <p class="text-sm text-gray-500">
+                                        Ngày đặt: @order.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    @{
+                                        var statusClass = order.Status switch
+                                        {
+                                            OrderStatus.PENDING => "bg-yellow-100 text-yellow-800",
+                                            OrderStatus.CONFIRMED => "bg-blue-100 text-blue-800",
+                                            OrderStatus.PROCESSING => "bg-purple-100 text-purple-800",
+                                            OrderStatus.SHIPPED => "bg-indigo-100 text-indigo-800",
+                                            OrderStatus.DELIVERED => "bg-green-100 text-green-800",
+                                            OrderStatus.CANCELLED => "bg-red-100 text-red-800",
+                                            _ => "bg-gray-100 text-gray-800"
+                                        };
+                                        var statusText = order.Status switch
+                                        {
+                                            OrderStatus.PENDING => "Chờ xử lý",
+                                            OrderStatus.CONFIRMED => "Đã xác nhận",
+                                            OrderStatus.PROCESSING => "Đang xử lý",
+                                            OrderStatus.SHIPPED => "Đang giao",
+                                            OrderStatus.DELIVERED => "Đã giao",
+                                            OrderStatus.CANCELLED => "Đã hủy",
+                                            _ => order.Status.ToString()
+                                        };
+                                    }
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium @statusClass order-status-badge">
+                                        @statusText
+                                    </span>
+                                    <p class="text-xl font-bold text-green-600 mt-2">
+                                        @order.Total.ToString("N0") ₫
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Order Items Preview -->
+                            <div class="border-t border-gray-200 pt-4 mt-4">
+                                <div class="space-y-2">
+                                    @foreach (var item in order.OrderItems.Take(3))
+                                    {
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-3">
+                                                @if (!string.IsNullOrEmpty(item.ProductImage))
+                                                {
+                                                    <img src="@item.ProductImage" alt="@item.ProductName"
+                                                        class="w-12 h-12 object-cover rounded">
+                                                }
+                                                <div>
+                                                    <p class="text-sm font-medium text-gray-900">
+                                                        @item.ProductName
+                                                    </p>
+                                                    <p class="text-xs text-gray-500">
+                                                        SL: @item.Quantity
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <p class="text-sm font-medium text-gray-900">
+                                                @item.Total.ToString("N0") ₫
+                                            </p>
+                                        </div>
+                                    }
+                                    @if (order.OrderItems.Count() > 3)
+                                    {
+                                        <p class="text-sm text-gray-500 text-center pt-2">
+                                            và @(order.OrderItems.Count() - 3) sản phẩm khác...
+                                        </p>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-gray-200">
+                                <a href="@Url.Action("Details", "Orders", new { id = order.Id })"
+                                    class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition">
+                                    Xem chi tiết
+                                </a>
+                                @if (order.Status == OrderStatus.PENDING || order.Status == OrderStatus.CONFIRMED)
+                                {
+                                    <button type="button" onclick="showCancelModal(@order.Id)"
+                                        class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition cancel-order-btn">
+                                        Hủy đơn
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-16 bg-white rounded-lg shadow-md">
+                <svg class="mx-auto h-24 w-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                </svg>
+                <h2 class="text-2xl font-semibold text-gray-900 mt-6">Chưa có đơn hàng nào</h2>
+                <p class="text-gray-600 mt-2">Bạn chưa có đơn hàng nào trong hệ thống</p>
+                <a href="@Url.Action("Index", "Products")"
+                    class="inline-block mt-6 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition">
+                    Tiếp tục mua sắm
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<script>
+    // SignalR realtime order list updates
+    (function () {
+        const userId = @ViewContext.HttpContext.Session.GetInt32("UserId") ?? 0;
+        if (!userId || userId === 0) {
+            console.log('[Index] No userId found, skipping SignalR initialization');
+            return;
+        }
+
+        console.log('[Index] ========================================');
+        console.log('[Index] Index page script loaded');
+        console.log('[Index] UserId:', userId);
+        console.log('[Index] SignalR available:', !!window.signalR);
+
+        function initializeSignalR() {
+            console.log('[Index] initializeSignalR() called');
+            console.log('[Index] SignalR available:', !!window.signalR);
+
+            if (!window.signalR) {
+                console.log('[Index] SignalR not ready, retrying in 500ms...');
+                setTimeout(initializeSignalR, 500);
+                return;
+            }
+
+            console.log('[Index] SignalR is ready, proceeding with initialization...');
+
+            // Reuse existing connection from header if available
+            let notificationConnection = window.__notificationHubConnection;
+            let isReusingConnection = false;
+            let isNewConnection = false;
+
+            if (notificationConnection) {
+                console.log('[Index] Found existing SignalR connection from header');
+                console.log('[Index] Connection state:', notificationConnection.state);
+
+                if (notificationConnection.state === signalR.HubConnectionState.Connected) {
+                    console.log('[Index] ✓ Reusing existing connected SignalR NotificationHub connection from header');
+                    isReusingConnection = true;
+                } else {
+                    console.log('[Index] Existing connection not yet connected, will wait for it to connect');
+                    isReusingConnection = true;
+                }
+            } else {
+                console.log('[Index] No existing connection found, creating new SignalR NotificationHub connection for order list');
+                notificationConnection = new signalR.HubConnectionBuilder()
+                    .withUrl('/hubs/notification')
+                    .withAutomaticReconnect({
+                        nextRetryDelayInMilliseconds: retryContext => {
+                            if (retryContext.elapsedMilliseconds < 60000) {
+                                return 2000;
+                            }
+                            return 10000;
+                        }
+                    })
+                    .build();
+                isNewConnection = true;
+            }
+
+            // IMPORTANT: Register listeners BEFORE starting/reusing connection
+            // Remove existing listeners first to avoid duplicates (if reusing connection)
+            notificationConnection.off('OrderUpdated');
+            notificationConnection.off('CancellationRequestSent');
+
+            // IMPORTANT: Register listeners BEFORE joining groups to ensure we don't miss any events
+            // Listen for order updates - this will be triggered for ANY order update for this user
+            notificationConnection.on('OrderUpdated', function (data) {
+                console.log('[Index] ========================================');
+                console.log('[Index] ====== Received OrderUpdated event ======');
+                console.log('[Index] Event data:', JSON.stringify(data, null, 2));
+                console.log('[Index] Current userId:', userId);
+                console.log('[Index] Received orderId:', data?.orderId, 'Type:', typeof data?.orderId);
+
+                if (data && data.orderId) {
+                    console.log('[Index] ✓ Valid OrderUpdated event received');
+                    console.log('[Index] Order updated via SignalR:', data);
+                    console.log('[Index] Calling updateOrderInList...');
+
+                    // Update the order in the list
+                    const updateSuccess = updateOrderInList(data);
+
+                    if (updateSuccess) {
+                        console.log('[Index] ✓ Order updated successfully in list');
+                        showToastNotification(data.message || 'Đơn hàng đã được cập nhật', 'success');
+                    } else {
+                        console.log('[Index] ⚠ Order not found in current list (may be filtered out or not loaded)');
+                        // Still show toast to inform user
+                        showToastNotification(data.message || 'Đơn hàng đã được cập nhật', 'success');
+                    }
+                } else {
+                    console.warn('[Index] ✗ OrderUpdated event received but missing orderId');
+                    console.warn('[Index] Event data:', data);
+                }
+            });
+
+            // Listen for cancellation request confirmation
+            notificationConnection.on('CancellationRequestSent', function (data) {
+                console.log('[Index] Received CancellationRequestSent event:', data);
+                if (data && data.orderId) {
+                    updateCancellationRequestInList(data);
+                    showToastNotification(data.message || 'Yêu cầu hủy đã được gửi. Đang chờ admin xác nhận.', 'info');
+                }
+            });
+
+            // Function to join groups (defined outside so it can be used in reconnection handler)
+            const joinGroups = () => {
+                if (!notificationConnection || notificationConnection.state !== signalR.HubConnectionState.Connected) {
+                    console.warn('[Index] Cannot join groups - connection not ready. State:', notificationConnection?.state);
+                    return Promise.resolve();
+                }
+
+                if (userId > 0) {
+                    console.log('[Index] Attempting to join user group: user-' + userId);
+                    return notificationConnection.invoke('JoinUserGroup', userId)
+                        .then(() => {
+                            console.log('[Index] ✓ Successfully joined user group: user-' + userId);
+                            console.log('[Index] ✓ Ready to receive realtime order updates.');
+                        })
+                        .catch(err => {
+                            console.error('[Index] ✗ Error joining user group:', err);
+                        });
+                }
+                return Promise.resolve();
+            };
+
+            // If reusing connection from header, wait for it to be connected
+            // Otherwise, start the new connection
+            if (isReusingConnection) {
+                console.log('[Index] Reusing connection from header, checking state...');
+
+                if (notificationConnection.state === signalR.HubConnectionState.Connected) {
+                    console.log('[Index] ✓ Connection already connected, joining groups immediately...');
+                    // Wait a bit to ensure connection is stable and listeners are registered
+                    setTimeout(() => {
+                        joinGroups().then(() => {
+                            console.log('[Index] ✓ Setup complete - ready to receive realtime updates');
+                        });
+                    }, 100);
+                } else {
+                    console.log('[Index] Connection not yet connected (state:', notificationConnection.state, '), waiting...');
+                    // Wait for connection to be established
+                    const checkConnected = setInterval(() => {
+                        if (notificationConnection.state === signalR.HubConnectionState.Connected) {
+                            console.log('[Index] ✓ Connection from header is now connected, joining groups...');
+                            clearInterval(checkConnected);
+                            joinGroups().then(() => {
+                                console.log('[Index] ✓ Setup complete - ready to receive realtime updates');
+                            });
+                        } else if (notificationConnection.state === signalR.HubConnectionState.Disconnected) {
+                            console.error('[Index] ✗ Connection from header disconnected unexpectedly');
+                            clearInterval(checkConnected);
+                            // Try to start it
+                            notificationConnection.start()
+                                .then(() => {
+                                    console.log('[Index] ✓ Restarted connection, joining groups...');
+                                    joinGroups().then(() => {
+                                        console.log('[Index] ✓ Setup complete - ready to receive realtime updates');
+                                    });
+                                })
+                                .catch(err => {
+                                    console.error('[Index] ✗ Failed to restart connection:', err);
+                                });
+                        }
+                    }, 100);
+
+                    // Timeout after 10 seconds
+                    setTimeout(() => {
+                        clearInterval(checkConnected);
+                        if (notificationConnection.state !== signalR.HubConnectionState.Connected) {
+                            console.error('[Index] ✗ Connection from header did not connect within 10 seconds');
+                        }
+                    }, 10000);
+                }
+            } else {
+                // New connection - start it
+                console.log('[Index] Starting new SignalR connection...');
+                notificationConnection.start()
+                    .then(() => {
+                        console.log('[Index] ✓ SignalR NotificationHub connected for order list updates');
+                        console.log('[Index] userId:', userId);
+                        return joinGroups();
+                    })
+                    .then(() => {
+                        console.log('[Index] ✓ Setup complete - ready to receive realtime updates');
+                    })
+                    .catch(err => {
+                        console.error('[Index] ✗ SignalR connection error:', err);
+                    });
+            }
+
+            // Add connection state listeners for debugging
+            notificationConnection.onclose(() => {
+                console.warn('[Index] SignalR NotificationHub connection closed');
+            });
+
+            notificationConnection.onreconnecting(() => {
+                console.log('[Index] SignalR NotificationHub reconnecting...');
+            });
+
+            notificationConnection.onreconnected(() => {
+                console.log('[Index] SignalR NotificationHub reconnected. Rejoining groups...');
+                // Rejoin groups after reconnection
+                setTimeout(() => joinGroups(), 500);
+            });
+
+            // Store connection (but don't overwrite if already exists from header)
+            if (!window.__orderListNotificationConnection) {
+                window.__orderListNotificationConnection = notificationConnection;
+            }
+
+            // Also ensure header knows about this connection for order updates
+            if (!window.__notificationHubConnection) {
+                window.__notificationHubConnection = notificationConnection;
+            }
+        }
+
+        function updateOrderInList(data) {
+            console.log('[Index] updateOrderInList() called');
+            console.log('[Index] Data received:', JSON.stringify(data, null, 2));
+
+            if (!data || !data.orderId) {
+                console.warn('[Index] ✗ Invalid data - missing orderId');
+                return false;
+            }
+
+            // Find order card by order ID
+            const orderCards = document.querySelectorAll('.order-card');
+            console.log('[Index] Found', orderCards.length, 'order cards on page');
+
+            if (orderCards.length === 0) {
+                console.warn('[Index] ⚠ No order cards found on page');
+                return false;
+            }
+
+            // Parse orderId from data (handle both string and number)
+            const receivedOrderId = parseInt(data.orderId || 0);
+            console.log('[Index] Looking for orderId:', receivedOrderId);
+
+            let found = false;
+            orderCards.forEach((card, index) => {
+                const orderIdAttr = card.getAttribute('data-order-id');
+                const cardOrderId = parseInt(orderIdAttr || 0);
+                
+                console.log(`[Index] Card ${index}: orderId=${cardOrderId} (attr="${orderIdAttr}") vs received=${receivedOrderId}`);
+
+                if (orderIdAttr && cardOrderId > 0 && cardOrderId === receivedOrderId) {
+                    found = true;
+                    console.log('[Index] ✓ Found matching order card for orderId:', receivedOrderId);
+
+                    // Update status badge
+                    const statusBadge = card.querySelector('.order-status-badge');
+                    if (statusBadge && data.status) {
+                        const statusTextMap = {
+                            'PENDING': 'Chờ xử lý',
+                            'CONFIRMED': 'Đã xác nhận',
+                            'PROCESSING': 'Đang xử lý',
+                            'SHIPPED': 'Đang giao',
+                            'DELIVERED': 'Đã giao',
+                            'CANCELLED': 'Đã hủy'
+                        };
+                        const statusClassMap = {
+                            'PENDING': 'bg-yellow-100 text-yellow-800',
+                            'CONFIRMED': 'bg-blue-100 text-blue-800',
+                            'PROCESSING': 'bg-purple-100 text-purple-800',
+                            'SHIPPED': 'bg-indigo-100 text-indigo-800',
+                            'DELIVERED': 'bg-green-100 text-green-800',
+                            'CANCELLED': 'bg-red-100 text-red-800'
+                        };
+
+                        const statusText = statusTextMap[data.status] || data.statusText || data.status;
+                        const statusClass = statusClassMap[data.status] || 'bg-gray-100 text-gray-800';
+
+                        // Update badge
+                        statusBadge.textContent = statusText;
+                        statusBadge.className = 'px-3 py-1 rounded-full text-sm font-medium order-status-badge ' + statusClass;
+
+                        console.log('[Index] ✓ Status badge updated to:', statusText);
+
+                        // Add highlight animation to badge
+                        statusBadge.style.transition = 'all 0.3s';
+                        statusBadge.style.transform = 'scale(1.1)';
+                        setTimeout(() => {
+                            statusBadge.style.transform = 'scale(1)';
+                        }, 300);
+                    } else {
+                        console.warn('[Index] ⚠ Status badge not found or status missing');
+                    }
+
+                    // Update cancel button visibility
+                    const cancelButton = card.querySelector('.cancel-order-btn');
+                    if (cancelButton) {
+                        if (data.status === 'CANCELLED' || data.status === 'DELIVERED' || data.status === 'SHIPPED' || data.status === 'PROCESSING') {
+                            cancelButton.style.display = 'none';
+                            console.log('[Index] ✓ Cancel button hidden (order cannot be cancelled)');
+                        } else if (data.status === 'PENDING' || data.status === 'CONFIRMED') {
+                            cancelButton.style.display = 'block';
+                            console.log('[Index] ✓ Cancel button shown (order can be cancelled)');
+                        }
+                    }
+
+                    // Add highlight effect to entire card
+                    card.style.transition = 'all 0.3s';
+                    card.style.backgroundColor = '#fef3c7';
+                    card.style.transform = 'scale(1.01)';
+                    setTimeout(() => {
+                        card.style.backgroundColor = '';
+                        card.style.transform = 'scale(1)';
+                    }, 2000);
+                }
+            });
+
+            if (!found) {
+                console.warn('[Index] ✗ Order card not found for orderId:', receivedOrderId);
+                console.warn('[Index] This order may be filtered out (by status) or not in current page view');
+            }
+
+            return found;
+        }
+
+        function updateCancellationRequestInList(data) {
+            // Find order card by order ID
+            const orderCards = document.querySelectorAll('.order-card');
+            orderCards.forEach(card => {
+                const orderIdAttr = card.getAttribute('data-order-id');
+                // Parse both sides to handle string/number differences
+                const cardOrderId = parseInt(orderIdAttr || 0);
+                const receivedOrderId = parseInt(data?.orderId || 0);
+
+                if (orderIdAttr && cardOrderId > 0 && cardOrderId === receivedOrderId) {
+                    // Update cancel button
+                    const cancelButton = card.querySelector('.cancel-order-btn');
+                    if (cancelButton) {
+                        cancelButton.textContent = 'Đã gửi yêu cầu hủy';
+                        cancelButton.disabled = true;
+                        cancelButton.classList.add('opacity-50', 'cursor-not-allowed');
+                        cancelButton.classList.remove('bg-red-600', 'hover:bg-red-700');
+                        cancelButton.classList.add('bg-gray-400');
+                    }
+
+                    // Add pending badge
+                    const statusBadge = card.querySelector('.order-status-badge');
+                    if (statusBadge) {
+                        const pendingBadge = document.createElement('span');
+                        pendingBadge.className = 'ml-2 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800';
+                        pendingBadge.textContent = 'Chờ duyệt hủy';
+                        statusBadge.parentElement.appendChild(pendingBadge);
+                    }
+                }
+            });
+        }
+
+        function showToast(message, type) {
+            // Use the enhanced toast notification function
+            showToastNotification(message, type);
+        }
+
+        function showToastNotification(message, type = 'info') {
+            // Remove existing toast if any
+            const existingToast = document.querySelector('.toast-notification');
+            if (existingToast) {
+                existingToast.remove();
+            }
+
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification fixed top-4 right-4 z-50 max-w-md w-full';
+
+            const bgColor = type === 'error' ? 'bg-red-500' :
+                type === 'success' ? 'bg-green-500' :
+                    type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500';
+
+            const icon = type === 'error' ? 'fa-exclamation-circle' :
+                type === 'success' ? 'fa-check-circle' :
+                    type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+
+            toast.innerHTML = `
+                <div class="${bgColor} text-white rounded-lg shadow-lg p-4 flex items-start gap-3 animate-slide-in">
+                    <div class="flex-shrink-0 mt-0.5">
+                        <i class="fas ${icon} text-xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-medium">${message}</p>
+                    </div>
+                    <button onclick="this.closest('.toast-notification').remove()" 
+                        class="flex-shrink-0 text-white hover:text-gray-200 transition">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(toast);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                const toastContent = toast.querySelector('.bg-red-500, .bg-green-500, .bg-yellow-500, .bg-blue-500');
+                if (toastContent) {
+                    toastContent.style.opacity = '0';
+                    toastContent.style.transition = 'opacity 0.3s';
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 5000);
+        }
+
+        // Wait for both DOM and SignalR to be ready
+        const startInit = () => {
+            if (document.readyState === 'loading') {
+                console.log('[Index] DOM is still loading, waiting for DOMContentLoaded...');
+                document.addEventListener('DOMContentLoaded', () => {
+                    console.log('[Index] DOMContentLoaded fired, initializing SignalR...');
+                    initializeSignalR();
+                });
+            } else {
+                console.log('[Index] DOM is ready, initializing SignalR...');
+                initializeSignalR();
+            }
+        };
+
+        // If SignalR is already loaded, start immediately
+        if (window.signalR) {
+            console.log('[Index] SignalR already loaded, starting initialization...');
+            startInit();
+        } else {
+            console.log('[Index] Waiting for SignalR to load...');
+            // Wait for SignalR script to load (check every 100ms, max 10 seconds)
+            let attempts = 0;
+            const checkSignalR = setInterval(() => {
+                attempts++;
+                if (window.signalR) {
+                    console.log('[Index] SignalR loaded after', attempts * 100, 'ms, starting initialization...');
+                    clearInterval(checkSignalR);
+                    startInit();
+                } else if (attempts > 100) {
+                    console.error('[Index] SignalR failed to load after 10 seconds');
+                    clearInterval(checkSignalR);
+                }
+            }, 100);
+        }
+    })();
+</script>
+
+<!-- Cancel Order Modal -->
+<div id="cancelModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+    <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+        <h3 class="mb-2 text-lg font-semibold text-gray-900">Hủy đơn hàng</h3>
+        <form id="cancelOrderForm" method="post" asp-action="Cancel" onsubmit="return validateCancelForm(event)">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="OrderId" id="cancelOrderId">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Lý do hủy đơn hàng <span class="text-red-500">*</span>
+                </label>
+                <textarea name="Reason" id="cancelReason" rows="4" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                    placeholder="Vui lòng nhập lý do hủy đơn hàng..."></textarea>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="closeCancelModal()"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100">
+                    Hủy
+                </button>
+                <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">
+                    Xác nhận hủy
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function showCancelModal(orderId) {
+        document.getElementById('cancelOrderId').value = orderId;
+        document.getElementById('cancelReason').value = '';
+        // Reset any error styling
+        const textarea = document.getElementById('cancelReason');
+        textarea.classList.remove('border-red-500');
+        document.getElementById('cancelModal').classList.remove('hidden');
+    }
+
+    function closeCancelModal() {
+        document.getElementById('cancelModal').classList.add('hidden');
+        // Reset form
+        document.getElementById('cancelReason').value = '';
+        document.getElementById('cancelReason').classList.remove('border-red-500');
+    }
+
+    function validateCancelForm(event) {
+        const reason = document.getElementById('cancelReason').value;
+        const textarea = document.getElementById('cancelReason');
+
+        if (!reason || !reason.trim()) {
+            event.preventDefault();
+            showToastNotification('Vui lòng nhập lý do hủy đơn hàng', 'error');
+            textarea.focus();
+            textarea.classList.add('border-red-500');
+            setTimeout(() => {
+                textarea.classList.remove('border-red-500');
+            }, 3000);
+            return false;
+        }
+
+        return true;
+    }
+</script>

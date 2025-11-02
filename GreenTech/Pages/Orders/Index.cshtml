@@ -1,0 +1,307 @@
+@page
+@model GreenTech.Pages.Orders.IndexModel
+@using DAL.Models.Enum
+
+@{
+    ViewData["Title"] = "Quản lý đơn hàng";
+}
+
+<div class="container-fluid px-4 py-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Quản lý đơn hàng</h1>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+        <form method="get" class="flex flex-wrap gap-4 items-end">
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+                <select asp-for="Status" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="">Tất cả</option>
+                    <option value="@OrderStatus.PENDING">Chờ xử lý</option>
+                    <option value="@OrderStatus.CONFIRMED">Đã xác nhận</option>
+                    <option value="@OrderStatus.PROCESSING">Đang xử lý</option>
+                    <option value="@OrderStatus.SHIPPED">Đang giao</option>
+                    <option value="@OrderStatus.DELIVERED">Đã giao</option>
+                    <option value="@OrderStatus.CANCELLED">Đã hủy</option>
+                </select>
+            </div>
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Từ ngày</label>
+                <input type="date" asp-for="StartDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Đến ngày</label>
+                <input type="date" asp-for="EndDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+            <div>
+                <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                    Lọc
+                </button>
+                <a href="/Orders" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg ml-2">
+                    Xóa bộ lọc
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mã đơn</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Khách hàng</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ngày đặt</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tổng tiền</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @if (Model.Orders != null && Model.Orders.Any())
+                    {
+                        @foreach (var order in Model.Orders)
+                        {
+                            <tr class="hover:bg-gray-50" data-order-id="@order.Id">
+                                <td class="px-6 py-4">
+                                    <a asp-page="./Details" asp-route-id="@order.Id" class="text-green-600 hover:text-green-700 font-medium">
+                                        #@order.OrderNumber
+                                    </a>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div>
+                                        <p class="font-medium text-gray-900">@order.CustomerName</p>
+                                        <p class="text-sm text-gray-500">@order.CustomerPhone</p>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600">
+                                    @order.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                </td>
+                                <td class="px-6 py-4 status-cell">
+                                    @{
+                                        var statusClass = order.Status switch
+                                        {
+                                            OrderStatus.PENDING => "bg-yellow-100 text-yellow-800",
+                                            OrderStatus.CONFIRMED => "bg-blue-100 text-blue-800",
+                                            OrderStatus.PROCESSING => "bg-purple-100 text-purple-800",
+                                            OrderStatus.SHIPPED => "bg-indigo-100 text-indigo-800",
+                                            OrderStatus.DELIVERED => "bg-green-100 text-green-800",
+                                            OrderStatus.CANCELLED => "bg-red-100 text-red-800",
+                                            _ => "bg-gray-100 text-gray-800"
+                                        };
+                                        var statusText = order.Status switch
+                                        {
+                                            OrderStatus.PENDING => "Chờ xử lý",
+                                            OrderStatus.CONFIRMED => "Đã xác nhận",
+                                            OrderStatus.PROCESSING => "Đang xử lý",
+                                            OrderStatus.SHIPPED => "Đang giao",
+                                            OrderStatus.DELIVERED => "Đã giao",
+                                            OrderStatus.CANCELLED => "Đã hủy",
+                                            _ => order.Status.ToString()
+                                        };
+                                    }
+                                    <span class="status-badge px-2 py-1 rounded-full text-xs font-medium @statusClass">
+                                        @statusText
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 font-semibold text-gray-900">
+                                    @order.Total.ToString("N0") ₫
+                                </td>
+                                <td class="px-6 py-4">
+                                    <a asp-page="./Details" asp-route-id="@order.Id" class="text-green-600 hover:text-green-700 font-medium">
+                                        Chi tiết
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                Không có đơn hàng nào
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+<script>
+    // SignalR realtime cancellation request notifications for Admin (Order List)
+    (function() {
+        if (!window.signalR) return;
+
+        function initializeSignalR() {
+            if (!window.signalR) {
+                setTimeout(initializeSignalR, 500);
+                return;
+            }
+
+            const orderConnection = new signalR.HubConnectionBuilder()
+                .withUrl('/hubs/order')
+                .withAutomaticReconnect({
+                    nextRetryDelayInMilliseconds: retryContext => {
+                        if (retryContext.elapsedMilliseconds < 60000) {
+                            return 2000;
+                        }
+                        return 10000;
+                    }
+                })
+                .build();
+
+            // Listen for new orders created
+            orderConnection.on('NewOrderCreated', function(data) {
+                if (data && data.orderId) {
+                    console.log('New order created, reloading list:', data);
+                    showNotification(data.message || 'Có đơn hàng mới', 'success');
+                    // Reload page after a short delay to show new order
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                }
+            });
+
+            // Listen for cancellation requests
+            orderConnection.on('CancellationRequest', function(data) {
+                if (data && data.orderId) {
+                    console.log('New cancellation request received in order list:', data);
+                    highlightOrderInList(data.orderId);
+                    showNotification(data.message || 'Có yêu cầu hủy đơn hàng mới', 'warning');
+                    // Update status badge to show cancellation request
+                    updateCancellationRequestInList(data.orderId);
+                }
+            });
+
+            // Listen for order status updates (real-time sync)
+            orderConnection.on('OrderUpdated', function(data) {
+                if (data && data.orderId) {
+                    console.log('Order status updated in list:', data);
+                    updateOrderInList(data);
+                    showNotification(data.message || 'Đơn hàng đã được cập nhật', 'info');
+                }
+            });
+
+            orderConnection.start()
+                .then(() => {
+                    console.log('SignalR OrderHub connected for admin order list');
+                })
+                .catch(err => {
+                    console.error('SignalR connection error:', err);
+                });
+
+            window.__adminOrderListHubConnection = orderConnection;
+        }
+
+        function highlightOrderInList(orderId) {
+            // Find order row by order ID
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const link = row.querySelector('a[href*="/Orders/Details"]');
+                if (link) {
+                    const href = link.getAttribute('href');
+                    if (href && href.includes(`id=${orderId}`)) {
+                        // Highlight the row
+                        row.style.transition = 'all 0.3s';
+                        row.style.backgroundColor = '#fef3c7';
+                        setTimeout(() => {
+                            row.style.backgroundColor = '';
+                        }, 3000);
+                    }
+                }
+            });
+        }
+
+        function updateOrderInList(data) {
+            // Find order row by data-order-id attribute
+            const row = document.querySelector(`tr[data-order-id="${data.orderId}"]`);
+            if (row && data.status) {
+                // Update status badge
+                const statusBadge = row.querySelector('.status-badge');
+                if (statusBadge) {
+                    const statusTextMap = {
+                        'PENDING': 'Chờ xử lý',
+                        'CONFIRMED': 'Đã xác nhận',
+                        'PROCESSING': 'Đang xử lý',
+                        'SHIPPED': 'Đang giao',
+                        'DELIVERED': 'Đã giao',
+                        'CANCELLED': 'Đã hủy'
+                    };
+                    const statusClassMap = {
+                        'PENDING': 'bg-yellow-100 text-yellow-800',
+                        'CONFIRMED': 'bg-blue-100 text-blue-800',
+                        'PROCESSING': 'bg-purple-100 text-purple-800',
+                        'SHIPPED': 'bg-indigo-100 text-indigo-800',
+                        'DELIVERED': 'bg-green-100 text-green-800',
+                        'CANCELLED': 'bg-red-100 text-red-800'
+                    };
+                    
+                    const statusText = statusTextMap[data.status] || data.statusText || data.status;
+                    statusBadge.textContent = statusText;
+                    statusBadge.className = 'status-badge px-2 py-1 rounded-full text-xs font-medium ' + (statusClassMap[data.status] || 'bg-gray-100 text-gray-800');
+                }
+
+                // Highlight the row
+                row.style.transition = 'all 0.3s';
+                row.style.backgroundColor = '#fef3c7';
+                setTimeout(() => {
+                    row.style.backgroundColor = '';
+                }, 2000);
+            }
+        }
+
+        function updateCancellationRequestInList(orderId) {
+            // Find order row by data-order-id attribute
+            const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
+            if (row) {
+                // Update status badge to show cancellation request
+                const statusBadge = row.querySelector('.status-badge');
+                if (statusBadge) {
+                    // Add cancellation request indicator
+                    statusBadge.innerHTML = statusBadge.textContent + ' <span class="ml-1 px-1 py-0.5 rounded bg-yellow-200 text-yellow-800 text-xs">Yêu cầu hủy</span>';
+                }
+
+                // Highlight the row
+                row.style.transition = 'all 0.3s';
+                row.style.backgroundColor = '#fef3c7';
+                setTimeout(() => {
+                    row.style.backgroundColor = '';
+                }, 3000);
+            }
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'error' ? 'bg-red-500 text-white' : 
+                'bg-yellow-500 text-white'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-${type === 'warning' ? 'exclamation-triangle' : type === 'error' ? 'times-circle' : 'check-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.3s';
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeSignalR);
+        } else {
+            initializeSignalR();
+        }
+    })();
+</script>
+

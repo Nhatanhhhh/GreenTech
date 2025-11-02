@@ -79,7 +79,7 @@ namespace GreenTech.Pages.Banners
                 ModelState.AddModelError(string.Empty, ex.Message);
                 return Page();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 ModelState.AddModelError(string.Empty, "Đã xảy ra lỗi khi cập nhật banner.");
                 return Page();
