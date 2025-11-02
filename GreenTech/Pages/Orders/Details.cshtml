@@ -1,0 +1,544 @@
+@page "{id:int}"
+@model GreenTech.Pages.Orders.DetailsModel
+@using DAL.Models.Enum
+
+@{
+    ViewData["Title"] = $"Chi tiết đơn hàng #{Model.Order?.OrderNumber}";
+}
+
+<div class="container-fluid px-4 py-6">
+    <div class="mb-6">
+        <a asp-page="./Index" class="text-green-600 hover:text-green-700 flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Quay lại danh sách đơn hàng
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="mb-4 bg-green-50 border-l-4 border-green-400 p-4 rounded-lg">
+            <p class="text-green-800">@TempData["Success"]</p>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="mb-4 bg-red-50 border-l-4 border-red-400 p-4 rounded-lg">
+            <p class="text-red-800">@TempData["Error"]</p>
+        </div>
+    }
+
+    @if (Model.Order == null)
+    {
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p class="text-red-800">Không tìm thấy đơn hàng này.</p>
+        </div>
+    }
+    else
+    {
+        <div class="space-y-6">
+            <!-- Order Header -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Đơn hàng #@Model.Order.OrderNumber</h1>
+                        <p class="text-gray-500 mt-1">Ngày đặt: @Model.Order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+                    </div>
+                    <div class="text-right">
+                        @{
+                            var statusClass = Model.Order.Status switch
+                            {
+                                OrderStatus.PENDING => "bg-yellow-100 text-yellow-800",
+                                OrderStatus.CONFIRMED => "bg-blue-100 text-blue-800",
+                                OrderStatus.PROCESSING => "bg-purple-100 text-purple-800",
+                                OrderStatus.SHIPPED => "bg-indigo-100 text-indigo-800",
+                                OrderStatus.DELIVERED => "bg-green-100 text-green-800",
+                                OrderStatus.CANCELLED => "bg-red-100 text-red-800",
+                                _ => "bg-gray-100 text-gray-800"
+                            };
+                            var statusText = Model.Order.Status switch
+                            {
+                                OrderStatus.PENDING => "Chờ xử lý",
+                                OrderStatus.CONFIRMED => "Đã xác nhận",
+                                OrderStatus.PROCESSING => "Đang xử lý",
+                                OrderStatus.SHIPPED => "Đang giao",
+                                OrderStatus.DELIVERED => "Đã giao",
+                                OrderStatus.CANCELLED => "Đã hủy",
+                                _ => Model.Order.Status.ToString()
+                            };
+                        }
+                        <span class="px-4 py-2 rounded-full text-sm font-medium @statusClass">
+                            @statusText
+                        </span>
+                        <p class="text-2xl font-bold text-green-600 mt-3">
+                            @Model.Order.Total.ToString("N0") ₫
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Payment Status -->
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-600">Trạng thái thanh toán:</span>
+                        @{
+                            var paymentStatusClass = Model.Order.PaymentStatus switch
+                            {
+                                PaymentStatus.PAID => "bg-green-100 text-green-800",
+                                PaymentStatus.PENDING => "bg-yellow-100 text-yellow-800",
+                                PaymentStatus.FAILED => "bg-red-100 text-red-800",
+                                _ => "bg-gray-100 text-gray-800"
+                            };
+                            var paymentStatusText = Model.Order.PaymentStatus switch
+                            {
+                                PaymentStatus.PAID => "Đã thanh toán",
+                                PaymentStatus.PENDING => "Chờ thanh toán",
+                                PaymentStatus.FAILED => "Thanh toán thất bại",
+                                _ => Model.Order.PaymentStatus.ToString()
+                            };
+                        }
+                        <span class="px-3 py-1 rounded-full text-xs font-medium @paymentStatusClass">
+                            @paymentStatusText
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Order Items -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Sản phẩm</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sản phẩm
+                                        </th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Số lượng
+                                        </th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đơn giá
+                                        </th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Thành
+                                            tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    @foreach (var item in Model.Order.OrderItems)
+                                    {
+                                        <tr>
+                                            <td class="px-4 py-3">
+                                                <div class="flex items-center space-x-3">
+                                                    @if (!string.IsNullOrEmpty(item.ProductImage))
+                                                    {
+                                                        <img src="@item.ProductImage" alt="@item.ProductName"
+                                                            class="w-12 h-12 object-cover rounded">
+                                                    }
+                                                    <span class="font-medium text-gray-900">@item.ProductName</span>
+                                                </div>
+                                            </td>
+                                            <td class="px-4 py-3 text-sm text-gray-600">@item.ProductSku</td>
+                                            <td class="px-4 py-3 text-sm text-gray-600">@item.Quantity</td>
+                                            <td class="px-4 py-3 text-sm text-gray-600">@item.UnitSellPrice.ToString("N0") ₫
+                                            </td>
+                                            <td class="px-4 py-3 font-semibold text-gray-900">@item.Total.ToString("N0") ₫</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Sidebar -->
+                <div class="lg:col-span-1 space-y-6">
+                    <!-- Customer Info -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Thông tin khách hàng</h2>
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-sm text-gray-600">Tên khách hàng</p>
+                                <p class="font-medium text-gray-900">@Model.Order.CustomerName</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Số điện thoại</p>
+                                <p class="font-medium text-gray-900">@Model.Order.CustomerPhone</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Email</p>
+                                <p class="font-medium text-gray-900">@Model.Order.UserEmail</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Địa chỉ giao hàng</p>
+                                <p class="font-medium text-gray-900">@Model.Order.ShippingAddress</p>
+                            </div>
+                            @if (!string.IsNullOrEmpty(Model.Order.Note))
+                            {
+                                <div>
+                                    <p class="text-sm text-gray-600">Ghi chú</p>
+                                    <p class="font-medium text-gray-900">@Model.Order.Note</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Order Summary -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Tóm tắt đơn hàng</h2>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Tạm tính:</span>
+                                <span class="font-medium">@Model.Order.Subtotal.ToString("N0") ₫</span>
+                            </div>
+                            @if (Model.Order.DiscountAmount > 0)
+                            {
+                                <div class="flex justify-between text-green-600">
+                                    <span>Giảm giá:</span>
+                                    <span>-@Model.Order.DiscountAmount.ToString("N0") ₫</span>
+                                </div>
+                                @if (Model.Order.CouponCode != null)
+                                {
+                                    <p class="text-xs text-gray-500">Coupon: @Model.Order.CouponCode</p>
+                                }
+                            }
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Phí vận chuyển:</span>
+                                <span class="font-medium">@Model.Order.ShippingFee.ToString("N0") ₫</span>
+                            </div>
+                            @if (Model.Order.WalletAmountUsed > 0)
+                            {
+                                <div class="flex justify-between text-blue-600">
+                                    <span>Đã dùng ví:</span>
+                                    <span>-@Model.Order.WalletAmountUsed.ToString("N0") ₫</span>
+                                </div>
+                            }
+                            <hr class="border-gray-200 my-2">
+                            <div class="flex justify-between text-lg font-semibold">
+                                <span>Tổng cộng:</span>
+                                <span class="text-green-600">@Model.Order.Total.ToString("N0") ₫</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cancel Request Actions (if order has cancellation request) -->
+                    <div id="cancellationRequestSection"
+                        class="@((Model.Order.Status == OrderStatus.PENDING || Model.Order.Status == OrderStatus.CONFIRMED) && !string.IsNullOrEmpty(Model.Order.CancelledReason) ? "" : "hidden")">
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-lg mb-6">
+                            <div class="flex items-center mb-4">
+                                <i class="fas fa-exclamation-triangle text-yellow-600 text-xl mr-3"></i>
+                                <h3 class="text-lg font-semibold text-yellow-900">Yêu cầu hủy đơn từ khách hàng</h3>
+                            </div>
+                            <p class="text-sm text-yellow-800 mb-2"><strong>Lý do hủy:</strong> <span
+                                    id="cancellationReason">@Model.Order.CancelledReason</span></p>
+                            <div class="flex gap-3 mt-4">
+                                <button type="button" onclick="showConfirmModal('approve', '@Model.Order.Id')"
+                                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium">
+                                    <i class="fas fa-check mr-1"></i> Duyệt hủy
+                                </button>
+                                <button type="button" onclick="showConfirmModal('reject', '@Model.Order.Id')"
+                                    class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium">
+                                    <i class="fas fa-times mr-1"></i> Từ chối hủy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Update Status -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Cập nhật trạng thái</h2>
+                        <form method="post" asp-page-handler="UpdateStatus">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="OrderId" value="@Model.Order.Id">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
+                                    <select name="Status"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                                        required>
+                                        <option value="@OrderStatus.PENDING"
+                                            selected="@(Model.Order.Status == OrderStatus.PENDING)">Chờ xử lý</option>
+                                        <option value="@OrderStatus.CONFIRMED"
+                                            selected="@(Model.Order.Status == OrderStatus.CONFIRMED)">Đã xác nhận</option>
+                                        <option value="@OrderStatus.PROCESSING"
+                                            selected="@(Model.Order.Status == OrderStatus.PROCESSING)">Đang xử lý</option>
+                                        <option value="@OrderStatus.SHIPPED"
+                                            selected="@(Model.Order.Status == OrderStatus.SHIPPED)">Đang giao</option>
+                                        <option value="@OrderStatus.DELIVERED"
+                                            selected="@(Model.Order.Status == OrderStatus.DELIVERED)">Đã giao</option>
+                                        <option value="@OrderStatus.CANCELLED"
+                                            selected="@(Model.Order.Status == OrderStatus.CANCELLED)">Đã hủy</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Lý do (tùy chọn)</label>
+                                    <textarea name="Reason" rows="3"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"></textarea>
+                                </div>
+                                <button type="submit"
+                                    class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+                                    Cập nhật
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+<script>
+    // SignalR realtime cancellation request notifications for Admin
+    (function () {
+        if (!window.signalR) return;
+
+        const orderId = @Model.Order?.Id ?? 0;
+        if (!orderId) return;
+
+        function initializeSignalR() {
+            if (!window.signalR) {
+                setTimeout(initializeSignalR, 500);
+                return;
+            }
+
+            const orderConnection = new signalR.HubConnectionBuilder()
+                .withUrl('/hubs/order')
+                .withAutomaticReconnect({
+                    nextRetryDelayInMilliseconds: retryContext => {
+                        if (retryContext.elapsedMilliseconds < 60000) {
+                            return 2000;
+                        }
+                        return 10000;
+                    }
+                })
+                .build();
+
+            // Listen for cancellation requests
+            orderConnection.on('CancellationRequest', function (data) {
+                if (data && data.orderId === orderId) {
+                    console.log('New cancellation request received:', data);
+                    showCancellationRequest(data);
+                }
+            });
+
+            // Listen for order status updates (real-time sync)
+            orderConnection.on('OrderUpdated', function (data) {
+                if (data && data.orderId === orderId) {
+                    console.log('Order status updated via SignalR:', data);
+                    updateOrderStatus(data);
+                    showNotification(data.message || 'Đơn hàng đã được cập nhật', 'info');
+                }
+            });
+
+
+            orderConnection.start()
+                .then(() => {
+                    console.log('SignalR OrderHub connected for admin');
+                    if (orderId > 0) {
+                        // Join order-specific group
+                        return orderConnection.invoke('JoinOrderGroup', orderId);
+                    }
+                    return Promise.resolve();
+                })
+                .then(() => {
+                    console.log('Joined order group for realtime updates');
+                })
+                .catch(err => {
+                    console.error('SignalR connection error:', err);
+                });
+
+            window.__adminOrderHubConnection = orderConnection;
+        }
+
+        function showCancellationRequest(data) {
+            const section = document.getElementById('cancellationRequestSection');
+            const reasonSpan = document.getElementById('cancellationReason');
+
+            if (section && reasonSpan && data) {
+                // Update cancellation reason
+                reasonSpan.textContent = data.reason || 'Khách hàng yêu cầu hủy đơn hàng';
+
+                // Show section
+                section.classList.remove('hidden');
+
+                // Highlight with animation
+                section.style.transition = 'all 0.3s';
+                section.style.backgroundColor = '#fef3c7';
+                setTimeout(() => {
+                    section.style.backgroundColor = '';
+                }, 2000);
+
+                // Show notification toast
+                showNotification(data.message || 'Có yêu cầu hủy đơn hàng mới', 'warning');
+            }
+        }
+
+        function updateOrderStatus(data) {
+            // Update status badge if exists
+            const statusBadge = document.querySelector('.order-status-badge');
+            const statusTextMap = {
+                'PENDING': 'Chờ xử lý',
+                'CONFIRMED': 'Đã xác nhận',
+                'PROCESSING': 'Đang xử lý',
+                'SHIPPED': 'Đang giao',
+                'DELIVERED': 'Đã giao',
+                'CANCELLED': 'Đã hủy'
+            };
+            const statusClassMap = {
+                'PENDING': 'bg-yellow-100 text-yellow-800',
+                'CONFIRMED': 'bg-blue-100 text-blue-800',
+                'PROCESSING': 'bg-purple-100 text-purple-800',
+                'SHIPPED': 'bg-indigo-100 text-indigo-800',
+                'DELIVERED': 'bg-green-100 text-green-800',
+                'CANCELLED': 'bg-red-100 text-red-800'
+            };
+
+            if (statusBadge && data.status) {
+                statusBadge.textContent = statusTextMap[data.status] || data.statusText || data.status;
+                statusBadge.className = 'px-4 py-2 rounded-full text-sm font-medium ' + (statusClassMap[data.status] || 'bg-gray-100 text-gray-800');
+            }
+
+            // Reload page after 1 second to get latest data
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        }
+
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                    'bg-yellow-500 text-white'
+                }`;
+            notification.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-${type === 'warning' ? 'exclamation-triangle' : type === 'error' ? 'times-circle' : 'check-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.3s';
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeSignalR);
+        } else {
+            initializeSignalR();
+        }
+    })();
+</script>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 transform transition-all">
+        <div class="p-6">
+            <div class="flex items-center mb-4">
+                <div id="confirmIcon" class="flex-shrink-0 mr-4"></div>
+                <h3 id="confirmTitle" class="text-xl font-semibold text-gray-900"></h3>
+            </div>
+            <p id="confirmMessage" class="text-gray-600 mb-6"></p>
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="closeConfirmModal()"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 font-medium transition">
+                    Hủy
+                </button>
+                <button type="button" id="confirmActionBtn" onclick="executeConfirmAction()"
+                    class="px-4 py-2 rounded-lg text-white font-medium transition">
+                    Xác nhận
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentConfirmAction = null;
+    let currentOrderId = null;
+
+    function showConfirmModal(action, orderId) {
+        currentConfirmAction = action;
+        currentOrderId = orderId;
+
+        const modal = document.getElementById('confirmModal');
+        const icon = document.getElementById('confirmIcon');
+        const title = document.getElementById('confirmTitle');
+        const message = document.getElementById('confirmMessage');
+        const actionBtn = document.getElementById('confirmActionBtn');
+
+        if (action === 'approve') {
+            icon.innerHTML = '<div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center"><i class="fas fa-check text-red-600 text-xl"></i></div>';
+            title.textContent = 'Duyệt hủy đơn hàng';
+            message.textContent = 'Bạn có chắc chắn muốn duyệt hủy đơn hàng này? Đơn hàng sẽ bị hủy và số lượng sản phẩm sẽ được khôi phục.';
+            actionBtn.textContent = 'Duyệt hủy';
+            actionBtn.className = 'px-4 py-2 rounded-lg text-white font-medium transition bg-red-600 hover:bg-red-700';
+        } else if (action === 'reject') {
+            icon.innerHTML = '<div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center"><i class="fas fa-times text-yellow-600 text-xl"></i></div>';
+            title.textContent = 'Từ chối yêu cầu hủy';
+            message.textContent = 'Bạn có chắc chắn muốn từ chối yêu cầu hủy đơn? Đơn hàng sẽ tiếp tục được xử lý bình thường.';
+            actionBtn.textContent = 'Từ chối';
+            actionBtn.className = 'px-4 py-2 rounded-lg text-white font-medium transition bg-yellow-600 hover:bg-yellow-700';
+        }
+
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.querySelector('.bg-white').style.transform = 'scale(1)';
+        }, 10);
+    }
+
+    function closeConfirmModal() {
+        const modal = document.getElementById('confirmModal');
+        modal.classList.add('hidden');
+        currentConfirmAction = null;
+        currentOrderId = null;
+    }
+
+    function executeConfirmAction() {
+        if (!currentConfirmAction || !currentOrderId) return;
+
+        const form = document.createElement('form');
+        form.method = 'post';
+
+        if (currentConfirmAction === 'approve') {
+            form.action = '?handler=ApproveCancel';
+        } else if (currentConfirmAction === 'reject') {
+            form.action = '?handler=RejectCancel';
+        }
+
+        const orderIdInput = document.createElement('input');
+        orderIdInput.type = 'hidden';
+        orderIdInput.name = 'orderId';
+        orderIdInput.value = currentOrderId;
+        form.appendChild(orderIdInput);
+
+        // Add anti-forgery token
+        const token = document.querySelector('input[name="__RequestVerificationToken"]');
+        if (token) {
+            const tokenInput = document.createElement('input');
+            tokenInput.type = 'hidden';
+            tokenInput.name = '__RequestVerificationToken';
+            tokenInput.value = token.value;
+            form.appendChild(tokenInput);
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('confirmModal')?.addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeConfirmModal();
+        }
+    });
+</script>

@@ -1,7 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using BLL.Service.Order.Interface;
 using BLL.Service.User.Interface;
 using DAL.DTOs.User;
+using GreenTechMVC.Hubs;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 
 namespace GreenTechMVC.Controllers
 {
@@ -9,10 +13,21 @@ namespace GreenTechMVC.Controllers
     public class ProfileController : Controller
     {
         private readonly IUserService _userService;
+        private readonly IOrderService _orderService;
+        private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly ILogger<ProfileController> _logger;
 
-        public ProfileController(IUserService userService)
+        public ProfileController(
+            IUserService userService,
+            IOrderService orderService,
+            IHubContext<NotificationHub> hubContext,
+            ILogger<ProfileController> logger
+        )
         {
             _userService = userService;
+            _orderService = orderService;
+            _hubContext = hubContext;
+            _logger = logger;
         }
 
         /// <summary>
@@ -38,25 +53,35 @@ namespace GreenTechMVC.Controllers
             var userId = GetCurrentUserId();
             if (userId == 0)
             {
-                TempData["ErrorMessage"] = "Vui lòng đăng nhập để xem thông tin cá nhân.";
+                return RedirectToAction("Login", "Auth");
+            }
+
+            // Check if user has customer role
+            var userRoles = HttpContext.Session.GetString("UserRoles");
+            if (string.IsNullOrEmpty(userRoles) || !userRoles.Contains("ROLE_CUSTOMER"))
+            {
                 return RedirectToAction("Login", "Auth");
             }
 
             try
             {
                 var profile = await _userService.GetProfileAsync(userId);
+
+                // Get recent orders (last 5 orders) to display in profile
+                var recentOrders = await _orderService.GetMyOrdersAsync(userId);
+                ViewBag.RecentOrders = recentOrders.Take(5).ToList();
+
                 return View(profile);
             }
             catch (KeyNotFoundException ex)
             {
-                TempData["ErrorMessage"] = ex.Message;
+                Console.WriteLine($"[Error] GetProfile - User not found: {ex.Message}");
                 return RedirectToAction("Login", "Auth");
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Đã có lỗi xảy ra khi tải thông tin profile.";
                 Console.WriteLine($"[Error] GetProfile failed: {ex.Message}");
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Login", "Auth");
             }
         }
 
@@ -70,7 +95,13 @@ namespace GreenTechMVC.Controllers
             var userId = GetCurrentUserId();
             if (userId == 0)
             {
-                TempData["ErrorMessage"] = "Vui lòng đăng nhập để cập nhật thông tin.";
+                return RedirectToAction("Login", "Auth");
+            }
+
+            // Check if user has customer role
+            var userRoles = HttpContext.Session.GetString("UserRoles");
+            if (string.IsNullOrEmpty(userRoles) || !userRoles.Contains("ROLE_CUSTOMER"))
+            {
                 return RedirectToAction("Login", "Auth");
             }
 
@@ -91,7 +122,7 @@ namespace GreenTechMVC.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                TempData["ErrorMessage"] = ex.Message;
+                Console.WriteLine($"[Error] GetProfile for Update - User not found: {ex.Message}");
                 return RedirectToAction("Login", "Auth");
             }
         }
@@ -107,9 +138,31 @@ namespace GreenTechMVC.Controllers
             var userId = GetCurrentUserId();
             if (userId == 0)
             {
-                TempData["ErrorMessage"] = "Vui lòng đăng nhập để cập nhật thông tin.";
                 return RedirectToAction("Login", "Auth");
             }
+
+            // Check if user has customer role
+            var userRoles = HttpContext.Session.GetString("UserRoles");
+            if (string.IsNullOrEmpty(userRoles) || !userRoles.Contains("ROLE_CUSTOMER"))
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            // Get current profile to preserve Email and Phone (these fields cannot be updated)
+            var currentProfile = await _userService.GetProfileAsync(userId);
+            if (currentProfile == null)
+            {
+                ModelState.AddModelError(string.Empty, "Không tìm thấy thông tin người dùng.");
+                return View(model);
+            }
+
+            // Preserve Email and Phone from database (not from form)
+            model.Email = currentProfile.Email;
+            model.Phone = currentProfile.Phone;
+
+            // Remove Email and Phone validation errors since we're using database values
+            ModelState.Remove("Email");
+            ModelState.Remove("Phone");
 
             if (!ModelState.IsValid)
             {
@@ -156,7 +209,13 @@ namespace GreenTechMVC.Controllers
             var userId = GetCurrentUserId();
             if (userId == 0)
             {
-                TempData["ErrorMessage"] = "Vui lòng đăng nhập để đổi mật khẩu.";
+                return RedirectToAction("Login", "Auth");
+            }
+
+            // Check if user has customer role
+            var userRoles = HttpContext.Session.GetString("UserRoles");
+            if (string.IsNullOrEmpty(userRoles) || !userRoles.Contains("ROLE_CUSTOMER"))
+            {
                 return RedirectToAction("Login", "Auth");
             }
 
@@ -174,7 +233,13 @@ namespace GreenTechMVC.Controllers
             var userId = GetCurrentUserId();
             if (userId == 0)
             {
-                TempData["ErrorMessage"] = "Vui lòng đăng nhập để đổi mật khẩu.";
+                return RedirectToAction("Login", "Auth");
+            }
+
+            // Check if user has customer role
+            var userRoles = HttpContext.Session.GetString("UserRoles");
+            if (string.IsNullOrEmpty(userRoles) || !userRoles.Contains("ROLE_CUSTOMER"))
+            {
                 return RedirectToAction("Login", "Auth");
             }
 
@@ -188,6 +253,30 @@ namespace GreenTechMVC.Controllers
                 await _userService.ChangePasswordAsync(userId, model);
                 TempData["SuccessMessage"] = "Đổi mật khẩu thành công!";
                 return RedirectToAction("Index");
+            }
+            catch (ValidationException ex)
+            {
+                // Parse validation errors from ValidationException
+                // Format: "Error1; Error2; ..."
+                // Errors from VerifyCurrentPasswordAttribute will be: "Mật khẩu hiện tại không chính xác"
+                var errorMessages = ex.Message.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                foreach (var errorMessage in errorMessages)
+                {
+                    var trimmedError = errorMessage.Trim();
+
+                    // Check if error is for CurrentPassword field (from VerifyCurrentPasswordAttribute)
+                    // The error message is "Mật khẩu hiện tại không chính xác"
+                    if (trimmedError.Contains("Mật khẩu hiện tại"))
+                    {
+                        // Add to CurrentPassword field for inline display
+                        ModelState.AddModelError(nameof(model.CurrentPassword), trimmedError);
+                    }
+                    else if (!string.IsNullOrWhiteSpace(trimmedError))
+                    {
+                        // Add other validation errors to general model errors
+                        ModelState.AddModelError(string.Empty, trimmedError);
+                    }
+                }
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -228,6 +317,43 @@ namespace GreenTechMVC.Controllers
             try
             {
                 var avatarUrl = await _userService.UploadAvatarAsync(userId, avatarFile);
+
+                // Send realtime notification via SignalR to update avatar immediately
+                var groupName = $"user-{userId}";
+                _logger.LogInformation(
+                    "Sending SignalR notification to group '{GroupName}' for avatar update. UserId: {UserId}, AvatarUrl: {AvatarUrl}",
+                    groupName,
+                    userId,
+                    avatarUrl
+                );
+
+                try
+                {
+                    await _hubContext
+                        .Clients.Group(groupName)
+                        .SendAsync(
+                            "AvatarUpdated",
+                            new
+                            {
+                                userId = userId,
+                                avatarUrl = avatarUrl,
+                                timestamp = DateTime.UtcNow,
+                            }
+                        );
+                    _logger.LogInformation(
+                        "SignalR notification sent successfully to group '{GroupName}'",
+                        groupName
+                    );
+                }
+                catch (Exception signalrEx)
+                {
+                    // Log but don't fail the upload
+                    _logger.LogWarning(
+                        signalrEx,
+                        "Failed to send SignalR notification to group '{GroupName}'. Avatar upload still succeeded.",
+                        groupName
+                    );
+                }
 
                 // Session đã được update trong UserService
                 return Json(
@@ -412,7 +538,7 @@ namespace GreenTechMVC.Controllers
 
                 TempData["SuccessMessage"] =
                     "Đặt lại mật khẩu thành công! Vui lòng đăng nhập với mật khẩu mới.";
-                return RedirectToAction("Login", "Auth");
+                return RedirectToAction("Login", "Auth/Login");
             }
             catch (KeyNotFoundException ex)
             {

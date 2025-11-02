@@ -7,6 +7,7 @@ using DAL.DTOs.User;
 using DAL.Repositories.User.Interface;
 using DAL.Utils.AutoMapper;
 using DAL.Utils.CryptoUtil;
+using DAL.Utils.FormEmail;
 using DAL.Utils.ValidationHelper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -90,20 +91,19 @@ namespace BLL.Service.User
 
         public async Task ChangePasswordAsync(int userId, ChangePasswordDTO changePasswordDTO)
         {
-            ValidationHelper.ValidateModel(changePasswordDTO);
+            // Set UserId for validation attribute (VerifyCurrentPasswordAttribute)
+            changePasswordDTO.UserId = userId;
+
+            // Create service provider for validation (needed for custom attributes that access database)
+            var serviceProvider = new ServiceCollection()
+                .AddScoped<AppDbContext>(_ => _context)
+                .BuildServiceProvider();
+
+            ValidationHelper.ValidateModel(changePasswordDTO, serviceProvider);
 
             var user =
                 await _userRepository.GetByIdAsync(userId)
                 ?? throw new KeyNotFoundException("Người dùng không tồn tại");
-
-            // Verify current password
-            if (
-                !CryptoUtil.VerifyPasswordHmacSHA512(
-                    user.Password,
-                    changePasswordDTO.CurrentPassword
-                )
-            )
-                throw new UnauthorizedAccessException("Mật khẩu hiện tại không chính xác");
 
             // Hash new password
             user.Password = CryptoUtil.HashPasswordHmacSHA512(changePasswordDTO.NewPassword);
@@ -121,24 +121,13 @@ namespace BLL.Service.User
             // Generate OTP (valid for 10 minutes)
             string otp = _otpService.GenerateOTP(user.Email, expiryMinutes: 10);
 
-            // Send OTP via email
+            // Send OTP via email using email template
             string emailSubject = "Mã OTP đặt lại mật khẩu - GreenTech";
-            string emailBody =
-                $@"
-                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
-                    <h2 style='color: #007934;'>Đặt lại mật khẩu</h2>
-                    <p>Xin chào <strong>{user.FullName}</strong>,</p>
-                    <p>Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản của mình.</p>
-                    <p>Mã OTP của bạn là:</p>
-                    <div style='background-color: #f0f0f0; padding: 20px; text-align: center; margin: 20px 0; border-radius: 5px;'>
-                        <h1 style='color: #007934; font-size: 32px; letter-spacing: 5px; margin: 0;'>{otp}</h1>
-                    </div>
-                    <p>Mã OTP này có hiệu lực trong <strong>10 phút</strong>.</p>
-                    <p>Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.</p>
-                    <hr style='border: none; border-top: 1px solid #eee; margin: 20px 0;'/>
-                    <p style='color: #666; font-size: 12px;'>Email này được gửi tự động từ hệ thống GreenTech. Vui lòng không trả lời email này.</p>
-                </div>
-            ";
+            string emailBody = SendEmailOtp.GenerateEmailBody(
+                user.FullName,
+                otp,
+                expiryMinutes: 10
+            );
 
             bool emailSent = await _emailService.SendEmailAsync(
                 user.Email,
@@ -156,7 +145,7 @@ namespace BLL.Service.User
             return true;
         }
 
-        public async Task<bool> VerifyOTPAsync(VerifyOTPDTO verifyOTPDTO)
+        public Task<bool> VerifyOTPAsync(VerifyOTPDTO verifyOTPDTO)
         {
             ValidationHelper.ValidateModel(verifyOTPDTO);
 
@@ -171,7 +160,7 @@ namespace BLL.Service.User
             // Remove OTP after successful verification
             _otpService.RemoveOTP(verifyOTPDTO.Email);
 
-            return true;
+            return Task.FromResult(true);
         }
 
         public async Task ResetPasswordAsync(ResetPasswordDTO resetPasswordDTO)
@@ -202,11 +191,6 @@ namespace BLL.Service.User
                 throw new ArgumentException(
                     "Chỉ chấp nhận file ảnh với định dạng: JPG, JPEG, PNG, GIF, WEBP"
                 );
-
-            // Validate file size (max 5MB)
-            const long maxFileSize = 5 * 1024 * 1024; // 5MB
-            if (avatarFile.Length > maxFileSize)
-                throw new ArgumentException("Kích thước file không được vượt quá 5MB");
 
             var user =
                 await _userRepository.GetByIdAsync(userId)

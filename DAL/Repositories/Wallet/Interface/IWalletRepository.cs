@@ -31,5 +31,19 @@ namespace DAL.Repositories.Wallet.Interface
             TransactionStatus status,
             decimal? finalAmount = null
         );
+        Task<WalletTransaction> CreateHoldTransactionAsync(
+            int userId,
+            int orderId,
+            decimal amount,
+            string? description
+        );
+        Task<bool> ConfirmHoldTransactionAsync(int orderId, TransactionStatus status);
+        Task<WalletTransaction> CreateRefundTransactionAsync(
+            int userId,
+            int orderId,
+            decimal amount,
+            string? description
+        );
+        Task<WalletTransaction?> GetHoldTransactionByOrderIdAsync(int orderId);
     }
 }

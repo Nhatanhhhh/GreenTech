@@ -43,9 +43,9 @@ namespace GreenTech.Pages.Categories
                 Category = await _categoryService.GetByIdAsync(Id);
                 return Page();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError("", $"Lỗi khi xóa danh mục: {ex.Message}");
+                ModelState.AddModelError("", "Lỗi khi xóa danh mục.");
                 Category = await _categoryService.GetByIdAsync(Id);
                 return Page();
             }

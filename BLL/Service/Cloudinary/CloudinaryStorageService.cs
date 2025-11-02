@@ -189,53 +189,48 @@ namespace BLL.Service.Cloudinary
                 Overwrite = true,
             };
 
-            // Build transformation string for image optimization
-            var transformations = new List<string>();
+            // Build transformation using Cloudinary SDK fluent API
+            var transformation = new Transformation();
+
+            // Determine if we should use face gravity (for avatars/profile images)
+            bool useFaceGravity = maxWidth.HasValue || maxHeight.HasValue;
 
             // Add resize if specified
             if (maxWidth.HasValue || maxHeight.HasValue)
             {
+                // Use "fill" crop mode when using face gravity (required by Cloudinary)
+                // Use "limit" crop mode when not using face gravity (maintains aspect ratio without cropping)
+                string cropMode = useFaceGravity ? "fill" : "limit";
+
                 if (maxWidth.HasValue && maxHeight.HasValue)
                 {
-                    transformations.Add($"w_{maxWidth.Value},h_{maxHeight.Value},c_limit"); // Limit size, maintain aspect ratio
+                    transformation.Width(maxWidth.Value).Height(maxHeight.Value).Crop(cropMode);
                 }
                 else if (maxWidth.HasValue)
                 {
-                    transformations.Add($"w_{maxWidth.Value},c_limit");
+                    transformation.Width(maxWidth.Value).Crop(cropMode);
                 }
                 else if (maxHeight.HasValue)
                 {
-                    transformations.Add($"h_{maxHeight.Value},c_limit");
+                    transformation.Height(maxHeight.Value).Crop(cropMode);
                 }
             }
 
             // Add quality setting
             if (!string.IsNullOrWhiteSpace(quality))
             {
-                transformations.Add($"q_{quality}");
+                transformation.Quality(quality);
             }
 
-            // Add format conversion if specified
-            if (!string.IsNullOrWhiteSpace(format) && format.ToLowerInvariant() != "auto")
+            // Add gravity for better cropping if resizing (face detection for avatars)
+            // Note: Face gravity can only be used with crop, fill, thumb, lfill, afill, fill_pad, auto, auto_pad, auto_afill
+            if (useFaceGravity)
             {
-                transformations.Add($"f_{format}");
-            }
-            else if (format.ToLowerInvariant() == "auto")
-            {
-                // Use auto format for best compression (webp when supported)
-                transformations.Add("f_auto");
+                transformation.Gravity("face"); // Auto face detection for avatars
             }
 
-            // Add gravity for better cropping if resizing
-            if (maxWidth.HasValue || maxHeight.HasValue)
-            {
-                transformations.Add("g_face"); // Auto face detection for avatars
-            }
-
-            if (transformations.Any())
-            {
-                uploadParams.Transformation = new Transformation(string.Join(",", transformations));
-            }
+            // Set transformation
+            uploadParams.Transformation = transformation;
 
             try
             {
@@ -334,10 +329,6 @@ namespace BLL.Service.Cloudinary
             try
             {
                 var uri = new Uri(url);
-                // The Public ID is the part of the path after the version number and before the file extension.
-                // e.g. /image/upload/v1678886344/avatars/c3a0b1.png -> avatars/c3a0b1
-                // The segments are ["/", "image", "upload", "v123...", "avatars", "c3a0b1.png"]
-                // We need to find the segment starting with 'v' and take everything after it.
 
                 var pathSegments = uri.AbsolutePath.Split('/');
                 int versionSegmentIndex = -1;

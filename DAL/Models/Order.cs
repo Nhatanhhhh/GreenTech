@@ -52,7 +52,7 @@ namespace DAL.Models
 
         [Column("gateway_transaction_id")]
         [MaxLength(255)]
-        public string GatewayTransactionId { get; set; }
+        public string? GatewayTransactionId { get; set; }
 
         [Required]
         [Column("shipping_address")]
@@ -75,11 +75,11 @@ namespace DAL.Models
         public DateTime? PointsAwardedAt { get; set; }
 
         [Column("note")]
-        public string Note { get; set; }
+        public string? Note { get; set; }
 
         [Column("cancelled_reason")]
         [MaxLength(500)]
-        public string CancelledReason { get; set; }
+        public string? CancelledReason { get; set; }
 
         [Column("cancelled_at")]
         public DateTime? CancelledAt { get; set; }

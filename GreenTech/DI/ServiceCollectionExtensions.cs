@@ -10,12 +10,12 @@ using BLL.Service.Category;
 using BLL.Service.Category.Interface;
 using BLL.Service.Cloudinary;
 using BLL.Service.Cloudinary.Interface;
-using BLL.Service.Review;
-using BLL.Service.Review.Interface;
 using BLL.Service.CouponTemplate;
 using BLL.Service.CouponTemplate.Interface;
 using BLL.Service.Email;
 using BLL.Service.Email.Interface;
+using BLL.Service.Order;
+using BLL.Service.Order.Interface;
 using BLL.Service.OTP;
 using BLL.Service.OTP.Interface;
 using BLL.Service.Payments;
@@ -24,6 +24,8 @@ using BLL.Service.Point;
 using BLL.Service.Point.Interface;
 using BLL.Service.Product;
 using BLL.Service.Product.Interface;
+using BLL.Service.Review;
+using BLL.Service.Review.Interface;
 using BLL.Service.Supplier;
 using BLL.Service.Supplier.Interface;
 using BLL.Service.User;
@@ -42,18 +44,20 @@ using DAL.Repositories.Category;
 using DAL.Repositories.Category.Interface;
 using DAL.Repositories.CouponTemplate;
 using DAL.Repositories.CouponTemplate.Interface;
+using DAL.Repositories.Order;
+using DAL.Repositories.Order.Interface;
 using DAL.Repositories.Point;
 using DAL.Repositories.Point.Interface;
 using DAL.Repositories.Product;
 using DAL.Repositories.Product.Interface;
+using DAL.Repositories.Review;
+using DAL.Repositories.Review.Interface;
 using DAL.Repositories.Supplier;
 using DAL.Repositories.Supplier.Interface;
 using DAL.Repositories.User;
 using DAL.Repositories.User.Interface;
 using DAL.Repositories.Wallet;
 using DAL.Repositories.Wallet.Interface;
-using DAL.Repositories.Review;
-using DAL.Repositories.Review.Interface;
 
 namespace GreenTech.DI
 {
@@ -84,6 +88,7 @@ namespace GreenTech.DI
             services.AddScoped<IPointsRepository, PointsRepository>();
             services.AddScoped<IReviewRepository, ReviewRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IOrderRepository, OrderRepository>();
             return services;
         }
 
@@ -114,6 +119,8 @@ namespace GreenTech.DI
             // Review
             services.AddScoped<IReviewService, ReviewService>();
 
+            // Order
+            services.AddScoped<IOrderService, OrderService>();
 
             return services;
         }

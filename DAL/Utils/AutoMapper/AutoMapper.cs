@@ -3,6 +3,7 @@ using DAL.DTOs.Blog;
 using DAL.DTOs.Cart;
 using DAL.DTOs.Category;
 using DAL.DTOs.CouponTemplate;
+using DAL.DTOs.Order;
 using DAL.DTOs.Product;
 using DAL.DTOs.ProductImage;
 using DAL.DTOs.Review;
@@ -11,6 +12,8 @@ using DAL.DTOs.User;
 using DAL.DTOs.Wallet;
 using DAL.Models;
 using DAL.Models.Enum;
+using OrderItemModel = DAL.Models.OrderItem;
+using OrderModel = DAL.Models.Order;
 
 namespace DAL.Utils.AutoMapper
 {
@@ -869,8 +872,86 @@ namespace DAL.Utils.AutoMapper
             TransactionStatus status
         )
         {
-            return status == TransactionStatus.SUCCESS
-                && transaction.TransactionType == TransactionType.TOP_UP;
+            // For TOP_UP: add to balance when SUCCESS
+            if (
+                status == TransactionStatus.SUCCESS
+                && transaction.TransactionType == TransactionType.TOP_UP
+            )
+            {
+                return true;
+            }
+            // For SPENT: subtract from balance when SUCCESS (confirm hold)
+            if (
+                status == TransactionStatus.SUCCESS
+                && transaction.TransactionType == TransactionType.SPENT
+            )
+            {
+                return true;
+            }
+            // For REFUND: add to balance when SUCCESS
+            if (
+                status == TransactionStatus.SUCCESS
+                && transaction.TransactionType == TransactionType.REFUND
+            )
+            {
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Creates a WalletTransaction to HOLD money (PENDING status) when order is created.
+        /// </summary>
+        public static WalletTransaction ToHoldWalletTransaction(
+            int userId,
+            int orderId,
+            decimal amount,
+            string? description,
+            decimal currentBalance
+        )
+        {
+            return new WalletTransaction
+            {
+                UserId = userId,
+                TransactionType = TransactionType.SPENT,
+                Amount = amount,
+                PaymentGateway = null,
+                GatewayTransactionId = $"ORDER-{orderId}-HOLD",
+                OrderId = orderId,
+                Status = TransactionStatus.PENDING, // Hold money, don't deduct yet
+                Description = description ?? $"Tạm giữ tiền cho đơn hàng #{orderId}",
+                BalanceBefore = currentBalance,
+                BalanceAfter = currentBalance, // Balance unchanged when PENDING
+                CreatedAt = DateTime.Now,
+            };
+        }
+
+        /// <summary>
+        /// Creates a WalletTransaction to REFUND money when order is cancelled.
+        /// </summary>
+        public static WalletTransaction ToRefundWalletTransaction(
+            int userId,
+            int orderId,
+            decimal amount,
+            string? description,
+            decimal currentBalance
+        )
+        {
+            return new WalletTransaction
+            {
+                UserId = userId,
+                TransactionType = TransactionType.REFUND,
+                Amount = amount,
+                PaymentGateway = null,
+                GatewayTransactionId = $"ORDER-{orderId}-REFUND",
+                OrderId = orderId,
+                Status = TransactionStatus.SUCCESS, // Refund immediately
+                Description = description ?? $"Hoàn tiền cho đơn hàng #{orderId} đã bị hủy",
+                BalanceBefore = currentBalance,
+                BalanceAfter = currentBalance + amount, // Add back to balance
+                ProcessedAt = DateTime.Now,
+                CreatedAt = DateTime.Now,
+            };
         }
 
         /// <summary>
@@ -892,6 +973,84 @@ namespace DAL.Utils.AutoMapper
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,
             };
+        }
+
+        /// <summary>
+        /// Converts an Order entity to an OrderResponseDTO.
+        /// </summary>
+        public static OrderResponseDTO ToOrderResponseDTO(OrderModel order)
+        {
+            if (order == null)
+                return null;
+
+            return new OrderResponseDTO
+            {
+                Id = order.Id,
+                OrderNumber = order.OrderNumber,
+                UserId = order.UserId,
+                UserName = order.User?.FullName,
+                UserEmail = order.User?.Email,
+                CouponId = order.CouponId,
+                CouponCode = order.Coupon?.Code,
+                Status = order.Status,
+                PaymentStatus = order.PaymentStatus,
+                PaymentGateway = order.PaymentGateway,
+                Subtotal = order.Subtotal,
+                DiscountAmount = order.DiscountAmount,
+                ShippingFee = order.ShippingFee,
+                Total = order.Total,
+                WalletAmountUsed = order.WalletAmountUsed,
+                GatewayTransactionId = order.GatewayTransactionId,
+                ShippingAddress = order.ShippingAddress,
+                CustomerName = order.CustomerName,
+                CustomerPhone = order.CustomerPhone,
+                PointsEarned = order.PointsEarned,
+                PointsAwardedAt = order.PointsAwardedAt,
+                Note = order.Note,
+                CancelledReason = order.CancelledReason,
+                CancelledAt = order.CancelledAt,
+                ShippedAt = order.ShippedAt,
+                DeliveredAt = order.DeliveredAt,
+                CreatedAt = order.CreatedAt,
+                UpdatedAt = order.UpdatedAt,
+                OrderItems =
+                    order.OrderItems?.Select(ToOrderItemResponseDTO).ToList()
+                    ?? new List<OrderItemResponseDTO>(),
+            };
+        }
+
+        /// <summary>
+        /// Converts an OrderItem entity to an OrderItemResponseDTO.
+        /// </summary>
+        public static OrderItemResponseDTO ToOrderItemResponseDTO(OrderItemModel orderItem)
+        {
+            if (orderItem == null)
+                return null;
+
+            return new OrderItemResponseDTO
+            {
+                Id = orderItem.Id,
+                OrderId = orderItem.OrderId,
+                ProductId = orderItem.ProductId,
+                ProductSku = orderItem.ProductSku,
+                ProductName = orderItem.ProductName,
+                ProductImage = orderItem.Product?.Image,
+                Quantity = orderItem.Quantity,
+                UnitCostPrice = orderItem.UnitCostPrice,
+                UnitSellPrice = orderItem.UnitSellPrice,
+                Total = orderItem.Total,
+                PointsPerItem = orderItem.PointsPerItem,
+            };
+        }
+
+        /// <summary>
+        /// Converts a list of Order entities to a list of OrderResponseDTOs.
+        /// </summary>
+        public static IEnumerable<OrderResponseDTO> ToOrderResponseDTOs(
+            IEnumerable<OrderModel> orders
+        )
+        {
+            return orders?.Select(ToOrderResponseDTO) ?? Enumerable.Empty<OrderResponseDTO>();
         }
 
         private static string FormatFullname(string fullname)

@@ -58,17 +58,78 @@ CONNECTIONSTRINGS__DEFAULTCONNECTION=Server=YOUR_SERVER;Database=GreenTechDB;Use
 .env.*
 ```
 
-### Step 3: Build the Solution
+### Step 3: Clean and Build the Solution
 
+**⚠️ Important:** Solution file is located at `GreenTech/GreenTech.sln`. You must specify the solution file or project path.
+
+**Clean entire solution:**
 ```bash
-# Build entire solution
-dotnet build
+# Clean all projects using solution file (from root directory)
+dotnet clean GreenTech/GreenTech.sln
 
-# Or build individual projects
-dotnet build DAL
-dotnet build BLL
-dotnet build GreenTech
-dotnet build GreenTechMVC
+# Or from GreenTech directory
+cd GreenTech
+dotnet clean GreenTech.sln
+cd ..
+
+# Or clean specific project (from root directory)
+dotnet clean DAL/DAL.csproj
+dotnet clean BLL/BLL.csproj
+dotnet clean GreenTech/GreenTechRazorPage.csproj
+dotnet clean GreenTechMVC/GreenTechMVC.csproj
+```
+
+**Rebuild entire solution (clean + build):**
+```bash
+# Rebuild all projects using solution file (from root directory)
+dotnet clean GreenTech/GreenTech.sln && dotnet build GreenTech/GreenTech.sln --no-incremental
+
+# Or rebuild without incremental (from root directory)
+dotnet build GreenTech/GreenTech.sln --no-incremental
+```
+
+**Build entire solution:**
+```bash
+# Build all projects using solution file (from root directory)
+dotnet build GreenTech/GreenTech.sln
+
+# Or build individual projects (from root directory)
+dotnet build DAL/DAL.csproj
+dotnet build BLL/BLL.csproj
+dotnet build GreenTech/GreenTechRazorPage.csproj
+dotnet build GreenTechMVC/GreenTechMVC.csproj
+```
+
+**Quick Rebuild Commands (PowerShell - from root directory):**
+```powershell
+# Clean and rebuild solution
+dotnet clean GreenTech/GreenTech.sln; dotnet build GreenTech/GreenTech.sln --no-incremental
+
+# Clean, restore packages, and build
+dotnet clean GreenTech/GreenTech.sln; dotnet restore GreenTech/GreenTech.sln; dotnet build GreenTech/GreenTech.sln --no-incremental
+```
+
+**Quick Rebuild Commands (Bash/Linux/Mac - from root directory):**
+```bash
+# Clean and rebuild solution
+dotnet clean GreenTech/GreenTech.sln && dotnet build GreenTech/GreenTech.sln --no-incremental
+
+# Clean, restore packages, and build
+dotnet clean GreenTech/GreenTech.sln && dotnet restore GreenTech/GreenTech.sln && dotnet build GreenTech/GreenTech.sln --no-incremental
+```
+
+**Alternative: Working from GreenTech directory:**
+```bash
+# Navigate to GreenTech directory first
+cd GreenTech
+
+# Then run commands without path prefix
+dotnet clean GreenTech.sln
+dotnet build GreenTech.sln
+dotnet build GreenTech.sln --no-incremental
+
+# Return to root
+cd ..
 ```
 
 ### Step 4: Setup Database (Code First)
