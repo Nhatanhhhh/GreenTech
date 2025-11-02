@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using DAL.DTOs.Review;
 using ReviewModel = DAL.Models.Review;
+using Microsoft.AspNetCore.Http;
 
 namespace BLL.Service.Review.Interface
 {
@@ -11,5 +12,7 @@ namespace BLL.Service.Review.Interface
         Task<bool> DeleteReviewAsync(int reviewId, int userId);
         Task<ReviewModel?> ToggleReviewStatusAsync(int id);
         Task<IEnumerable<ReviewModel>> GetAllReviewsAsync();
+        Task<string> UploadReviewMediaAsync(int reviewId, IFormFile file);
+
     }
 }

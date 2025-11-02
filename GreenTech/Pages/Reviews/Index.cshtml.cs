@@ -1,5 +1,6 @@
 using BLL.Service.Review.Interface;
 using GreenTech.Filters;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using DAL.Models;
 
@@ -20,6 +21,12 @@ namespace GreenTech.Pages.Reviews
         public async Task OnGetAsync()
         {
             Reviews = await _reviewService.GetAllReviewsAsync();
+        }
+
+        public async Task<IActionResult> OnPostToggleStatusAsync(int id)
+        {
+            await _reviewService.ToggleReviewStatusAsync(id);
+            return RedirectToPage(); // Refresh UI
         }
     }
 }
