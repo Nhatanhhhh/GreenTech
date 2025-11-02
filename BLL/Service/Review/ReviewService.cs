@@ -60,7 +60,6 @@ namespace BLL.Service.Review
         {
             return await _reviewRepository.GetAllReviewsAsync();
         }
-
         public async Task<string> UploadReviewMediaAsync(int reviewId, IFormFile file)
         {
             if (file == null || file.Length == 0)
