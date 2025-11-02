@@ -25,7 +25,18 @@ namespace DAL.Repositories.Wallet
             if (user == null)
                 throw new KeyNotFoundException("User not found");
 
-            return user.WalletBalance;
+            // Calculate available balance (actual balance minus pending holds)
+            var pendingHoldAmount =
+                await _dbContext
+                    .WalletTransactions.Where(t =>
+                        t.UserId == userId
+                        && t.TransactionType == TransactionType.SPENT
+                        && t.Status == TransactionStatus.PENDING
+                    )
+                    .SumAsync(t => (decimal?)t.Amount) ?? 0;
+
+            // Available balance = actual balance - pending holds
+            return user.WalletBalance - pendingHoldAmount;
         }
 
         public async Task<int> GetPointsBalanceAsync(int userId)
@@ -156,6 +167,104 @@ namespace DAL.Repositories.Wallet
 
             await _dbContext.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<WalletTransaction> CreateHoldTransactionAsync(
+            int userId,
+            int orderId,
+            decimal amount,
+            string? description
+        )
+        {
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+                throw new KeyNotFoundException("User not found");
+
+            // Create PENDING transaction to hold money (doesn't deduct balance yet)
+            var transaction = AutoMapper.ToHoldWalletTransaction(
+                userId,
+                orderId,
+                amount,
+                description,
+                user.WalletBalance
+            );
+
+            _dbContext.WalletTransactions.Add(transaction);
+            await _dbContext.SaveChangesAsync();
+            return transaction;
+        }
+
+        public async Task<bool> ConfirmHoldTransactionAsync(int orderId, TransactionStatus status)
+        {
+            var transaction = await _dbContext.WalletTransactions.FirstOrDefaultAsync(t =>
+                t.OrderId == orderId
+                && t.TransactionType == TransactionType.SPENT
+                && t.Status == TransactionStatus.PENDING
+            );
+
+            if (transaction == null)
+                return false;
+
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == transaction.UserId);
+            if (user == null)
+                return false;
+
+            // Update transaction status
+            AutoMapper.UpdateTransactionStatus(transaction, status, null);
+
+            // If confirming (SUCCESS), deduct from balance
+            if (status == TransactionStatus.SUCCESS)
+            {
+                transaction.BalanceAfter = user.WalletBalance - transaction.Amount;
+                user.WalletBalance -= transaction.Amount;
+                user.UpdatedAt = DateTime.UtcNow;
+            }
+            else if (status == TransactionStatus.FAILED)
+            {
+                // If failed, keep balance unchanged (refund will be handled separately if needed)
+                transaction.BalanceAfter = user.WalletBalance;
+            }
+
+            await _dbContext.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<WalletTransaction> CreateRefundTransactionAsync(
+            int userId,
+            int orderId,
+            decimal amount,
+            string? description
+        )
+        {
+            var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+                throw new KeyNotFoundException("User not found");
+
+            // Create REFUND transaction (SUCCESS status - refund immediately)
+            var transaction = AutoMapper.ToRefundWalletTransaction(
+                userId,
+                orderId,
+                amount,
+                description,
+                user.WalletBalance
+            );
+
+            // Update user balance immediately (refund)
+            user.WalletBalance += amount;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            _dbContext.WalletTransactions.Add(transaction);
+            await _dbContext.SaveChangesAsync();
+            return transaction;
+        }
+
+        public async Task<WalletTransaction?> GetHoldTransactionByOrderIdAsync(int orderId)
+        {
+            return await _dbContext.WalletTransactions.FirstOrDefaultAsync(t =>
+                t.OrderId == orderId
+                && t.TransactionType == TransactionType.SPENT
+                && t.Status == TransactionStatus.PENDING
+            );
         }
     }
 }

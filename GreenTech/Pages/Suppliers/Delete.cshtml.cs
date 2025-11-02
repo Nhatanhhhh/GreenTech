@@ -42,7 +42,7 @@ namespace GreenTech.Pages.Suppliers
                 Supplier = await _supplierService.GetSupplierByIdAsync(id);
                 return Page();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 ModelState.AddModelError(string.Empty, "Đã xảy ra lỗi khi xóa nhà cung cấp.");
                 Supplier = await _supplierService.GetSupplierByIdAsync(id);

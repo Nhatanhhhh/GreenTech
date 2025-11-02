@@ -14,6 +14,8 @@ using BLL.Service.CouponTemplate;
 using BLL.Service.CouponTemplate.Interface;
 using BLL.Service.Email;
 using BLL.Service.Email.Interface;
+using BLL.Service.Order;
+using BLL.Service.Order.Interface;
 using BLL.Service.OTP;
 using BLL.Service.OTP.Interface;
 using BLL.Service.Payments;
@@ -40,6 +42,8 @@ using DAL.Repositories.Category;
 using DAL.Repositories.Category.Interface;
 using DAL.Repositories.CouponTemplate;
 using DAL.Repositories.CouponTemplate.Interface;
+using DAL.Repositories.Order;
+using DAL.Repositories.Order.Interface;
 using DAL.Repositories.Point;
 using DAL.Repositories.Point.Interface;
 using DAL.Repositories.Product;
@@ -78,6 +82,7 @@ namespace GreenTechMVC.DI
             services.AddScoped<IWalletRepository, WalletRepository>();
             services.AddScoped<IPointsRepository, PointsRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IOrderRepository, OrderRepository>();
             return services;
         }
 
@@ -94,11 +99,12 @@ namespace GreenTechMVC.DI
             services.AddScoped<IWalletService, WalletService>();
             services.AddScoped<IPointsService, PointsService>();
             services.AddScoped<IUserService, UserService>();
-            
+            services.AddScoped<IOrderService, OrderService>();
+
             // Email and OTP services
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IOTPService, OTPService>();
-            
+
             services.AddSingleton<IPaymentGatewayProcessor, MoMoPaymentProcessor>();
             services.AddSingleton<IPaymentGatewayProcessor, VnPayPaymentProcessor>();
             services.AddSingleton<IPaymentGatewayFactory, PaymentGatewayFactory>();

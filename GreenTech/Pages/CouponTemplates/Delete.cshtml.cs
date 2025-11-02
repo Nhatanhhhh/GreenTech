@@ -86,7 +86,7 @@ namespace GreenTech.Pages.CouponTemplates
                 Template = await _couponTemplateService.GetByIdAsync(Id);
                 return Page();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 ModelState.AddModelError(string.Empty, "Đã xảy ra lỗi khi xóa template.");
                 Template = await _couponTemplateService.GetByIdAsync(Id);

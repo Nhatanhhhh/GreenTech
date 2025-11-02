@@ -16,6 +16,7 @@ builder.Configuration.AddEnvironmentVariables();
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+builder.Services.AddSignalR();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddMemoryCache(); // For OTP service
@@ -117,5 +118,8 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapRazorPages();
+
+// SignalR hubs
+app.MapHub<GreenTech.Hubs.OrderHub>("/hubs/order");
 
 app.Run();

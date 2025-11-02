@@ -1,10 +1,18 @@
 using System.ComponentModel.DataAnnotations;
+using DAL.ValidationAttributes;
 
 namespace DAL.DTOs.User
 {
     public class ChangePasswordDTO
     {
+        /// <summary>
+        /// UserId for password verification (set by controller, not displayed in form)
+        /// </summary>
+        [ScaffoldColumn(false)]
+        public int? UserId { get; set; }
+
         [Required(ErrorMessage = "Mật khẩu hiện tại là bắt buộc")]
+        [VerifyCurrentPassword(UserIdPropertyName = "UserId")]
         [DataType(DataType.Password)]
         [Display(Name = "Mật khẩu hiện tại")]
         public string CurrentPassword { get; set; }

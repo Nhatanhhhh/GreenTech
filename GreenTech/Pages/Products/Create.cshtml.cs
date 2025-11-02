@@ -108,7 +108,7 @@ namespace GreenTech.Pages.Products
                 await LoadSelectLists();
                 return Page();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 ModelState.AddModelError(string.Empty, "Đã xảy ra lỗi khi tạo sản phẩm.");
                 await LoadSelectLists();

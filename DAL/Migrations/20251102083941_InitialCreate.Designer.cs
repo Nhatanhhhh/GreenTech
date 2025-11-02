@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DAL.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251101160550_InitialCreate")]
+    [Migration("20251102083941_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -828,7 +828,6 @@ namespace DAL.Migrations
                         .HasColumnName("cancelled_at");
 
                     b.Property<string>("CancelledReason")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)")
                         .HasColumnName("cancelled_reason");
@@ -863,13 +862,11 @@ namespace DAL.Migrations
                         .HasColumnName("discount_amount");
 
                     b.Property<string>("GatewayTransactionId")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("gateway_transaction_id");
 
                     b.Property<string>("Note")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("note");
 

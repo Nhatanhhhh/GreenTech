@@ -87,7 +87,7 @@ namespace GreenTechMVC.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Search(string search)
+        public IActionResult Search(string search)
         {
             if (string.IsNullOrWhiteSpace(search))
             {

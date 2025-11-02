@@ -43,9 +43,9 @@ namespace GreenTech.Pages.Blogs
                 Blog = await _blogService.GetBlogByIdAsync(Id);
                 return Page();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ModelState.AddModelError("", $"Lỗi khi xóa bài viết: {ex.Message}");
+                ModelState.AddModelError("", "Lỗi khi xóa bài viết.");
                 Blog = await _blogService.GetBlogByIdAsync(Id);
                 return Page();
             }

@@ -42,7 +42,7 @@ namespace GreenTech.Pages.Banners
 
                 return RedirectToPage("./Index");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 ModelState.AddModelError(string.Empty, "Đã xảy ra lỗi khi xóa banner.");
                 Banner = await _bannerService.GetByIdAsync(id);

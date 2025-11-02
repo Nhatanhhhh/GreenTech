@@ -74,14 +74,13 @@ namespace GreenTechMVC.Controllers
                 );
             }
 
-            // Đủ tiền: cho phép tiếp tục bước tiếp theo (tùy hệ thống của bạn)
+            // Đủ tiền: redirect đến trang checkout
             return Json(
                 new
                 {
                     success = true,
                     message = "Số dư ví đủ để thanh toán",
-                    // Bạn có thể đổi sang trang xác nhận/địa chỉ/đặt hàng
-                    nextUrl = Url.Action("Index", "Home"),
+                    nextUrl = Url.Action("Checkout", "Orders"),
                 }
             );
         }
@@ -139,7 +138,7 @@ namespace GreenTechMVC.Controllers
             {
                 return Json(new { success = false, message = ex.Message });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return Json(
                     new
@@ -213,7 +212,7 @@ namespace GreenTechMVC.Controllers
             {
                 return Json(new { success = false, message = ex.Message });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return Json(
                     new { success = false, message = "Có lỗi xảy ra khi cập nhật giỏ hàng" }
@@ -268,7 +267,7 @@ namespace GreenTechMVC.Controllers
                     );
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return Json(
                     new
@@ -322,7 +321,7 @@ namespace GreenTechMVC.Controllers
                     return Json(new { success = false, message = "Không thể xóa giỏ hàng" });
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return Json(new { success = false, message = "Có lỗi xảy ra khi xóa giỏ hàng" });
             }
@@ -354,7 +353,7 @@ namespace GreenTechMVC.Controllers
                     }
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return Json(
                     new { success = false, message = "Có lỗi xảy ra khi lấy thông tin giỏ hàng" }
