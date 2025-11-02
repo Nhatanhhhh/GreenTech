@@ -13,5 +13,6 @@ namespace BLL.Service.Review.Interface
         Task<IEnumerable<ReviewModel>> GetAllReviewsAsync();
         Task<ReviewModel?> ToggleReviewStatusAsync(int id);
         Task<string> UploadReviewMediaAsync(int reviewId, IFormFile file);
+
     }
 }
