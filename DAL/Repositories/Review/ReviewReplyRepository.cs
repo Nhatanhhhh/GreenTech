@@ -43,5 +43,20 @@ namespace DAL.Repositories.ReviewReply
             _context.ReviewReplies.Remove(reply);
             return await _context.SaveChangesAsync() > 0;
         }
+        public async Task<ReviewReplyModel?> UpdateReplyAsync(int replyId, int userId, string content)
+        {
+            var reply = await _context.ReviewReplies
+                .FirstOrDefaultAsync(r => r.Id == replyId && r.UserId == userId);
+
+            if (reply == null) return null;
+
+            reply.Content = content;
+            reply.UpdatedAt = DateTime.Now;
+
+            _context.ReviewReplies.Update(reply);
+            await _context.SaveChangesAsync();
+
+            return reply;
+        }
     }
 }
