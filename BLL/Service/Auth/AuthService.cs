@@ -46,12 +46,16 @@ namespace BLL.Service.Auth
                 await _authRepository.LoginAsync(loginDTO)
                 ?? throw new UnauthorizedAccessException("Email hoặc mật khẩu không chính xác");
 
+            // Check user status FIRST before verifying password
+            // This ensures blocked users get the correct error message
+            if (user.Status != UserStatus.ACTIVE)
+                throw new UnauthorizedAccessException(
+                    "Tài khoản của bạn đã bị chặn. Vui lòng liên hệ quản trị viên để được hỗ trợ."
+                );
+
             // Verify password using HMACSHA512
             if (!CryptoUtil.VerifyPasswordHmacSHA512(user.Password, loginDTO.Password))
                 throw new UnauthorizedAccessException("Email hoặc mật khẩu không chính xác");
-
-            if (user.Status != UserStatus.ACTIVE)
-                throw new UnauthorizedAccessException("Tài khoản của bạn đã bị khóa");
 
             SaveUserSession(user);
 

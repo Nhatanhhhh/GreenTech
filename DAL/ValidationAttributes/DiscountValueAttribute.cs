@@ -18,8 +18,8 @@ namespace DAL.ValidationAttributes
             ErrorMessage = "Giá trị giảm giá không hợp lệ";
         }
 
-        protected override ValidationResult IsValid(
-            object value,
+        protected override ValidationResult? IsValid(
+            object? value,
             ValidationContext validationContext
         )
         {

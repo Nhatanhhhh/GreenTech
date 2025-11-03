@@ -212,11 +212,9 @@ namespace BLL.Service.Payments
             string signData = string.Empty;
             if (signDataString.Length > 0)
             {
-                signData = CryptoUtil.HMacHexStringEncode(
-                    CryptoUtil.HMACSHA512,
-                    secret,
-                    signDataString
-                );
+                signData =
+                    CryptoUtil.HMacHexStringEncode(CryptoUtil.HMACSHA512, secret, signDataString)
+                    ?? throw new InvalidOperationException("Failed to generate VNPay secure hash");
             }
 
             // Tạo URL với queryString và hash
@@ -308,6 +306,12 @@ namespace BLL.Service.Payments
                 secret,
                 rawData
             );
+
+            if (computedHash == null)
+            {
+                _logger.LogError("[VNPay] Failed to compute hash for verification");
+                return false;
+            }
 
             // So sánh case-sensitive
             var isValid = string.Equals(

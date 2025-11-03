@@ -65,11 +65,9 @@ namespace BLL.Service.Payments
             var rawSignature =
                 $"accessKey={accessKey}&amount={(long)decimal.Truncate(amount)}&extraData={extraData}&ipnUrl={ipnUrl}&orderId={orderId}&orderInfo={orderInfo}&partnerCode={partnerCode}&redirectUrl={redirectUrl}&requestId={requestId}&requestType={requestType}";
 
-            var signature = CryptoUtil.HMacHexStringEncode(
-                CryptoUtil.HMACSHA256,
-                secretKey,
-                rawSignature
-            );
+            var signature =
+                CryptoUtil.HMacHexStringEncode(CryptoUtil.HMACSHA256, secretKey, rawSignature)
+                ?? throw new InvalidOperationException("Failed to generate MoMo signature");
 
             var payload = new
             {

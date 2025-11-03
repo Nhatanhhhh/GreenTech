@@ -1297,7 +1297,16 @@ namespace DAL.Context
             string dataWithSalt = $"{password}{fixedSaltBase64}";
 
             // Compute HMAC-SHA512
-            string hmacHash = CryptoUtil.HMacBase64Encode(CryptoUtil.HMACSHA512, key, dataWithSalt);
+            string? hmacHash = CryptoUtil.HMacBase64Encode(
+                CryptoUtil.HMACSHA512,
+                key,
+                dataWithSalt
+            );
+
+            if (hmacHash == null)
+            {
+                throw new InvalidOperationException("Failed to generate password hash");
+            }
 
             // Return salt:hash format
             return $"{fixedSaltBase64}:{hmacHash}";
