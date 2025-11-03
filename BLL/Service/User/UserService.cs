@@ -242,5 +242,47 @@ namespace BLL.Service.User
 
             return avatarUrl;
         }
+
+        public async Task<(IEnumerable<UserResponseDTO> Users, int TotalCount)> GetAllUsersAsync(
+            UserQueryParamsDTO queryParams
+        )
+        {
+            var users = await _userRepository.GetAllAsync(queryParams);
+            var totalCount = await _userRepository.CountAsync(queryParams);
+
+            var userDTOs = users.Select(user => AutoMapper.ToUserResponseDTO(user));
+
+            return (userDTOs, totalCount);
+        }
+
+        public async Task<UserResponseDTO> GetUserDetailsAsync(int userId)
+        {
+            var user =
+                await _userRepository.GetByIdAsync(userId, includeBlocked: true)
+                ?? throw new KeyNotFoundException("Người dùng không tồn tại");
+
+            return AutoMapper.ToUserResponseDTO(user);
+        }
+
+        public async Task<UserResponseDTO> BlockUserAsync(int userId)
+        {
+            var user = await _userRepository.BlockUserAsync(userId);
+            _logger.LogInformation($"User {userId} has been blocked");
+            return AutoMapper.ToUserResponseDTO(user);
+        }
+
+        public async Task<UserResponseDTO> UnblockUserAsync(int userId)
+        {
+            var user = await _userRepository.UnblockUserAsync(userId);
+            _logger.LogInformation($"User {userId} has been unblocked");
+            return AutoMapper.ToUserResponseDTO(user);
+        }
+
+        public async Task<UserResponseDTO> ChangeUserRoleAsync(int userId, string roleName)
+        {
+            var user = await _userRepository.ChangeUserRoleAsync(userId, roleName);
+            _logger.LogInformation($"User {userId} role has been changed to {roleName}");
+            return AutoMapper.ToUserResponseDTO(user);
+        }
     }
 }

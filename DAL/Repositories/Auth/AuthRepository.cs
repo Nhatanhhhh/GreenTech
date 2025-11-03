@@ -63,9 +63,7 @@ namespace DAL.Repositories.Auth
             return await _context
                 .Users.Include(u => u.UserRoles)
                 .ThenInclude(ur => ur.Role)
-                .FirstOrDefaultAsync(u =>
-                    u.Email.ToLower() == loginDTO.Email.ToLower() && u.Status == UserStatus.ACTIVE
-                );
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == loginDTO.Email.ToLower());
         }
 
         public async Task<bool> EmailExistsAsync(string email)
