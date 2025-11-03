@@ -348,7 +348,7 @@ namespace GreenTechMVC.Controllers
             {
                 // Get Razor Pages base URL from configuration or use default
                 var razorPagesBaseUrl =
-                    _configuration["RazorPagesBaseUrl"] ?? "https://localhost:7142";
+                    _configuration["RazorPagesBaseUrl"] ?? "http://localhost:5174";
 
                 var notification = new
                 {
@@ -411,7 +411,7 @@ namespace GreenTechMVC.Controllers
             {
                 // Get Razor Pages base URL from configuration or use default
                 var razorPagesBaseUrl =
-                    _configuration["RazorPagesBaseUrl"] ?? "https://localhost:7142";
+                    _configuration["RazorPagesBaseUrl"] ?? "http://localhost:5174";
 
                 var notification = new
                 {

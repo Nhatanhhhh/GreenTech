@@ -34,7 +34,7 @@ namespace GreenTech.Pages.Auth
             // Notify MVC app to clear session (logout synchronization)
             try
             {
-                var mvcAppUrl = "https://localhost:7135/Auth/ClearSession";
+                var mvcAppUrl = "http://localhost:5045/Auth/ClearSession";
                 var httpClient = _httpClientFactory.CreateClient();
                 httpClient.Timeout = TimeSpan.FromSeconds(5); // Short timeout
 
@@ -84,7 +84,7 @@ namespace GreenTech.Pages.Auth
                 Console.WriteLine($"[Logout Sync] Error: {ex.Message}");
             }
 
-            return Redirect("https://localhost:7135/Auth/Login");
+            return Redirect("http://localhost:5045/Auth/Login");
         }
     }
 }

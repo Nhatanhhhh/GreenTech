@@ -50,7 +50,7 @@ public class AuthController : Controller
                     var userRoles = HttpContext.Session.GetString("UserRoles") ?? "";
 
                     // Build admin app URL with session data
-                    var adminAppUrl = "https://localhost:7142/Auth/SyncSession";
+                    var adminAppUrl = "http://localhost:5174/Auth/SyncSession";
                     var redirectUrl =
                         $"{adminAppUrl}?userId={userId}&email={Uri.EscapeDataString(userEmail)}&userName={Uri.EscapeDataString(userName)}&roles={Uri.EscapeDataString(userRoles)}";
 
@@ -140,7 +140,7 @@ public class AuthController : Controller
         // Notify RazorPages app to clear session (logout synchronization)
         try
         {
-            var adminAppUrl = "https://localhost:7142/Auth/ClearSession";
+            var adminAppUrl = "http://localhost:5174/Auth/ClearSession";
             var httpClient = _httpClientFactory.CreateClient();
             httpClient.Timeout = TimeSpan.FromSeconds(5); // Short timeout
 

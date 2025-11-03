@@ -31,7 +31,7 @@ namespace GreenTech.Pages.Auth
             if (string.IsNullOrEmpty(verifyAuth) || verifyAuth != "true")
             {
                 // Session was not saved correctly
-                return Redirect("https://localhost:7135/Auth/Login");
+                return Redirect("http://localhost:5045/Auth/Login");
             }
 
             return RedirectToPage("/Index");
