@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DAL.Utils.ValidationHelper
 {
@@ -10,14 +11,19 @@ namespace DAL.Utils.ValidationHelper
         /// </summary>
         /// <typeparam name="T">The type of the object being validated.</typeparam>
         /// <param name="model">The model instance to validate.</param>
+        /// <param name="serviceProvider">Optional service provider for dependency injection in validation attributes.</param>
         /// <exception cref="ArgumentNullException">Thrown when the model is null.</exception>
         /// <exception cref="ValidationException">Thrown when validation fails.</exception>
-        public static void ValidateModel<T>(T model)
+        public static void ValidateModel<T>(T model, IServiceProvider? serviceProvider = null)
         {
             if (model == null)
                 throw new ArgumentNullException(nameof(model));
 
-            var context = new ValidationContext(model);
+            var context = new ValidationContext(
+                model,
+                serviceProvider: serviceProvider,
+                items: null
+            );
             var results = new List<ValidationResult>();
 
             if (!Validator.TryValidateObject(model, context, results, true))

@@ -50,16 +50,70 @@ namespace GreenTech.Pages.Products
                 .ToList();
         }
 
-        public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnPostCreateAsync()
         {
+            // Ensure session is available before checking
+            if (!HttpContext.Session.IsAvailable)
+            {
+                await HttpContext.Session.LoadAsync();
+            }
+
+            // Check authentication before processing
+            var isAuthenticated = HttpContext.Session.GetString("IsAuthenticated");
+            var userRoles = HttpContext.Session.GetString("UserRoles");
+
+            // If session is expired, reload the page with error instead of redirecting to login
+            if (string.IsNullOrEmpty(isAuthenticated) || isAuthenticated != "true")
+            {
+                await LoadSelectLists();
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
+                );
+                return Page();
+            }
+
+            if (string.IsNullOrEmpty(userRoles) || !userRoles.Contains("ROLE_ADMIN"))
+            {
+                await LoadSelectLists();
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Bạn không có quyền thực hiện thao tác này."
+                );
+                return Page();
+            }
+
+            // Ensure Description and Dimensions are not null
+            if (Product != null)
+            {
+                Product.Description = Product.Description ?? string.Empty;
+                Product.Dimensions = Product.Dimensions ?? string.Empty;
+            }
+
             if (!ModelState.IsValid)
             {
                 await LoadSelectLists();
                 return Page();
             }
 
-            await _productService.CreateProductAsync(Product);
-            return RedirectToPage("./Index");
+            try
+            {
+                await _productService.CreateProductAsync(Product);
+                TempData["SuccessMessage"] = "Tạo sản phẩm thành công!";
+                return RedirectToPage("./Index");
+            }
+            catch (ArgumentException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                await LoadSelectLists();
+                return Page();
+            }
+            catch (Exception)
+            {
+                ModelState.AddModelError(string.Empty, "Đã xảy ra lỗi khi tạo sản phẩm.");
+                await LoadSelectLists();
+                return Page();
+            }
         }
 
         private async Task LoadSelectLists()

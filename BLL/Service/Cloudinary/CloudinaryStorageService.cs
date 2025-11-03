@@ -1,5 +1,8 @@
-﻿using BLL.Config;
+﻿using System.Collections.Generic;
+using System.Linq;
+using BLL.Config;
 using BLL.Service.Cloudinary.Interface;
+using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -131,6 +134,138 @@ namespace BLL.Service.Cloudinary
         }
 
         /// <inheritdoc />
+        public async Task<string> SaveImageAsync(
+            IFormFile file,
+            string subFolder = "",
+            int? maxWidth = null,
+            int? maxHeight = null,
+            string quality = "auto",
+            string format = "auto"
+        )
+        {
+            if (file == null || file.Length == 0)
+            {
+                throw new ArgumentException("File cannot be null or empty.", nameof(file));
+            }
+
+            // Validate it's an image file
+            var allowedContentTypes = new[]
+            {
+                "image/jpeg",
+                "image/jpg",
+                "image/png",
+                "image/gif",
+                "image/webp",
+            };
+
+            if (
+                !allowedContentTypes.Contains(file.ContentType?.ToLowerInvariant())
+                && !new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" }.Contains(
+                    Path.GetExtension(file.FileName)?.ToLowerInvariant()
+                )
+            )
+            {
+                throw new ArgumentException(
+                    "File must be an image (JPG, JPEG, PNG, GIF, or WEBP).",
+                    nameof(file)
+                );
+            }
+
+            await using var stream = file.OpenReadStream();
+
+            // Generate a unique file name to avoid conflicts
+            var uniqueFileName = $"{Guid.NewGuid()}";
+
+            // Combine subfolder with the unique file name to create the PublicId
+            var publicId = string.IsNullOrWhiteSpace(subFolder)
+                ? uniqueFileName
+                : $"{subFolder.Trim('/')}/{uniqueFileName}";
+
+            // Use ImageUploadParams for image-specific features (transformations, optimization)
+            var uploadParams = new ImageUploadParams()
+            {
+                File = new CloudinaryDotNet.FileDescription(file.FileName, stream),
+                PublicId = publicId,
+                Overwrite = true,
+            };
+
+            // Build transformation using Cloudinary SDK fluent API
+            var transformation = new Transformation();
+
+            // Determine if we should use face gravity (for avatars/profile images)
+            bool useFaceGravity = maxWidth.HasValue || maxHeight.HasValue;
+
+            // Add resize if specified
+            if (maxWidth.HasValue || maxHeight.HasValue)
+            {
+                // Use "fill" crop mode when using face gravity (required by Cloudinary)
+                // Use "limit" crop mode when not using face gravity (maintains aspect ratio without cropping)
+                string cropMode = useFaceGravity ? "fill" : "limit";
+
+                if (maxWidth.HasValue && maxHeight.HasValue)
+                {
+                    transformation.Width(maxWidth.Value).Height(maxHeight.Value).Crop(cropMode);
+                }
+                else if (maxWidth.HasValue)
+                {
+                    transformation.Width(maxWidth.Value).Crop(cropMode);
+                }
+                else if (maxHeight.HasValue)
+                {
+                    transformation.Height(maxHeight.Value).Crop(cropMode);
+                }
+            }
+
+            // Add quality setting
+            if (!string.IsNullOrWhiteSpace(quality))
+            {
+                transformation.Quality(quality);
+            }
+
+            // Add gravity for better cropping if resizing (face detection for avatars)
+            // Note: Face gravity can only be used with crop, fill, thumb, lfill, afill, fill_pad, auto, auto_pad, auto_afill
+            if (useFaceGravity)
+            {
+                transformation.Gravity("face"); // Auto face detection for avatars
+            }
+
+            // Set transformation
+            uploadParams.Transformation = transformation;
+
+            try
+            {
+                _logger.LogInformation(
+                    "Uploading image to Cloudinary with PublicId: {PublicId}, Transformations: {Transformations}",
+                    publicId,
+                    uploadParams.Transformation?.ToString() ?? "none"
+                );
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+
+                if (uploadResult.Error != null)
+                {
+                    _logger.LogError(
+                        "Cloudinary image upload failed: {Error}",
+                        uploadResult.Error.Message
+                    );
+                    throw new Exception(
+                        $"Failed to upload image. Cloudinary error: {uploadResult.Error.Message}"
+                    );
+                }
+
+                _logger.LogInformation(
+                    "Image uploaded successfully. URL: {Url}",
+                    uploadResult.SecureUrl.ToString()
+                );
+                return uploadResult.SecureUrl.ToString();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An unexpected error occurred during image upload.");
+                throw; // Re-throw the exception to be handled by higher-level code
+            }
+        }
+
+        /// <inheritdoc />
         public async Task DeleteFileAsync(string fileUrl)
         {
             if (string.IsNullOrWhiteSpace(fileUrl))
@@ -194,10 +329,6 @@ namespace BLL.Service.Cloudinary
             try
             {
                 var uri = new Uri(url);
-                // The Public ID is the part of the path after the version number and before the file extension.
-                // e.g. /image/upload/v1678886344/avatars/c3a0b1.png -> avatars/c3a0b1
-                // The segments are ["/", "image", "upload", "v123...", "avatars", "c3a0b1.png"]
-                // We need to find the segment starting with 'v' and take everything after it.
 
                 var pathSegments = uri.AbsolutePath.Split('/');
                 int versionSegmentIndex = -1;

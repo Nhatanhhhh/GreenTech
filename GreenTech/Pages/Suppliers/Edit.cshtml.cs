@@ -62,7 +62,7 @@ namespace GreenTech.Pages.Suppliers
                 ModelState.AddModelError(string.Empty, ex.Message);
                 return Page();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 ModelState.AddModelError(string.Empty, "Đã xảy ra lỗi khi cập nhật nhà cung cấp.");
                 return Page();

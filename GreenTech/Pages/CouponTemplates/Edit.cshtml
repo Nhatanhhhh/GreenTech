@@ -9,80 +9,572 @@
     <p class="text-gray-600 mt-2">Cập nhật mẫu mã giảm giá</p>
 </div>
 
+<!-- Success/Error Messages -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div id="successMessage" class="mb-4 bg-green-50 border-l-4 border-green-400 p-4 rounded-lg shadow-sm">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm font-medium text-green-800">@TempData["SuccessMessage"]</p>
+            </div>
+            <div class="ml-auto pl-3">
+                <button onclick="document.getElementById('successMessage').remove()" class="text-green-400 hover:text-green-600">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Tự động ẩn success message sau 5 giây
+        setTimeout(function() {
+            const successMsg = document.getElementById('successMessage');
+            if (successMsg) {
+                successMsg.style.opacity = '0';
+                successMsg.style.transition = 'opacity 0.5s ease-out';
+                setTimeout(function() {
+                    successMsg.remove();
+                }, 500);
+            }
+        }, 5000);
+    </script>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div id="errorMessage" class="mb-4 bg-red-50 border-l-4 border-red-400 p-4 rounded-lg shadow-sm">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm font-medium text-red-800">@TempData["ErrorMessage"]</p>
+            </div>
+            <div class="ml-auto pl-3">
+                <button onclick="document.getElementById('errorMessage').remove()" class="text-red-400 hover:text-red-600">
+                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-    <form method="post">
+    <form method="post" id="editCouponTemplateForm">
+        @Html.AntiForgeryToken()
+        
+        <!-- Validation Summary với UI đẹp -->
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div asp-validation-summary="All" class="mb-4 bg-red-50 border-l-4 border-red-400 p-4 rounded-lg shadow-sm">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <h3 class="text-sm font-medium text-red-800 mb-2">Vui lòng sửa các lỗi sau:</h3>
+                        <ul class="list-disc list-inside space-y-1 text-sm text-red-700">
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <li>@error.ErrorMessage</li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        }
+        
+        <input type="hidden" asp-for="Template.Id" />
+        <!-- Handler parameter để route đến OnPostUpdateAsync -->
+        <input type="hidden" name="handler" value="Update" />
+        
         <div class="grid grid-cols-2 gap-6">
             <div class="col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Tên template *</label>
-                <input asp-for="Template.Name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" />
-                <span asp-validation-for="Template.Name" class="text-red-500 text-xs"></span>
+                <input asp-for="Template.Name"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 @(ViewData.ModelState["Template.Name"]?.Errors.Count > 0 ? "border-red-500" : "")" />
+                @if (ViewData.ModelState["Template.Name"]?.Errors.Count > 0)
+                {
+                    <span class="flex items-center mt-1 text-xs text-red-600">
+                        <svg class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <span asp-validation-for="Template.Name"></span>
+                    </span>
+                }
             </div>
 
             <div class="col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
-                <textarea asp-for="Template.Description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>
+                <textarea asp-for="Template.Description" rows="3"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Loại giảm giá *</label>
-                <select asp-for="Template.DiscountType" asp-items="Model.DiscountTypes" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                <select asp-for="Template.DiscountType" asp-items="Model.DiscountTypes"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 @(ViewData.ModelState["Template.DiscountType"]?.Errors.Count > 0 ? "border-red-500" : "")">
                     <option value="">Chọn loại</option>
                 </select>
-                <span asp-validation-for="Template.DiscountType" class="text-red-500 text-xs"></span>
+                @if (ViewData.ModelState["Template.DiscountType"]?.Errors.Count > 0)
+                {
+                    <span class="flex items-center mt-1 text-xs text-red-600">
+                        <svg class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <span asp-validation-for="Template.DiscountType"></span>
+                    </span>
+                }
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Giá trị giảm giá *</label>
-                <input asp-for="Template.DiscountValue" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" />
-                <span asp-validation-for="Template.DiscountValue" class="text-red-500 text-xs"></span>
+                <input asp-for="Template.DiscountValue" type="number" step="0.01" id="discountValue"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 @(ViewData.ModelState["Template.DiscountValue"]?.Errors.Count > 0 ? "border-red-500" : "")" />
+                @if (ViewData.ModelState["Template.DiscountValue"]?.Errors.Count > 0)
+                {
+                    <span class="flex items-center mt-1 text-xs text-red-600">
+                        <svg class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <span asp-validation-for="Template.DiscountValue"></span>
+                    </span>
+                }
+                <span id="discountValueHint" class="text-xs text-gray-500 mt-1 block"></span>
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Giá trị đơn hàng tối thiểu</label>
-                <input asp-for="Template.MinOrderAmount" type="number" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" />
-                <span asp-validation-for="Template.MinOrderAmount" class="text-red-500 text-xs"></span>
+                <input asp-for="Template.MinOrderAmount" type="number" step="0.01"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 @(ViewData.ModelState["Template.MinOrderAmount"]?.Errors.Count > 0 ? "border-red-500" : "")" />
+                @if (ViewData.ModelState["Template.MinOrderAmount"]?.Errors.Count > 0)
+                {
+                    <span class="flex items-center mt-1 text-xs text-red-600">
+                        <svg class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <span asp-validation-for="Template.MinOrderAmount"></span>
+                    </span>
+                }
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Chi phí điểm *</label>
-                <input asp-for="Template.PointsCost" type="number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" />
-                <span asp-validation-for="Template.PointsCost" class="text-red-500 text-xs"></span>
+                <input asp-for="Template.PointsCost" type="number"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 @(ViewData.ModelState["Template.PointsCost"]?.Errors.Count > 0 ? "border-red-500" : "")" />
+                @if (ViewData.ModelState["Template.PointsCost"]?.Errors.Count > 0)
+                {
+                    <span class="flex items-center mt-1 text-xs text-red-600">
+                        <svg class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <span asp-validation-for="Template.PointsCost"></span>
+                    </span>
+                }
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Giới hạn sử dụng/người</label>
-                <input asp-for="Template.UsageLimitPerUser" type="number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" />
-                <span asp-validation-for="Template.UsageLimitPerUser" class="text-red-500 text-xs"></span>
+                <input asp-for="Template.UsageLimitPerUser" type="number"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 @(ViewData.ModelState["Template.UsageLimitPerUser"]?.Errors.Count > 0 ? "border-red-500" : "")" />
+                @if (ViewData.ModelState["Template.UsageLimitPerUser"]?.Errors.Count > 0)
+                {
+                    <span class="flex items-center mt-1 text-xs text-red-600">
+                        <svg class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <span asp-validation-for="Template.UsageLimitPerUser"></span>
+                    </span>
+                }
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Tổng giới hạn sử dụng</label>
-                <input asp-for="Template.TotalUsageLimit" type="number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" />
-                <span asp-validation-for="Template.TotalUsageLimit" class="text-red-500 text-xs"></span>
+                <input asp-for="Template.TotalUsageLimit" type="number"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 @(ViewData.ModelState["Template.TotalUsageLimit"]?.Errors.Count > 0 ? "border-red-500" : "")" />
+                @if (ViewData.ModelState["Template.TotalUsageLimit"]?.Errors.Count > 0)
+                {
+                    <span class="flex items-center mt-1 text-xs text-red-600">
+                        <svg class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <span asp-validation-for="Template.TotalUsageLimit"></span>
+                    </span>
+                }
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Số ngày hợp lệ</label>
-                <input asp-for="Template.ValidDays" type="number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" />
-                <span asp-validation-for="Template.ValidDays" class="text-red-500 text-xs"></span>
+                <input asp-for="Template.ValidDays" type="number"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 @(ViewData.ModelState["Template.ValidDays"]?.Errors.Count > 0 ? "border-red-500" : "")" />
+                @if (ViewData.ModelState["Template.ValidDays"]?.Errors.Count > 0)
+                {
+                    <span class="flex items-center mt-1 text-xs text-red-600">
+                        <svg class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <span asp-validation-for="Template.ValidDays"></span>
+                    </span>
+                }
             </div>
 
             <div>
                 <label class="flex items-center">
-                    <input asp-for="Template.IsActive" type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500" />
+                    <input asp-for="Template.IsActive" type="checkbox"
+                        class="rounded border-gray-300 text-green-600 focus:ring-green-500" />
                     <span class="ml-2 text-sm text-gray-700">Hoạt động</span>
                 </label>
             </div>
         </div>
 
         <div class="mt-6 flex gap-3">
-            <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Cập nhật</button>
+            <button type="submit" asp-page-handler="Update" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Cập
+                nhật</button>
             <a asp-page="./Index" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Hủy</a>
         </div>
     </form>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 
+    <script>
+        $(document).ready(function () {
+            const discountTypeSelect = $('#Template_DiscountType');
+            const discountValueInput = $('#discountValue');
+            const discountValueHint = $('#discountValueHint');
+            const MAX_PERCENT = 100;
+            const MAX_FIXED_AMOUNT = 500000;
+            let validationTimeout = null;
+
+            // AJAX validation function - gọi server để validate
+            function validateDiscountValueAjax(discountType, discountValue, callback) {
+                // Clear previous timeout
+                if (validationTimeout) {
+                    clearTimeout(validationTimeout);
+                }
+
+                // Debounce: chỉ gọi AJAX sau 300ms không có input
+                validationTimeout = setTimeout(function () {
+                    if (!discountType || isNaN(discountValue)) {
+                        if (callback) callback(false, 'Vui lòng nhập giá trị hợp lệ');
+                        return;
+                    }
+
+                    // Show loading state
+                    discountValueHint.text('Đang kiểm tra...');
+                    discountValueHint.removeClass('text-red-500 text-gray-500').addClass('text-blue-500');
+
+                    // Get antiforgery token from form
+                    var token = $('input[name="__RequestVerificationToken"]').val();
+                    if (!token) {
+                        token = $('input[name="RequestVerificationToken"]').val();
+                    }
+
+                    $.ajax({
+                        url: '@Url.Page("./Edit", "ValidateDiscountValue")',
+                        type: 'POST',
+                        contentType: 'application/json; charset=utf-8',
+                        headers: token ? {
+                            'RequestVerificationToken': token
+                        } : {},
+                        data: JSON.stringify({
+                            discountType: discountType,
+                            discountValue: discountValue
+                        }),
+                        success: function (response) {
+                            updateValidationUI(response.isValid, response.message);
+                            if (callback) callback(response.isValid, response.message);
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Validation error:', error, xhr);
+                            var errorMessage = 'Lỗi khi kiểm tra';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            } else if (xhr.status === 400) {
+                                errorMessage = 'Dữ liệu không hợp lệ';
+                            }
+                            discountValueHint.text(errorMessage);
+                            discountValueHint.removeClass('text-blue-500 text-gray-500').addClass('text-red-500');
+                            if (callback) callback(false, errorMessage);
+                        }
+                    });
+                }, 300);
+            }
+
+            // Update UI based on validation result
+            function updateValidationUI(isValid, message) {
+                if (isValid) {
+                    discountValueInput.removeClass('border-red-500');
+                    discountValueInput.addClass('border-gray-300');
+                    discountValueHint.removeClass('text-red-500 text-blue-500').addClass('text-gray-500');
+                    // Keep hint text if exists, otherwise use default
+                    if (!message) {
+                        const discountType = discountTypeSelect.val();
+                        if (discountType === 'PERCENT') {
+                            discountValueHint.text(`Giá trị từ 0% đến ${MAX_PERCENT}%`);
+                        } else if (discountType === 'FIXED_AMOUNT') {
+                            discountValueHint.text(`Giá trị từ 0 đến ${MAX_FIXED_AMOUNT.toLocaleString('vi-VN')} VND`);
+                        }
+                    }
+                } else {
+                    discountValueInput.removeClass('border-gray-300');
+                    discountValueInput.addClass('border-red-500');
+                    discountValueHint.removeClass('text-gray-500 text-blue-500').addClass('text-red-500');
+                    discountValueHint.text(message || 'Giá trị không hợp lệ');
+                }
+            }
+
+            // Update validation hints and constraints when discount type changes
+            function updateValidationConstraints() {
+                const discountType = discountTypeSelect.val();
+                let hintText, step;
+
+                if (discountType === 'PERCENT') {
+                    hintText = `Giá trị từ 0% đến ${MAX_PERCENT}%`;
+                    step = '0.01';
+                    // Don't set max/min to avoid browser HTML5 validation messages
+                    // We'll use custom validation instead
+                } else if (discountType === 'FIXED_AMOUNT') {
+                    hintText = `Giá trị từ 0 đến ${MAX_FIXED_AMOUNT.toLocaleString('vi-VN')} VND`;
+                    step = '0.01'; // Allow decimal values for fixed amount
+                    // Don't set max/min to avoid browser HTML5 validation messages
+                    // We'll use custom validation instead
+                } else {
+                    hintText = 'Vui lòng chọn loại giảm giá trước';
+                }
+
+                discountValueInput.attr('step', step || '0.01');
+
+                // Update hint (only if not showing error)
+                if (!discountValueHint.hasClass('text-red-500')) {
+                    discountValueHint.text(hintText || '');
+                    discountValueHint.removeClass('text-red-500').addClass('text-gray-500');
+                }
+
+                // Re-validate current value with AJAX
+                const currentValue = parseFloat(discountValueInput.val());
+                if (!isNaN(currentValue) && discountType) {
+                    validateDiscountValueAjax(discountType, currentValue);
+                }
+            }
+
+            // Update validation when discount type changes
+            discountTypeSelect.on('change', function () {
+                updateValidationConstraints();
+            });
+
+            // Override browser's HTML5 validation to prevent default messages
+            discountValueInput.on('invalid', function(e) {
+                e.preventDefault();
+                // Clear browser's validation message
+                this.setCustomValidity('');
+                // Use our custom validation instead
+                const discountType = discountTypeSelect.val();
+                const value = parseFloat($(this).val());
+                if (!isNaN(value) && discountType) {
+                    validateDiscountValueAjax(discountType, value);
+                }
+                return false;
+            });
+
+            // Validate discount value on input/blur using AJAX
+            discountValueInput.on('input blur', function () {
+                // Clear any browser validation message
+                this.setCustomValidity('');
+                
+                const discountType = discountTypeSelect.val();
+                const value = parseFloat($(this).val());
+
+                if (!isNaN(value) && discountType) {
+                    validateDiscountValueAjax(discountType, value);
+                } else if (!discountType) {
+                    discountValueHint.text('Vui lòng chọn loại giảm giá trước');
+                    discountValueHint.removeClass('text-red-500').addClass('text-gray-500');
+                }
+            });
+
+            // Initialize validation on page load
+            updateValidationConstraints();
+
+            // Add custom jQuery validation rule (for form submit validation)
+            $.validator.addMethod("discountValue", function (value, element) {
+                const discountType = discountTypeSelect.val();
+                const numValue = parseFloat(value);
+
+                if (isNaN(numValue)) {
+                    return false;
+                }
+
+                // Client-side quick check
+                if (discountType === 'PERCENT') {
+                    return numValue >= 0 && numValue <= MAX_PERCENT;
+                } else if (discountType === 'FIXED_AMOUNT') {
+                    return numValue >= 0 && numValue <= MAX_FIXED_AMOUNT;
+                }
+
+                return true;
+            }, function () {
+                const discountType = discountTypeSelect.val();
+                if (discountType === 'PERCENT') {
+                    return `Giá trị phải từ 0% đến ${MAX_PERCENT}%`;
+                } else if (discountType === 'FIXED_AMOUNT') {
+                    return `Giá trị phải từ 0 đến ${MAX_FIXED_AMOUNT.toLocaleString('vi-VN')} VND`;
+                }
+                return 'Giá trị giảm giá không hợp lệ';
+            });
+
+            // Configure form validation - chỉ validate client-side, không intercept form submit
+            var form = $('#editCouponTemplateForm'); // Chỉ lấy form edit bằng ID, không lấy form logout
+            form.validate({
+                rules: {
+                    'Template.DiscountValue': {
+                        required: true,
+                        number: true,
+                        discountValue: true
+                    }
+                },
+                // Không dùng submitHandler để tránh conflict - để form submit tự nhiên
+            });
+
+            // Đảm bảo handler parameter luôn có trong form và URL từ đầu
+            if (!$('input[name="handler"]', form).length) {
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: 'handler',
+                    value: 'Update'
+                }).appendTo(form);
+            }
+            
+            // Set form action với handler trong URL để đảm bảo handler được gửi
+            var currentUrl = window.location.pathname + window.location.search;
+            if (currentUrl.indexOf('handler=') === -1) {
+                var handlerParam = 'handler=Update';
+                if (currentUrl.indexOf('?') > -1) {
+                    form.attr('action', currentUrl + '&' + handlerParam);
+                } else {
+                    form.attr('action', currentUrl + '?' + handlerParam);
+                }
+            }
+
+            // Intercept form submit để thực hiện AJAX validation cuối cùng
+            form.on('submit', function(e) {
+                // Đảm bảo handler luôn có trước khi submit
+                if (!$('input[name="handler"]', form).length) {
+                    $('<input>').attr({
+                        type: 'hidden',
+                        name: 'handler',
+                        value: 'Update'
+                    }).appendTo(form);
+                }
+
+                // Kiểm tra jQuery validation trước
+                if (!$(this).valid()) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                // Nếu đã valid, thực hiện AJAX validation cuối cùng
+                const discountType = discountTypeSelect.val();
+                const discountValue = parseFloat(discountValueInput.val());
+
+                if (discountType && !isNaN(discountValue)) {
+                    // Prevent default submit để chờ AJAX validation
+                    e.preventDefault();
+                    
+                    validateDiscountValueAjax(discountType, discountValue, function (isValid, message) {
+                        if (isValid) {
+                            // Đảm bảo handler có trước khi submit
+                            if (!$('input[name="handler"]', form).length) {
+                                $('<input>').attr({
+                                    type: 'hidden',
+                                    name: 'handler',
+                                    value: 'Update'
+                                }).appendTo(form);
+                            }
+                            
+                            // Nếu valid, submit form thật sự (native submit)
+                            // Đảm bảo handler được gửi qua URL hoặc form data
+                            var currentUrl = window.location.pathname + window.location.search;
+                            var handlerParam = 'handler=Update';
+                            // Nếu URL đã có query string, thêm handler vào
+                            if (currentUrl.indexOf('?') > -1) {
+                                if (currentUrl.indexOf('handler=') === -1) {
+                                    form.attr('action', currentUrl + '&' + handlerParam);
+                                }
+                            } else {
+                                form.attr('action', currentUrl + '?' + handlerParam);
+                            }
+                            
+                            form.off('submit'); // Remove event handler để submit tự nhiên
+                            form[0].submit(); // Native DOM submit với handler trong URL
+                        } else {
+                            // Hiển thị toast notification đẹp thay vì alert
+                            showToastNotification(message || 'Giá trị không hợp lệ. Vui lòng kiểm tra lại.', 'error');
+                        }
+                    });
+                    return false;
+                }
+                // Nếu không có discountValue cần validate, cho form submit tự nhiên với handler="Update"
+            });
+
+            // Hàm hiển thị toast notification đẹp
+            function showToastNotification(message, type = 'error') {
+                const toastId = 'toast-' + Date.now();
+                const bgColor = type === 'error' ? 'bg-red-50 border-red-400 text-red-800' : 'bg-green-50 border-green-400 text-green-800';
+                const iconColor = type === 'error' ? 'text-red-400' : 'text-green-400';
+                const iconPath = type === 'error' 
+                    ? 'M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z'
+                    : 'M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z';
+                
+                const toastHtml = `
+                    <div id="${toastId}" class="fixed top-4 right-4 ${bgColor} border-l-4 p-4 rounded-lg shadow-lg max-w-md z-50 transform transition-all duration-300 ease-in-out">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 ${iconColor}" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="${iconPath}" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3 flex-1">
+                                <p class="text-sm font-medium">${message}</p>
+                            </div>
+                            <div class="ml-auto pl-3">
+                                <button onclick="document.getElementById('${toastId}').remove()" class="text-gray-400 hover:text-gray-600">
+                                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', toastHtml);
+                
+                // Auto remove sau 5 giây
+                setTimeout(function() {
+                    const toast = document.getElementById(toastId);
+                    if (toast) {
+                        toast.style.opacity = '0';
+                        toast.style.transform = 'translateX(100%)';
+                        setTimeout(() => toast.remove(), 300);
+                    }
+                }, 5000);
+            }
+        });
+    </script>
+}

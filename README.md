@@ -7,6 +7,10 @@ GreenTech is an e-commerce system built with .NET 8 using a 3-tier architecture:
 - **BLL**: Business Logic Layer  
 - **Presentation**: 2 web applications (Razor Pages + MVC)
 
+**⚠️ Development Setup:** This project is configured to use **HTTP only** (not HTTPS) for localhost development:
+- **GreenTechMVC**: `http://localhost:5045` (Customer-facing website)
+- **GreenTech** (Razor Pages): `http://localhost:5174` (Admin panel)
+
 ## 🛠 System Requirements
 
 - .NET 8 SDK or higher
@@ -44,7 +48,27 @@ CONNECTIONSTRINGS__DEFAULTCONNECTION=Server=YOUR_SERVER;Database=GreenTechDB;Use
 **GreenTechMVC/.env:**
 ```env
 CONNECTIONSTRINGS__DEFAULTCONNECTION=Server=YOUR_SERVER;Database=GreenTechDB;User Id=YOUR_USER;Password=YOUR_PASSWORD;TrustServerCertificate=True;
+
+# Payment Gateway Configuration (Optional - for wallet top-up feature)
+# VNPay Configuration
+VNPAY_TMN_CODE=your_tmn_code
+VNPAY_HASH_SECRET=your_hash_secret
+VNPAY_PAY_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+VNPAY_RETURN_URL=http://localhost:5045/Wallet/Return
+
+# MoMo Configuration
+MOMO_PARTNER_CODE=your_partner_code
+MOMO_ACCESS_KEY=your_access_key
+MOMO_SECRET_KEY=your_secret_key
+MOMO_PAY_URL=https://test-payment.momo.vn/v2/gateway/api/create
+MOMO_REDIRECT_URL=http://localhost:5045/Wallet/Return
+MOMO_IPN_URL=http://localhost:5045/Wallet/Return
 ```
+
+**⚠️ Important:** 
+- All payment gateway URLs use **HTTP** (not HTTPS) for localhost development
+- GreenTechMVC runs on `http://localhost:5045`
+- GreenTech (Razor Pages) runs on `http://localhost:5174`
 
 **⚠️ Important:** 
 - Add `.env` to your `.gitignore` file to avoid committing sensitive data
@@ -58,17 +82,78 @@ CONNECTIONSTRINGS__DEFAULTCONNECTION=Server=YOUR_SERVER;Database=GreenTechDB;Use
 .env.*
 ```
 
-### Step 3: Build the Solution
+### Step 3: Clean and Build the Solution
 
+**⚠️ Important:** Solution file is located at `GreenTech/GreenTech.sln`. You must specify the solution file or project path.
+
+**Clean entire solution:**
 ```bash
-# Build entire solution
-dotnet build
+# Clean all projects using solution file (from root directory)
+dotnet clean GreenTech/GreenTech.sln
 
-# Or build individual projects
-dotnet build DAL
-dotnet build BLL
-dotnet build GreenTech
-dotnet build GreenTechMVC
+# Or from GreenTech directory
+cd GreenTech
+dotnet clean GreenTech.sln
+cd ..
+
+# Or clean specific project (from root directory)
+dotnet clean DAL/DAL.csproj
+dotnet clean BLL/BLL.csproj
+dotnet clean GreenTech/GreenTechRazorPage.csproj
+dotnet clean GreenTechMVC/GreenTechMVC.csproj
+```
+
+**Rebuild entire solution (clean + build):**
+```bash
+# Rebuild all projects using solution file (from root directory)
+dotnet clean GreenTech/GreenTech.sln && dotnet build GreenTech/GreenTech.sln --no-incremental
+
+# Or rebuild without incremental (from root directory)
+dotnet build GreenTech/GreenTech.sln --no-incremental
+```
+
+**Build entire solution:**
+```bash
+# Build all projects using solution file (from root directory)
+dotnet build GreenTech/GreenTech.sln
+
+# Or build individual projects (from root directory)
+dotnet build DAL/DAL.csproj
+dotnet build BLL/BLL.csproj
+dotnet build GreenTech/GreenTechRazorPage.csproj
+dotnet build GreenTechMVC/GreenTechMVC.csproj
+```
+
+**Quick Rebuild Commands (PowerShell - from root directory):**
+```powershell
+# Clean and rebuild solution
+dotnet clean GreenTech/GreenTech.sln; dotnet build GreenTech/GreenTech.sln --no-incremental
+
+# Clean, restore packages, and build
+dotnet clean GreenTech/GreenTech.sln; dotnet restore GreenTech/GreenTech.sln; dotnet build GreenTech/GreenTech.sln --no-incremental
+```
+
+**Quick Rebuild Commands (Bash/Linux/Mac - from root directory):**
+```bash
+# Clean and rebuild solution
+dotnet clean GreenTech/GreenTech.sln && dotnet build GreenTech/GreenTech.sln --no-incremental
+
+# Clean, restore packages, and build
+dotnet clean GreenTech/GreenTech.sln && dotnet restore GreenTech/GreenTech.sln && dotnet build GreenTech/GreenTech.sln --no-incremental
+```
+
+**Alternative: Working from GreenTech directory:**
+```bash
+# Navigate to GreenTech directory first
+cd GreenTech
+
+# Then run commands without path prefix
+dotnet clean GreenTech.sln
+dotnet build GreenTech.sln
+dotnet build GreenTech.sln --no-incremental
+
+# Return to root
+cd ..
 ```
 
 ### Step 4: Setup Database (Code First)
@@ -177,14 +262,14 @@ dotnet ef database update --project DAL --startup-project GreenTech
 cd GreenTech
 dotnet run
 ```
-Application will be available at: `https://localhost:7xxx` or `http://localhost:5xxx`
+Application will be available at: `http://localhost:5174`
 
 **Run MVC Application:**
 ```bash
 cd GreenTechMVC
 dotnet run
 ```
-Application will be available at: `https://localhost:7xxx` or `http://localhost:5xxx`
+Application will be available at: `http://localhost:5045`
 
 ## 🔧 Troubleshooting Common Issues
 
@@ -285,6 +370,10 @@ dotnet ef database update --project DAL --startup-project GreenTech
 - **Use ApplicationDbContextFactory** to avoid DbContextOptions errors
 - **Install DotNetEnv package** in all projects that need to read .env file
 - **Node.js packages** are required for MVC project (Tailwind CSS)
+- **⚠️ HTTP Only Setup:** This project uses HTTP (not HTTPS) for localhost development
+  - All URLs in code use `http://localhost:5045` (MVC) and `http://localhost:5174` (Razor Pages)
+  - Payment gateway callbacks (VNPay, MoMo) must be configured with HTTP URLs
+  - HTTPS redirection is disabled in both projects
 
 ## 🏗️ Project Structure
 ```
@@ -311,9 +400,33 @@ dotnet add package DotNetEnv
 1. **Never commit .env files** to version control
 2. Add `.env` to `.gitignore`
 3. Create `.env.example` with dummy values as template:
+
+**GreenTech/.env.example:**
 ```env
-   CONNECTIONSTRINGS__DEFAULTCONNECTION=Server=localhost;Database=GreenTechDB;User Id=your_user;Password=your_password;TrustServerCertificate=True;
+CONNECTIONSTRINGS__DEFAULTCONNECTION=Server=localhost;Database=GreenTechDB;User Id=your_user;Password=your_password;TrustServerCertificate=True;
 ```
+
+**GreenTechMVC/.env.example:**
+```env
+CONNECTIONSTRINGS__DEFAULTCONNECTION=Server=localhost;Database=GreenTechDB;User Id=your_user;Password=your_password;TrustServerCertificate=True;
+
+# Payment Gateway Configuration (Optional - for wallet top-up feature)
+# VNPay Configuration
+VNPAY_TMN_CODE=your_tmn_code
+VNPAY_HASH_SECRET=your_hash_secret
+VNPAY_PAY_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+VNPAY_RETURN_URL=http://localhost:5045/Wallet/Return
+
+# MoMo Configuration
+MOMO_PARTNER_CODE=your_partner_code
+MOMO_ACCESS_KEY=your_access_key
+MOMO_SECRET_KEY=your_secret_key
+MOMO_PAY_URL=https://test-payment.momo.vn/v2/gateway/api/create
+MOMO_REDIRECT_URL=http://localhost:5045/Wallet/Return
+MOMO_IPN_URL=http://localhost:5045/Wallet/Return
+```
+
+**Note:** All URLs use **HTTP** (not HTTPS) for localhost development.
 4. Share `.env.example` with team members, not actual `.env` file
 5. Use different `.env` files for different environments (dev, staging, production)
 

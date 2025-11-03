@@ -1,4 +1,4 @@
-@page
+@page "{id:int}"
 @model GreenTech.Pages.CouponTemplates.DeleteModel
 @{
     ViewData["Title"] = "Xóa Template Coupon";
@@ -87,10 +87,15 @@
         </dl>
     </div>
 
-    <form method="post">
+    <form method="post" id="deleteCouponTemplateForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Template.Id" />
+        <!-- Handler parameter để route đến OnPostDeleteAsync -->
+        <input type="hidden" name="handler" value="Delete" />
+        
         <div asp-validation-summary="ModelOnly" class="text-red-500 text-sm mb-4"></div>
         <div class="flex gap-3">
-            <button type="submit" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Xóa template</button>
+            <button type="submit" asp-page-handler="Delete" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Xóa template</button>
             <a asp-page="./Index" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Hủy</a>
         </div>
     </form>

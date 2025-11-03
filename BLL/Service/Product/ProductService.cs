@@ -42,23 +42,31 @@ namespace BLL.Service.Product
 
         public async Task DeleteProductAsync(int productId)
         {
-            var product = await _productRepository.GetByIdAsync(productId);
+            var product = await _productRepository.GetByIdAsync(productId, includeInactive: true);
             if (product == null)
             {
                 throw new KeyNotFoundException($"Product with ID {productId} not found.");
             }
 
-            // Delete associated images from Cloudinary
-            if (!string.IsNullOrEmpty(product.Image))
+            // Soft delete: không xóa images vì product vẫn tồn tại, chỉ inactive
+            // Chỉ soft delete bằng cách set IsActive = false
+            await _productRepository.DeleteAsync(productId);
+        }
+
+        public async Task RestoreProductAsync(int productId)
+        {
+            var product = await _productRepository.GetByIdAsync(productId, includeInactive: true);
+            if (product == null)
             {
-                await _fileStorageService.DeleteFileAsync(product.Image);
-            }
-            foreach (var image in product.ProductImages)
-            {
-                await _fileStorageService.DeleteFileAsync(image.ImageUrl);
+                throw new KeyNotFoundException($"Product with ID {productId} not found.");
             }
 
-            await _productRepository.DeleteAsync(productId);
+            if (product.IsActive)
+            {
+                throw new InvalidOperationException("Product is already active.");
+            }
+
+            await _productRepository.RestoreAsync(productId);
         }
 
         public async Task DeleteImageAsync(int productId, int imageId)
@@ -91,9 +99,12 @@ namespace BLL.Service.Product
             }
         }
 
-        public async Task<ProductResponseDTO> GetProductByIdAsync(int productId)
+        public async Task<ProductResponseDTO> GetProductByIdAsync(
+            int productId,
+            bool includeInactive = false
+        )
         {
-            var product = await _productRepository.GetByIdAsync(productId);
+            var product = await _productRepository.GetByIdAsync(productId, includeInactive);
             if (product == null)
             {
                 return null;
@@ -119,7 +130,11 @@ namespace BLL.Service.Product
             UpdateProductDTO updateProductDto
         )
         {
-            var existingProduct = await _productRepository.GetByIdAsync(productId);
+            // Use includeInactive: true để có thể update cả products đã inactive
+            var existingProduct = await _productRepository.GetByIdAsync(
+                productId,
+                includeInactive: true
+            );
             if (existingProduct == null)
             {
                 throw new KeyNotFoundException($"Product with ID {productId} not found.");

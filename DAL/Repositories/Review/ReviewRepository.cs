@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using DAL.Context;
+using DAL.DTOs.Review;
 using DAL.Models.Enum;
 using DAL.Repositories.Review.Interface;
 using Microsoft.EntityFrameworkCore;
@@ -54,11 +56,62 @@ namespace DAL.Repositories.Review
                     : ReviewStatus.APPROVED;
 
             review.UpdatedAt = DateTime.Now;
-
             _context.Reviews.Update(review);
             await _context.SaveChangesAsync();
 
             return review;
+        }
+
+        public async Task<IEnumerable<ReviewModel>> GetAllReviewsAsync()
+        {
+            return await _context
+                .Reviews.Include(r => r.User)
+                .Include(r => r.Product)
+                .Include(r => r.OrderItem)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<ReviewModel>> GetReviewsByProductIdAsync(
+            int productId,
+            int pageNumber,
+            int pageSize
+        )
+        {
+            return await _context
+                .Reviews.Include(r => r.User)
+                .Include(r => r.ReviewReplies)
+                .ThenInclude(rr => rr.User)
+                .Include(r => r.ReviewVotes)
+                .Where(r => r.ProductId == productId && r.Status == ReviewStatus.APPROVED)
+                .OrderByDescending(r => r.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+        }
+
+        public async Task<int> GetReviewsCountByProductIdAsync(int productId)
+        {
+            return await _context
+                .Reviews.Where(r => r.ProductId == productId && r.Status == ReviewStatus.APPROVED)
+                .CountAsync();
+        }
+
+        public async Task<ReviewModel?> GetReviewByOrderItemIdAsync(int orderItemId)
+        {
+            return await _context
+                .Reviews.Include(r => r.User)
+                .Include(r => r.Product)
+                .FirstOrDefaultAsync(r => r.OrderItemId == orderItemId);
+        }
+
+        public async Task<IEnumerable<ReviewModel>> GetApprovedReviewsByProductIdAsync(
+            int productId
+        )
+        {
+            return await _context
+                .Reviews.Where(r => r.ProductId == productId && r.Status == ReviewStatus.APPROVED)
+                .ToListAsync();
         }
     }
 }

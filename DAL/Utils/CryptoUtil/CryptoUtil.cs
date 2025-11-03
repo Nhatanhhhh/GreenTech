@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 namespace DAL.Utils.CryptoUtil
 {
     /// <summary>
-    /// Provides cryptographic utility methods including password hashing, HMAC, 
+    /// Provides cryptographic utility methods including password hashing, HMAC,
     /// RSA encryption/decryption, and byte/hex conversions.
     /// </summary>
     public static class CryptoUtil
@@ -34,12 +34,15 @@ namespace DAL.Utils.CryptoUtil
                 rng.GetBytes(salt);
             }
 
-            string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                password: password,
-                salt: salt,
-                prf: KeyDerivationPrf.HMACSHA256,
-                iterationCount: 100000,
-                numBytesRequested: 256 / 8));
+            string hashed = Convert.ToBase64String(
+                KeyDerivation.Pbkdf2(
+                    password: password,
+                    salt: salt,
+                    prf: KeyDerivationPrf.HMACSHA256,
+                    iterationCount: 100000,
+                    numBytesRequested: 256 / 8
+                )
+            );
 
             return $"{Convert.ToBase64String(salt)}:{hashed}";
         }
@@ -72,7 +75,11 @@ namespace DAL.Utils.CryptoUtil
             string dataWithSalt = $"{password}{Convert.ToBase64String(salt)}";
 
             // Compute HMAC-SHA512
-            string hmacHash = HMacBase64Encode(HMACSHA512, key, dataWithSalt);
+            string? hmacHash = HMacBase64Encode(HMACSHA512, key, dataWithSalt);
+            if (hmacHash == null)
+            {
+                throw new InvalidOperationException("Failed to generate password hash");
+            }
 
             // Return salt:hash format
             return $"{Convert.ToBase64String(salt)}:{hmacHash}";
@@ -85,7 +92,11 @@ namespace DAL.Utils.CryptoUtil
         /// <param name="providedPassword">Password to verify</param>
         /// <param name="key">HMAC key (if null, uses default key)</param>
         /// <returns>True if password matches</returns>
-        public static bool VerifyPasswordHmacSHA512(string hashedPassword, string providedPassword, string key = null)
+        public static bool VerifyPasswordHmacSHA512(
+            string hashedPassword,
+            string providedPassword,
+            string key = null
+        )
         {
             if (string.IsNullOrEmpty(hashedPassword) || string.IsNullOrEmpty(providedPassword))
                 return false;
@@ -107,7 +118,11 @@ namespace DAL.Utils.CryptoUtil
             string dataWithSalt = $"{providedPassword}{Convert.ToBase64String(salt)}";
 
             // Compute HMAC-SHA512
-            string computedHash = HMacBase64Encode(HMACSHA512, key, dataWithSalt);
+            string? computedHash = HMacBase64Encode(HMACSHA512, key, dataWithSalt);
+            if (computedHash == null)
+            {
+                return false;
+            }
 
             return storedHash == computedHash;
         }
@@ -130,12 +145,15 @@ namespace DAL.Utils.CryptoUtil
             byte[] salt = Convert.FromBase64String(parts[0]);
             string hash = parts[1];
 
-            string hashedProvided = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                password: providedPassword,
-                salt: salt,
-                prf: KeyDerivationPrf.HMACSHA256,
-                iterationCount: 100000,
-                numBytesRequested: 256 / 8));
+            string hashedProvided = Convert.ToBase64String(
+                KeyDerivation.Pbkdf2(
+                    password: providedPassword,
+                    salt: salt,
+                    prf: KeyDerivationPrf.HMACSHA256,
+                    iterationCount: 100000,
+                    numBytesRequested: 256 / 8
+                )
+            );
 
             return hash == hashedProvided;
         }
@@ -147,15 +165,33 @@ namespace DAL.Utils.CryptoUtil
         /// <param name="key"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        private static byte[] HMacEncode(string algorithm, string key, string data)
+        private static byte[]? HMacEncode(string algorithm, string key, string data)
         {
             try
             {
-                using (var hmac = HMAC.Create(algorithm))
+                HMAC? hmac = null;
+                if (algorithm == HMACSHA512)
                 {
-                    if (hmac == null)
-                        return null;
+                    hmac = new HMACSHA512();
+                }
+                else if (algorithm == HMACSHA256)
+                {
+                    hmac = new HMACSHA256();
+                }
+                else if (algorithm == HMACSHA1)
+                {
+                    hmac = new HMACSHA1();
+                }
+                else if (algorithm == HMACMD5)
+                {
+                    hmac = new HMACMD5();
+                }
 
+                if (hmac == null)
+                    return null;
+
+                using (hmac)
+                {
                     var keyBytes = UTF8.GetBytes(key);
                     var dataBytes = UTF8.GetBytes(data);
                     hmac.Key = keyBytes;
@@ -175,9 +211,9 @@ namespace DAL.Utils.CryptoUtil
         /// <param name="key"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        public static string HMacBase64Encode(string algorithm, string key, string data)
+        public static string? HMacBase64Encode(string algorithm, string key, string data)
         {
-            byte[] hmacEncodeBytes = HMacEncode(algorithm, key, data);
+            byte[]? hmacEncodeBytes = HMacEncode(algorithm, key, data);
             return hmacEncodeBytes != null ? Convert.ToBase64String(hmacEncodeBytes) : null;
         }
 
@@ -188,9 +224,9 @@ namespace DAL.Utils.CryptoUtil
         /// <param name="key"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        public static string HMacHexStringEncode(string algorithm, string key, string data)
+        public static string? HMacHexStringEncode(string algorithm, string key, string data)
         {
-            byte[] hmacEncodeBytes = HMacEncode(algorithm, key, data);
+            byte[]? hmacEncodeBytes = HMacEncode(algorithm, key, data);
             return hmacEncodeBytes != null ? ByteArrayToHexString(hmacEncodeBytes) : null;
         }
 
@@ -239,7 +275,6 @@ namespace DAL.Utils.CryptoUtil
 
             return bytesResult;
         }
-
 
         /// <summary>
         /// RSA encryption and decryption
@@ -353,6 +388,127 @@ namespace DAL.Utils.CryptoUtil
         {
             var privateKey = StringToPrivateKey(prikeyStr);
             return Decrypt(privateKey, message);
+        }
+
+        /// <summary>
+        /// Generate a password reset token that contains email and expiry time
+        /// Token format: Base64(Email|ExpiryTimestamp|Nonce):HMAC
+        /// </summary>
+        /// <param name="email">User email</param>
+        /// <param name="expiryHours">Hours until token expires (default 1 hour)</param>
+        /// <param name="key">HMAC key (if null, uses default key)</param>
+        /// <returns>Reset token string</returns>
+        public static string GeneratePasswordResetToken(
+            string email,
+            int expiryHours = 1,
+            string key = null
+        )
+        {
+            if (string.IsNullOrEmpty(email))
+                throw new ArgumentException("Email cannot be null or empty", nameof(email));
+
+            // Generate nonce for uniqueness
+            byte[] nonceBytes = new byte[16];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(nonceBytes);
+            }
+            string nonce = Convert.ToBase64String(nonceBytes);
+
+            // Calculate expiry timestamp
+            long expiryTimestamp = (
+                (DateTimeOffset)DateTime.UtcNow.AddHours(expiryHours)
+            ).ToUnixTimeSeconds();
+
+            // Create payload: email|timestamp|nonce
+            string payload = $"{email}|{expiryTimestamp}|{nonce}";
+
+            // Encode payload to Base64
+            byte[] payloadBytes = UTF8.GetBytes(payload);
+            string encodedPayload = Convert.ToBase64String(payloadBytes);
+
+            // Use default key if not provided
+            if (string.IsNullOrEmpty(key))
+            {
+                key = "GreenTech2024!@#$%^&*()SecretKey";
+            }
+
+            // Generate HMAC signature
+            string? hmacSignature = HMacBase64Encode(HMACSHA512, key, encodedPayload);
+            if (hmacSignature == null)
+            {
+                throw new InvalidOperationException("Failed to generate password reset token");
+            }
+
+            // Return token: encodedPayload:hmacSignature
+            return $"{encodedPayload}:{hmacSignature}";
+        }
+
+        /// <summary>
+        /// Verify and decode password reset token
+        /// </summary>
+        /// <param name="token">Reset token to verify</param>
+        /// <param name="expectedEmail">Expected email (optional, for additional validation)</param>
+        /// <param name="key">HMAC key (if null, uses default key)</param>
+        /// <returns>Tuple (isValid, email, expiryTimestamp). Returns (false, null, 0) if invalid.</returns>
+        public static (bool isValid, string email, long expiryTimestamp) VerifyPasswordResetToken(
+            string token,
+            string expectedEmail = null,
+            string key = null
+        )
+        {
+            if (string.IsNullOrEmpty(token))
+                return (false, null, 0);
+
+            var parts = token.Split(':');
+            if (parts.Length != 2)
+                return (false, null, 0);
+
+            string encodedPayload = parts[0];
+            string providedHmac = parts[1];
+
+            // Use default key if not provided
+            if (string.IsNullOrEmpty(key))
+            {
+                key = "GreenTech2024!@#$%^&*()SecretKey";
+            }
+
+            // Verify HMAC signature
+            string? computedHmac = HMacBase64Encode(HMACSHA512, key, encodedPayload);
+            if (computedHmac == null || computedHmac != providedHmac)
+                return (false, null, 0);
+
+            try
+            {
+                // Decode payload
+                byte[] payloadBytes = Convert.FromBase64String(encodedPayload);
+                string payload = UTF8.GetString(payloadBytes);
+
+                var payloadParts = payload.Split('|');
+                if (payloadParts.Length != 3)
+                    return (false, null, 0);
+
+                string email = payloadParts[0];
+                long expiryTimestamp = long.Parse(payloadParts[1]);
+
+                // Verify expiry
+                long currentTimestamp = ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds();
+                if (expiryTimestamp < currentTimestamp)
+                    return (false, email, expiryTimestamp); // Token expired
+
+                // Verify email if provided
+                if (
+                    !string.IsNullOrEmpty(expectedEmail)
+                    && email.ToLowerInvariant() != expectedEmail.ToLowerInvariant()
+                )
+                    return (false, email, expiryTimestamp); // Email mismatch
+
+                return (true, email, expiryTimestamp);
+            }
+            catch
+            {
+                return (false, null, 0);
+            }
         }
     }
 }

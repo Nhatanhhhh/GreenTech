@@ -1,0 +1,193 @@
+@page
+@model GreenTech.Pages.Users.DetailsModel
+@{
+    ViewData["Title"] = "Chi tiết Người dùng";
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+        <span class="block sm:inline">@TempData["Success"]</span>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <span class="block sm:inline">@TempData["Error"]</span>
+    </div>
+}
+
+<div class="mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Chi tiết Người dùng</h1>
+            <p class="text-gray-600 mt-2">Thông tin chi tiết và quản lý người dùng</p>
+        </div>
+        <a asp-page="./Index" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Quay lại
+        </a>
+    </div>
+</div>
+
+@if (Model.User != null)
+{
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Info Card -->
+        <div class="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Thông tin cá nhân</h2>
+            
+            <div class="space-y-6">
+                <!-- Avatar -->
+                <div class="flex items-center space-x-4">
+                    <div>
+                        @if (!string.IsNullOrEmpty(Model.User.Avatar))
+                        {
+                            <img src="@Model.User.Avatar" alt="@Model.User.FullName" class="w-24 h-24 rounded-full object-cover">
+                        }
+                        else
+                        {
+                            <div class="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center">
+                                <span class="text-gray-600 text-2xl font-medium">@(Model.User.FullName?.Substring(0, 1).ToUpper() ?? "?")</span>
+                            </div>
+                        }
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-900">@Model.User.FullName</h3>
+                        <p class="text-gray-600">@Model.User.Email</p>
+                    </div>
+                </div>
+
+                <!-- Basic Info -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">ID</label>
+                        <p class="mt-1 text-sm text-gray-900">@Model.User.Id</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Số điện thoại</label>
+                        <p class="mt-1 text-sm text-gray-900">@Model.User.Phone</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Tỉnh/Thành phố</label>
+                        <p class="mt-1 text-sm text-gray-900">@Model.User.Province</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Quận/Huyện</label>
+                        <p class="mt-1 text-sm text-gray-900">@Model.User.District</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Phường/Xã</label>
+                        <p class="mt-1 text-sm text-gray-900">@Model.User.Ward</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Địa chỉ cụ thể</label>
+                        <p class="mt-1 text-sm text-gray-900">@(string.IsNullOrEmpty(Model.User.SpecificAddress) ? "Không có" : Model.User.SpecificAddress)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions & Status Card -->
+        <div class="space-y-6">
+            <!-- Status Card -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Trạng thái</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
+                        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full @(Model.User.Status == "ACTIVE" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")">
+                            @(Model.User.Status == "ACTIVE" ? "Hoạt động" : "Đã chặn")
+                        </span>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach (var role in Model.User.Roles)
+                            {
+                                <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full 
+                                    @(role == "ROLE_STAFF" ? "bg-blue-100 text-blue-800" : role == "ROLE_CUSTOMER" ? "bg-purple-100 text-purple-800" : "bg-gray-100 text-gray-800")">
+                                    @(role == "ROLE_STAFF" ? "Staff" : role == "ROLE_CUSTOMER" ? "Customer" : role)
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-6 space-y-3">
+                    @if (Model.User.Status == "ACTIVE")
+                    {
+                        <form method="post" asp-page-handler="Block" asp-route-id="@Model.User.Id" class="inline-block w-full">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                                </svg>
+                                Chặn người dùng
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form method="post" asp-page-handler="Unblock" asp-route-id="@Model.User.Id" class="inline-block w-full">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Bỏ chặn người dùng
+                            </button>
+                        </form>
+                    }
+
+                    <!-- Change Role -->
+                    <div class="border-t pt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Thay đổi Role</label>
+                        <form method="post" asp-page-handler="ChangeRole" asp-route-id="@Model.User.Id" class="flex gap-2">
+                            @Html.AntiForgeryToken()
+                            <select name="roleName" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                                @if (!Model.User.Roles.Contains("ROLE_STAFF"))
+                                {
+                                    <option value="ROLE_STAFF">Staff</option>
+                                }
+                                @if (!Model.User.Roles.Contains("ROLE_CUSTOMER"))
+                                {
+                                    <option value="ROLE_CUSTOMER">Customer</option>
+                                }
+                            </select>
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                Đổi
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Stats Card -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Thống kê tài khoản</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Điểm tích lũy</label>
+                        <p class="mt-1 text-2xl font-bold text-green-600">@Model.User.Points</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Số dư ví</label>
+                        <p class="mt-1 text-2xl font-bold text-blue-600">@Model.User.WalletBalance.ToString("N0") ₫</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <p class="text-gray-500">Không tìm thấy thông tin người dùng.</p>
+    </div>
+}
+

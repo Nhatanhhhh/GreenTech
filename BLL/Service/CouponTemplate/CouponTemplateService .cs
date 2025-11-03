@@ -41,13 +41,13 @@ namespace BLL.Service.CouponTemplate
 
         public async Task<CouponTemplateDTO> CreateAsync(CreateCouponTemplateDTO createDto)
         {
+            // ValidateModel sẽ check tất cả validation attributes từ DTO (bao gồm [DiscountValue], [Required], etc.)
             ValidationHelper.ValidateModel(createDto);
 
             if (await _couponTemplateRepository.NameExistsAsync(createDto.Name))
                 throw new ArgumentException("Tên template đã tồn tại");
 
-            if (createDto.DiscountType == DiscountType.PERCENT && createDto.DiscountValue > 100)
-                throw new ArgumentException("Giảm giá theo phần trăm không được vượt quá 100%");
+            // Không cần validate lại DiscountValue vì đã có [DiscountValue] attribute trong DTO
 
             var template = AutoMapper.ToCouponTemplate(createDto);
             var createdTemplate = await _couponTemplateRepository.CreateAsync(template);
@@ -57,6 +57,7 @@ namespace BLL.Service.CouponTemplate
 
         public async Task<CouponTemplateDTO> UpdateAsync(int id, CouponTemplateDTO updateDto)
         {
+            // ValidateModel sẽ check tất cả validation attributes từ DTO (bao gồm [DiscountValue], [Required], etc.)
             ValidationHelper.ValidateModel(updateDto);
 
             var existingTemplate =
@@ -66,13 +67,23 @@ namespace BLL.Service.CouponTemplate
             if (await _couponTemplateRepository.NameExistsAsync(updateDto.Name, id))
                 throw new ArgumentException("Tên template đã tồn tại");
 
-            if (updateDto.DiscountType == DiscountType.PERCENT && updateDto.DiscountValue > 100)
-                throw new ArgumentException("Giảm giá theo phần trăm không được vượt quá 100%");
+            // Không cần validate lại DiscountValue vì đã có [DiscountValue] attribute trong DTO
 
-            var templateToUpdate = AutoMapper.ToCouponTemplate(updateDto);
-            templateToUpdate.Id = id;
+            // Update existing entity properties instead of creating new one
+            // This preserves CreatedAt and avoids EF tracking issues
+            existingTemplate.Name = updateDto.Name;
+            existingTemplate.Description = updateDto.Description;
+            existingTemplate.DiscountType = updateDto.DiscountType;
+            existingTemplate.DiscountValue = updateDto.DiscountValue;
+            existingTemplate.MinOrderAmount = updateDto.MinOrderAmount;
+            existingTemplate.PointsCost = updateDto.PointsCost;
+            existingTemplate.UsageLimitPerUser = updateDto.UsageLimitPerUser;
+            existingTemplate.TotalUsageLimit = updateDto.TotalUsageLimit;
+            existingTemplate.IsActive = updateDto.IsActive;
+            existingTemplate.ValidDays = updateDto.ValidDays;
+            // CreatedAt is preserved automatically
 
-            var updatedTemplate = await _couponTemplateRepository.UpdateAsync(templateToUpdate);
+            var updatedTemplate = await _couponTemplateRepository.UpdateAsync(existingTemplate);
             return AutoMapper.ToCouponTemplateDTO(updatedTemplate);
         }
 

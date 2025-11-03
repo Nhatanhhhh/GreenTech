@@ -5,6 +5,7 @@
     var isAuthenticated = HttpContextAccessor.HttpContext?.Session.GetString("IsAuthenticated") == "true";
     var userName = HttpContextAccessor.HttpContext?.Session.GetString("UserName") ?? "Khách";
     var currentUserId = HttpContextAccessor.HttpContext?.Session.GetInt32("UserId");
+    var userAvatar = HttpContextAccessor.HttpContext?.Session.GetString("UserAvatar");
 }
 <header class="w-auto bg-white">
     <!-- Top Contact Bar -->
@@ -104,9 +105,18 @@
                 @if (isAuthenticated)
                 {
                     <div class="relative" id="user-menu-root">
-                        <a asp-controller="Profile" asp-action="Index" class="text-white text-sm font-['Roboto_Condensed'] hover:text-green-300 transition-colors duration-200">
-                            <i class="fas fa-user mr-1"></i>
-                            Xin chào, @userName
+                        <a asp-controller="Profile" asp-action="Index" class="flex items-center gap-2 text-white text-sm font-['Roboto_Condensed'] hover:text-green-300 transition-colors duration-200">
+                            @if (!string.IsNullOrEmpty(userAvatar))
+                            {
+                                <img id="header-user-avatar" src="@userAvatar" alt="@userName" class="h-8 w-8 rounded-full object-cover border-2 border-white" />
+                            }
+                            else
+                            {
+                                <div id="header-avatar-placeholder">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            }
+                            <span>Xin chào, @userName</span>
                         </a>
                     </div>
                     <span class="text-white opacity-50">|</span>
@@ -164,6 +174,254 @@
 
     // Expose globally so other pages can trigger a refresh after add-to-cart
     window.updateCartCount = updateCartCount;
+
+    // Function to update header avatar (reusable for SignalR and other updates)
+    function updateHeaderAvatar(avatarUrl) {
+        if (!avatarUrl) {
+            console.warn('updateHeaderAvatar: avatarUrl is empty');
+            return;
+        }
+        
+        console.log('updateHeaderAvatar called with URL:', avatarUrl);
+        
+        // Try to find existing avatar image by ID first
+        let img = document.getElementById('header-user-avatar');
+        
+        if (img) {
+            // Update existing image with timestamp to force refresh
+            console.log('Updating existing header avatar image');
+            img.src = avatarUrl + '?t=' + new Date().getTime();
+            // Add fade effect
+            img.style.opacity = '0.5';
+            setTimeout(() => {
+                img.style.opacity = '1';
+                img.style.transition = 'opacity 0.3s ease-in-out';
+            }, 100);
+        } else {
+            // If no avatar exists, replace placeholder with image
+            const placeholder = document.getElementById('header-avatar-placeholder');
+            if (placeholder) {
+                console.log('Replacing header placeholder with avatar image');
+                const newImg = document.createElement('img');
+                newImg.id = 'header-user-avatar';
+                newImg.src = avatarUrl + '?t=' + new Date().getTime();
+                newImg.alt = '@userName';
+                newImg.className = 'h-8 w-8 rounded-full object-cover border-2 border-white';
+                newImg.style.transition = 'opacity 0.3s ease-in-out';
+                placeholder.replaceWith(newImg);
+            } else {
+                console.error('updateHeaderAvatar: Could not find avatar image or placeholder element');
+            }
+        }
+    }
+
+    // Expose globally for other pages
+    window.updateHeaderAvatar = updateHeaderAvatar;
+
+    // Function to perform logout (clear session and redirect)
+    function performLogout() {
+        console.log('Performing forced logout due to user ban');
+        
+        // Clear all session data
+        $.ajax({
+            url: '@Url.Action("Logout", "Auth")',
+            type: 'POST',
+            headers: {
+                'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() || ''
+            },
+            success: function() {
+                // Clear session storage
+                sessionStorage.clear();
+                localStorage.clear();
+                
+                // Redirect to login page
+                window.location.href = '@Url.Action("Login", "Auth")';
+            },
+            error: function() {
+                // Even if logout fails, force redirect
+                sessionStorage.clear();
+                localStorage.clear();
+                window.location.href = '@Url.Action("Login", "Auth")';
+            }
+        });
+    }
+    
+    // Expose globally
+    window.performLogout = performLogout;
+
+    // Initialize SignalR connection for header avatar updates (if user is authenticated)
+    @if (isAuthenticated && currentUserId.HasValue)
+    {
+        <text>
+        (function() {
+            // Wait for SignalR to be available (might load after page script)
+            function initializeHeaderSignalR() {
+                if (!window.signalR) {
+                    console.warn('SignalR is not loaded for header, retrying in 500ms...');
+                    setTimeout(initializeHeaderSignalR, 500);
+                    return;
+                }
+
+                const userId = @currentUserId.Value;
+                if (!userId || userId === 0) {
+                    console.warn('User ID not available for SignalR connection in header');
+                    return;
+                }
+
+                // Reuse existing connection if available (from Profile page)
+                if (window.__notificationHubConnection) {
+                    console.log('Reusing existing SignalR connection for header avatar updates');
+                    const existingConnection = window.__notificationHubConnection;
+                    
+                    // Ensure we're listening for AvatarUpdated events
+                    existingConnection.on('AvatarUpdated', function(data) {
+                        console.log('AvatarUpdated event received in header via SignalR:', data);
+                        if (data && data.userId === userId && data.avatarUrl) {
+                            console.log('Updating header avatar via SignalR for user:', userId);
+                            updateHeaderAvatar(data.avatarUrl);
+                        }
+                    });
+                    
+                    // Ensure we're in the user group (rejoin if needed)
+                    existingConnection.invoke('JoinUserGroup', userId)
+                        .then(() => console.log('Header: Joined/rejoined user group:', userId))
+                        .catch(err => console.error('Header: Error joining group:', err));
+                    
+                    return;
+                }
+
+                // Otherwise, create new connection
+                console.log('Initializing new SignalR NotificationHub connection for header, user:', userId);
+
+                const notificationConnection = new signalR.HubConnectionBuilder()
+                    .withUrl('/hubs/notification')
+                    .withAutomaticReconnect({
+                        nextRetryDelayInMilliseconds: retryContext => {
+                            if (retryContext.elapsedMilliseconds < 60000) {
+                                return 2000;
+                            }
+                            return 10000;
+                        }
+                    })
+                    .build();
+
+                // Set up event handlers BEFORE starting connection
+                notificationConnection.on('AvatarUpdated', function(data) {
+                    console.log('AvatarUpdated event received in header via SignalR:', data);
+                    if (data && data.userId === userId && data.avatarUrl) {
+                        console.log('Updating header avatar via SignalR for user:', userId);
+                        updateHeaderAvatar(data.avatarUrl);
+                    }
+                });
+
+                // Listen for UserBanned notification
+                notificationConnection.on('UserBanned', function(data) {
+                    console.log('UserBanned event received via SignalR:', data);
+                    if (data && data.userId === userId && data.isBanned) {
+                        console.log('User has been banned, logging out immediately');
+                        
+                        // Show popup message and logout
+                        var message = data.message || "Tài khoản của bạn đã bị chặn bởi quản trị viên. Vui lòng liên hệ hỗ trợ để biết thêm chi tiết.";
+                        
+                        // Create custom modal for better UX
+                        var modal = document.createElement('div');
+                        modal.id = 'ban-notification-modal';
+                        modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;';
+                        
+                        var modalDiv = document.createElement('div');
+                        modalDiv.style.cssText = 'background:white;padding:30px;border-radius:10px;max-width:500px;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.2);';
+                        
+                        var warningDiv = document.createElement('div');
+                        warningDiv.style.cssText = 'font-size:48px;margin-bottom:15px;';
+                        warningDiv.textContent = '⚠️';
+                        
+                        var title = document.createElement('h2');
+                        title.style.cssText = 'color:#dc2626;margin-bottom:15px;font-size:24px;font-weight:bold;';
+                        title.textContent = 'Tài khoản đã bị chặn';
+                        
+                        var messageP = document.createElement('p');
+                        messageP.style.cssText = 'color:#374151;margin-bottom:25px;font-size:16px;line-height:1.6;';
+                        messageP.textContent = message;
+                        
+                        var button = document.createElement('button');
+                        button.id = 'ban-logout-btn';
+                        button.style.cssText = 'background:#dc2626;color:white;border:none;padding:12px 32px;border-radius:6px;cursor:pointer;font-size:16px;font-weight:600;transition:background 0.3s;';
+                        button.textContent = 'Đóng và Đăng xuất';
+                        
+                        modalDiv.appendChild(warningDiv);
+                        modalDiv.appendChild(title);
+                        modalDiv.appendChild(messageP);
+                        modalDiv.appendChild(button);
+                        modal.appendChild(modalDiv);
+                        document.body.appendChild(modal);
+                        
+                        // Handle button click
+                        document.getElementById('ban-logout-btn').onclick = function() {
+                            modal.remove();
+                            performLogout();
+                        };
+                        
+                        // Auto logout after 5 seconds if user doesn't click
+                        setTimeout(function() {
+                            if (document.body.contains(modal)) {
+                                modal.remove();
+                                performLogout();
+                            }
+                        }, 5000);
+                    }
+                });
+
+                // Connection state handlers
+                notificationConnection.onclose(error => {
+                    console.warn('SignalR NotificationHub connection closed in header', error);
+                });
+
+                notificationConnection.onreconnecting(error => {
+                    console.log('SignalR NotificationHub reconnecting in header...', error);
+                });
+
+                notificationConnection.onreconnected(connectionId => {
+                    console.log('SignalR NotificationHub reconnected in header:', connectionId);
+                    // Rejoin group after reconnection
+                    if (userId) {
+                        notificationConnection.invoke('JoinUserGroup', userId)
+                            .then(() => console.log('Header: Rejoined user group after reconnect:', userId))
+                            .catch(err => console.error('Header: Error rejoining group:', err));
+                    }
+                });
+
+                // Start connection and join user group
+                notificationConnection.start()
+                    .then(() => {
+                        console.log('SignalR NotificationHub connected successfully in header');
+                        return notificationConnection.invoke('JoinUserGroup', userId);
+                    })
+                    .then(() => {
+                        console.log('Header: Successfully joined user group: user-' + userId);
+                        // Store connection globally for reuse
+                        window.__notificationHubConnection = notificationConnection;
+                    })
+                    .catch(err => {
+                        console.error('SignalR NotificationHub connection error in header:', err);
+                    });
+
+                // Cleanup on page unload
+                window.addEventListener('beforeunload', () => {
+                    if (notificationConnection && !window.__notificationHubConnection) {
+                        notificationConnection.stop();
+                    }
+                });
+            }
+
+            // Start initialization
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeHeaderSignalR);
+            } else {
+                initializeHeaderSignalR();
+            }
+        })();
+        </text>
+    }
 
     // Initialize on load
     $(document).ready(function () {

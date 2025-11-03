@@ -1,0 +1,193 @@
+@model DAL.DTOs.Order.CreateOrderDTO
+@using DAL.DTOs.Cart
+
+@{
+    ViewData["Title"] = "Thanh toán";
+    var cart = ViewBag.Cart as CartResponseDTO;
+    var walletBalanceValue = ViewBag.WalletBalance;
+    var walletBalance = walletBalanceValue != null ? Convert.ToDecimal(walletBalanceValue) : 0m;
+}
+
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">Thanh toán</h1>
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-red-800">@TempData["Error"]</p>
+            </div>
+        }
+
+        @if (cart != null && cart.CartItems.Any())
+        {
+            <form asp-action="Create" method="post" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                @Html.AntiForgeryToken()
+
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Shipping Information -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Thông tin giao hàng</h2>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label asp-for="CustomerName" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Họ và tên <span class="text-red-500">*</span>
+                                </label>
+                                <input asp-for="CustomerName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
+                                <span asp-validation-for="CustomerName" class="text-red-500 text-sm"></span>
+                            </div>
+
+                            <div>
+                                <label asp-for="CustomerPhone" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Số điện thoại <span class="text-red-500">*</span>
+                                </label>
+                                <input asp-for="CustomerPhone" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
+                                <span asp-validation-for="CustomerPhone" class="text-red-500 text-sm"></span>
+                            </div>
+
+                            <div>
+                                <label asp-for="ShippingAddress" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Địa chỉ giao hàng <span class="text-red-500">*</span>
+                                </label>
+                                <textarea asp-for="ShippingAddress" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" required></textarea>
+                                <span asp-validation-for="ShippingAddress" class="text-red-500 text-sm"></span>
+                            </div>
+
+                            <div>
+                                <label asp-for="Note" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Ghi chú (không bắt buộc)
+                                </label>
+                                <textarea asp-for="Note" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500" placeholder="Nhập ghi chú cho đơn hàng (nếu có)"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cart Items -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Sản phẩm đặt mua</h2>
+                        <div class="space-y-3">
+                            @foreach (var item in cart.CartItems)
+                            {
+                                <div class="flex items-center justify-between py-3 border-b border-gray-200">
+                                    <div class="flex items-center space-x-3">
+                                        @if (!string.IsNullOrEmpty(item.ProductImage))
+                                        {
+                                            <img src="@item.ProductImage" alt="@item.ProductName" class="w-16 h-16 object-cover rounded">
+                                        }
+                                        <div>
+                                            <p class="font-medium text-gray-900">@item.ProductName</p>
+                                            <p class="text-sm text-gray-500">SL: @item.Quantity x @item.UnitPrice.ToString("N0") ₫</p>
+                                        </div>
+                                    </div>
+                                    <p class="font-semibold text-gray-900">@item.Subtotal.ToString("N0") ₫</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Tóm tắt đơn hàng</h2>
+
+                        <div class="space-y-3 mb-6">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Tạm tính:</span>
+                                <span class="font-medium">@cart.Subtotal.ToString("N0") ₫</span>
+                            </div>
+                            @if (cart.DiscountAmount > 0)
+                            {
+                                <div class="flex justify-between text-green-600">
+                                    <span>Giảm giá:</span>
+                                    <span>-@cart.DiscountAmount.ToString("N0") ₫</span>
+                                </div>
+                            }
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Phí vận chuyển:</span>
+                                <span class="font-medium" id="shippingFeeDisplay">@Model.ShippingFee.ToString("N0") ₫</span>
+                            </div>
+                            <input type="hidden" asp-for="ShippingFee" id="shippingFee">
+                            <hr class="border-gray-200">
+                            <div class="flex justify-between text-lg font-semibold">
+                                <span>Tổng cộng (sau khi trừ ví):</span>
+                                <span class="text-green-600" id="totalAmount">
+                                    @{
+                                        var totalAfterWallet = (cart.Total + Model.ShippingFee) - Math.Min(walletBalance, cart.Total + Model.ShippingFee);
+                                    }
+                                    @totalAfterWallet.ToString("N0") ₫
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Wallet Usage - Auto apply -->
+                        @{
+                            var totalOrderAmount = cart.Total + Model.ShippingFee;
+                            var walletAmountUsed = Math.Min(walletBalance, totalOrderAmount);
+                            var remainingAmount = totalOrderAmount - walletAmountUsed;
+                        }
+                        <div class="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                            <div class="space-y-2 mb-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-700">Số dư ví:</span>
+                                    <span class="font-semibold text-green-700">@walletBalance.ToString("N0") ₫</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-700">Sẽ sử dụng:</span>
+                                    <span class="font-semibold text-green-600">@walletAmountUsed.ToString("N0") ₫</span>
+                                </div>
+                                @if (remainingAmount > 0)
+                                {
+                                    <div class="flex justify-between items-center pt-2 border-t border-green-200">
+                                        <span class="text-sm font-medium text-gray-700">Còn thiếu:</span>
+                                        <span class="font-semibold text-orange-600">@remainingAmount.ToString("N0") ₫</span>
+                                    </div>
+                                    <p class="text-xs text-orange-600 mt-1 inline-flex items-center gap-1">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span>Số dư ví không đủ. Vui lòng nạp thêm tiền để hoàn tất đơn hàng.</span>
+                                    </p>
+                                }
+                                else
+                                {
+                                    <div class="flex justify-between items-center pt-2 border-t border-green-200">
+                                        <span class="text-sm font-medium text-gray-700">Số tiền còn lại trong ví:</span>
+                                        <span class="font-semibold text-green-600">@(walletBalance - walletAmountUsed).ToString("N0") ₫</span>
+                                    </div>
+                                    <p class="text-xs text-green-600 mt-1 inline-flex items-center gap-1">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>Đủ số dư để thanh toán toàn bộ đơn hàng.</span>
+                                    </p>
+                                }
+                            </div>
+                            <input type="hidden" asp-for="WalletAmountUsed" value="@walletAmountUsed">
+                        </div>
+
+                        <input type="hidden" asp-for="UserId">
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition">
+                            Đặt hàng
+                        </button>
+                    </div>
+                </div>
+            </form>
+        }
+    </div>
+</div>
+
+<script>
+    const walletBalance = @walletBalance;
+    const cartTotal = @(cart?.Total ?? 0);
+    const shippingFee = @(Model?.ShippingFee ?? 0);
+    const walletAmountUsed = Math.min(walletBalance, cartTotal + shippingFee);
+    const totalAmount = cartTotal + shippingFee - walletAmountUsed;
+    
+    // Update total display on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('totalAmount').textContent = Math.max(0, totalAmount).toLocaleString('vi-VN') + ' ₫';
+    });
+</script>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
+

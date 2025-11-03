@@ -3,6 +3,7 @@ using DAL.DTOs.Blog;
 using DAL.DTOs.Cart;
 using DAL.DTOs.Category;
 using DAL.DTOs.CouponTemplate;
+using DAL.DTOs.Order;
 using DAL.DTOs.Product;
 using DAL.DTOs.ProductImage;
 using DAL.DTOs.Review;
@@ -11,6 +12,8 @@ using DAL.DTOs.User;
 using DAL.DTOs.Wallet;
 using DAL.Models;
 using DAL.Models.Enum;
+using OrderItemModel = DAL.Models.OrderItem;
+using OrderModel = DAL.Models.Order;
 
 namespace DAL.Utils.AutoMapper
 {
@@ -462,7 +465,14 @@ namespace DAL.Utils.AutoMapper
             existingProduct.Tags = updateDto.Tags;
             existingProduct.PointsEarned = updateDto.PointsEarned;
             existingProduct.IsFeatured = updateDto.IsFeatured;
-            existingProduct.IsActive = updateDto.IsActive;
+            // IsActive: Update không được phép chuyển từ Active -> Inactive
+            // Chỉ cho phép restore từ Inactive -> Active nếu product đang inactive
+            if (!existingProduct.IsActive && updateDto.IsActive)
+            {
+                // Restore: cho phép chuyển từ Inactive -> Active
+                existingProduct.IsActive = true;
+            }
+            // Nếu đang Active và cố set thành Inactive, giữ nguyên Active (không cho phép)
             existingProduct.UpdatedAt = DateTime.UtcNow;
         }
 
@@ -862,8 +872,86 @@ namespace DAL.Utils.AutoMapper
             TransactionStatus status
         )
         {
-            return status == TransactionStatus.SUCCESS
-                && transaction.TransactionType == TransactionType.TOP_UP;
+            // For TOP_UP: add to balance when SUCCESS
+            if (
+                status == TransactionStatus.SUCCESS
+                && transaction.TransactionType == TransactionType.TOP_UP
+            )
+            {
+                return true;
+            }
+            // For SPENT: subtract from balance when SUCCESS (confirm hold)
+            if (
+                status == TransactionStatus.SUCCESS
+                && transaction.TransactionType == TransactionType.SPENT
+            )
+            {
+                return true;
+            }
+            // For REFUND: add to balance when SUCCESS
+            if (
+                status == TransactionStatus.SUCCESS
+                && transaction.TransactionType == TransactionType.REFUND
+            )
+            {
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Creates a WalletTransaction to HOLD money (PENDING status) when order is created.
+        /// </summary>
+        public static WalletTransaction ToHoldWalletTransaction(
+            int userId,
+            int orderId,
+            decimal amount,
+            string? description,
+            decimal currentBalance
+        )
+        {
+            return new WalletTransaction
+            {
+                UserId = userId,
+                TransactionType = TransactionType.SPENT,
+                Amount = amount,
+                PaymentGateway = null,
+                GatewayTransactionId = $"ORDER-{orderId}-HOLD",
+                OrderId = orderId,
+                Status = TransactionStatus.PENDING, // Hold money, don't deduct yet
+                Description = description ?? $"Tạm giữ tiền cho đơn hàng #{orderId}",
+                BalanceBefore = currentBalance,
+                BalanceAfter = currentBalance, // Balance unchanged when PENDING
+                CreatedAt = DateTime.Now,
+            };
+        }
+
+        /// <summary>
+        /// Creates a WalletTransaction to REFUND money when order is cancelled.
+        /// </summary>
+        public static WalletTransaction ToRefundWalletTransaction(
+            int userId,
+            int orderId,
+            decimal amount,
+            string? description,
+            decimal currentBalance
+        )
+        {
+            return new WalletTransaction
+            {
+                UserId = userId,
+                TransactionType = TransactionType.REFUND,
+                Amount = amount,
+                PaymentGateway = null,
+                GatewayTransactionId = $"ORDER-{orderId}-REFUND",
+                OrderId = orderId,
+                Status = TransactionStatus.SUCCESS, // Refund immediately
+                Description = description ?? $"Hoàn tiền cho đơn hàng #{orderId} đã bị hủy",
+                BalanceBefore = currentBalance,
+                BalanceAfter = currentBalance + amount, // Add back to balance
+                ProcessedAt = DateTime.Now,
+                CreatedAt = DateTime.Now,
+            };
         }
 
         /// <summary>
@@ -885,6 +973,249 @@ namespace DAL.Utils.AutoMapper
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,
             };
+        }
+
+        /// <summary>
+        /// Converts a Review entity to a ReviewResponseDTO.
+        /// </summary>
+        public static ReviewResponseDTO ToReviewResponseDTO(
+            Review review,
+            int? currentUserId = null
+        )
+        {
+            if (review == null)
+                return null;
+
+            var mediaUrls = string.IsNullOrEmpty(review.MediaUrls)
+                ? new List<string>()
+                : review.MediaUrls.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+
+            var dto = new ReviewResponseDTO
+            {
+                Id = review.Id,
+                ProductId = review.ProductId,
+                UserId = review.UserId,
+                UserName = review.IsAnonymous
+                    ? "Người dùng ẩn danh"
+                    : (review.User?.FullName ?? "Người dùng"),
+                UserAvatar = review.User?.Avatar ?? "",
+                OrderItemId = review.OrderItemId,
+                Rating = review.Rating,
+                Content = review.Content ?? "",
+                MediaUrls = mediaUrls,
+                HelpfulCount = review.HelpfulCount,
+                IsAnonymous = review.IsAnonymous,
+                Status = review.Status,
+                CreatedAt = review.CreatedAt,
+                UpdatedAt = review.UpdatedAt,
+                Replies =
+                    review.ReviewReplies?.Select(ToReviewReplyResponseDTO).ToList()
+                    ?? new List<ReviewReplyResponseDTO>(),
+            };
+
+            // Check if current user has voted
+            if (currentUserId.HasValue && review.ReviewVotes != null)
+            {
+                var userVote = review.ReviewVotes.FirstOrDefault(v =>
+                    v.UserId == currentUserId.Value
+                );
+                if (userVote != null)
+                {
+                    dto.HasUserVoted = true;
+                    dto.IsHelpful = userVote.IsHelpful;
+                }
+            }
+
+            return dto;
+        }
+
+        /// <summary>
+        /// Converts a ReviewReply entity to a ReviewReplyResponseDTO.
+        /// </summary>
+        public static ReviewReplyResponseDTO ToReviewReplyResponseDTO(ReviewReply reviewReply)
+        {
+            if (reviewReply == null)
+                return null;
+
+            return new ReviewReplyResponseDTO
+            {
+                Id = reviewReply.Id,
+                ReviewId = reviewReply.ReviewId,
+                UserId = reviewReply.UserId,
+                UserName = reviewReply.User?.FullName ?? "Người dùng",
+                UserAvatar = reviewReply.User?.Avatar ?? "",
+                Content = reviewReply.Content,
+                CreatedAt = reviewReply.CreatedAt,
+                UpdatedAt = reviewReply.UpdatedAt,
+            };
+        }
+
+        /// <summary>
+        /// Converts a list of Review entities to a list of ReviewResponseDTOs.
+        /// </summary>
+        public static IEnumerable<ReviewResponseDTO> ToReviewResponseDTOs(
+            IEnumerable<Review> reviews,
+            int? currentUserId = null
+        )
+        {
+            return reviews?.Select(r => ToReviewResponseDTO(r, currentUserId))
+                ?? Enumerable.Empty<ReviewResponseDTO>();
+        }
+
+        /// <summary>
+        /// Creates a ReviewStatisticsDTO from review statistics.
+        /// </summary>
+        public static ReviewStatisticsDTO ToReviewStatisticsDTO(
+            int totalReviews,
+            double averageRating,
+            int rating1Count,
+            int rating2Count,
+            int rating3Count,
+            int rating4Count,
+            int rating5Count
+        )
+        {
+            return new ReviewStatisticsDTO
+            {
+                TotalReviews = totalReviews,
+                AverageRating = averageRating,
+                Rating1Count = rating1Count,
+                Rating2Count = rating2Count,
+                Rating3Count = rating3Count,
+                Rating4Count = rating4Count,
+                Rating5Count = rating5Count,
+            };
+        }
+
+        /// <summary>
+        /// Creates a ReviewStatisticsDTO from a list of Review entities.
+        /// </summary>
+        public static ReviewStatisticsDTO ToReviewStatisticsDTO(IEnumerable<Review> reviews)
+        {
+            var reviewsList = reviews?.ToList() ?? new List<Review>();
+            var approvedReviews = reviewsList
+                .Where(r => r.Status == ReviewStatus.APPROVED)
+                .ToList();
+
+            return new ReviewStatisticsDTO
+            {
+                TotalReviews = approvedReviews.Count,
+                AverageRating =
+                    approvedReviews.Count > 0 ? approvedReviews.Average(r => (double)r.Rating) : 0,
+                Rating1Count = approvedReviews.Count(r => r.Rating == 1),
+                Rating2Count = approvedReviews.Count(r => r.Rating == 2),
+                Rating3Count = approvedReviews.Count(r => r.Rating == 3),
+                Rating4Count = approvedReviews.Count(r => r.Rating == 4),
+                Rating5Count = approvedReviews.Count(r => r.Rating == 5),
+            };
+        }
+
+        /// <summary>
+        /// Creates a ReviewPaginationDTO from reviews and pagination info.
+        /// </summary>
+        public static ReviewPaginationDTO ToReviewPaginationDTO(
+            IEnumerable<Review> reviews,
+            int totalCount,
+            int pageNumber,
+            int pageSize,
+            int? currentUserId = null
+        )
+        {
+            var reviewsList = reviews?.ToList() ?? new List<Review>();
+            var reviewDTOs = reviewsList
+                .Select(r => ToReviewResponseDTO(r, currentUserId))
+                .ToList();
+
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+            return new ReviewPaginationDTO
+            {
+                Reviews = reviewDTOs,
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalPages = totalPages,
+                HasPreviousPage = pageNumber > 1,
+                HasNextPage = pageNumber < totalPages,
+            };
+        }
+
+        /// <summary>
+        /// Converts an Order entity to an OrderResponseDTO.
+        /// </summary>
+        public static OrderResponseDTO ToOrderResponseDTO(OrderModel order)
+        {
+            if (order == null)
+                return null;
+
+            return new OrderResponseDTO
+            {
+                Id = order.Id,
+                OrderNumber = order.OrderNumber,
+                UserId = order.UserId,
+                UserName = order.User?.FullName,
+                UserEmail = order.User?.Email,
+                CouponId = order.CouponId,
+                CouponCode = order.Coupon?.Code,
+                Status = order.Status,
+                PaymentStatus = order.PaymentStatus,
+                PaymentGateway = order.PaymentGateway,
+                Subtotal = order.Subtotal,
+                DiscountAmount = order.DiscountAmount,
+                ShippingFee = order.ShippingFee,
+                Total = order.Total,
+                WalletAmountUsed = order.WalletAmountUsed,
+                GatewayTransactionId = order.GatewayTransactionId,
+                ShippingAddress = order.ShippingAddress,
+                CustomerName = order.CustomerName,
+                CustomerPhone = order.CustomerPhone,
+                PointsEarned = order.PointsEarned,
+                PointsAwardedAt = order.PointsAwardedAt,
+                Note = order.Note,
+                CancelledReason = order.CancelledReason,
+                CancelledAt = order.CancelledAt,
+                ShippedAt = order.ShippedAt,
+                DeliveredAt = order.DeliveredAt,
+                CreatedAt = order.CreatedAt,
+                UpdatedAt = order.UpdatedAt,
+                OrderItems =
+                    order.OrderItems?.Select(ToOrderItemResponseDTO).ToList()
+                    ?? new List<OrderItemResponseDTO>(),
+            };
+        }
+
+        /// <summary>
+        /// Converts an OrderItem entity to an OrderItemResponseDTO.
+        /// </summary>
+        public static OrderItemResponseDTO ToOrderItemResponseDTO(OrderItemModel orderItem)
+        {
+            if (orderItem == null)
+                return null;
+
+            return new OrderItemResponseDTO
+            {
+                Id = orderItem.Id,
+                OrderId = orderItem.OrderId,
+                ProductId = orderItem.ProductId,
+                ProductSku = orderItem.ProductSku,
+                ProductName = orderItem.ProductName,
+                ProductImage = orderItem.Product?.Image,
+                Quantity = orderItem.Quantity,
+                UnitCostPrice = orderItem.UnitCostPrice,
+                UnitSellPrice = orderItem.UnitSellPrice,
+                Total = orderItem.Total,
+                PointsPerItem = orderItem.PointsPerItem,
+            };
+        }
+
+        /// <summary>
+        /// Converts a list of Order entities to a list of OrderResponseDTOs.
+        /// </summary>
+        public static IEnumerable<OrderResponseDTO> ToOrderResponseDTOs(
+            IEnumerable<OrderModel> orders
+        )
+        {
+            return orders?.Select(ToOrderResponseDTO) ?? Enumerable.Empty<OrderResponseDTO>();
         }
 
         private static string FormatFullname(string fullname)

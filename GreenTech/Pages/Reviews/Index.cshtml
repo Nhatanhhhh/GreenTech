@@ -1,0 +1,66 @@
+@page
+@model GreenTech.Pages.Reviews.IndexModel
+@{
+    ViewData["Title"] = "Quản lý đánh giá";
+}
+
+<div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-900">Quản lý Đánh giá</h1>
+    <p class="text-gray-600 mt-2">Xem tất cả đánh giá sản phẩm của người dùng</p>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Người dùng</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sản phẩm</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nội dung</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Số sao</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tạo</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                @if (Model.Reviews != null && Model.Reviews.Any())
+                {
+                    @foreach (var review in Model.Reviews)
+                    {
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">@review.Id</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@review.User?.FullName</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@review.Product?.Name</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">@review.Content</td>
+                            <td class="px-6 py-4 text-center whitespace-nowrap text-sm text-yellow-500">
+                                @for (int i = 0; i < review.Rating; i++)
+                                {
+                                    <svg class="inline h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.974a1 1 0 00.95.69h4.181c.969 0 1.371 1.24.588 1.81l-3.388 2.463a1 1 0 00-.364 1.118l1.287 3.974c.3.922-.755 1.688-1.54 1.118l-3.388-2.463a1 1 0 00-1.176 0l-3.388 2.463c-.784.57-1.838-.196-1.539-1.118l1.287-3.974a1 1 0 00-.364-1.118L2.274 9.401c-.783-.57-.38-1.81.588-1.81h4.181a1 1 0 00.95-.69l1.286-3.974z" /></svg>
+                                }
+                            </td>
+                            <td class="px-6 py-4 text-center whitespace-nowrap">
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full @(review.Status == DAL.Models.Enum.ReviewStatus.APPROVED ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800")">
+                                    @(review.Status == DAL.Models.Enum.ReviewStatus.APPROVED ? "Đã duyệt" : "Ẩn")
+                                </span>
+                                <form method="post" asp-page-handler="ToggleStatus" asp-route-id="@review.Id" class="inline">
+                                    <button type="submit"
+                                            class="ml-2 px-3 py-1 text-xs font-semibold rounded bg-blue-100 text-blue-800 hover:bg-blue-200 transition">
+                                        @(review.Status == DAL.Models.Enum.ReviewStatus.APPROVED ? "Ẩn" : "Duyệt")
+                                    </button>
+                                </form>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">@review.CreatedAt.ToString("dd/MM/yyyy")</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">Không có đánh giá nào.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

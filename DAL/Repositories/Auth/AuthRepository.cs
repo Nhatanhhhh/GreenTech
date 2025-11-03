@@ -5,6 +5,7 @@ using DAL.Models.Enum;
 using DAL.Repositories.Auth.Interface;
 using DAL.Utils.AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using UserModel = DAL.Models.User;
 
 namespace DAL.Repositories.Auth
 {
@@ -17,7 +18,7 @@ namespace DAL.Repositories.Auth
             _context = context;
         }
 
-        public async Task<User> RegisterAsync(RegisterDTO registerDTO)
+        public async Task<UserModel> RegisterAsync(RegisterDTO registerDTO)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -57,14 +58,12 @@ namespace DAL.Repositories.Auth
             }
         }
 
-        public async Task<User?> LoginAsync(LoginDTO loginDTO)
+        public async Task<UserModel?> LoginAsync(LoginDTO loginDTO)
         {
             return await _context
                 .Users.Include(u => u.UserRoles)
                 .ThenInclude(ur => ur.Role)
-                .FirstOrDefaultAsync(u =>
-                    u.Email.ToLower() == loginDTO.Email.ToLower() && u.Status == UserStatus.ACTIVE
-                );
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == loginDTO.Email.ToLower());
         }
 
         public async Task<bool> EmailExistsAsync(string email)

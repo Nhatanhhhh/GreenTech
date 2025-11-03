@@ -274,6 +274,9 @@ namespace DAL.Context
 
             modelBuilder.Entity<Order>().Property(o => o.PaymentGateway).HasConversion<string>();
 
+            // Allow CancelledReason to be nullable
+            modelBuilder.Entity<Order>().Property(o => o.CancelledReason).IsRequired(false);
+
             modelBuilder.Entity<Notification>().Property(n => n.Type).HasConversion<string>();
 
             modelBuilder.Entity<Notification>().Property(n => n.Priority).HasConversion<string>();
@@ -327,7 +330,7 @@ namespace DAL.Context
             var adminUserId = 1;
             var customerUserId = 2;
             var staffUserId = 3;
-            
+
             // Hash passwords using HMACSHA512 (fixed salt for seed data)
             // Password: Admin@123
             string adminPasswordHash = HashPasswordSeedData("Admin@123");
@@ -355,8 +358,8 @@ namespace DAL.Context
                         WalletBalance = 0,
                         CreatedAt = now,
                         UpdatedAt = now,
-                        EmailVerifiedAt = now, 
-                        PhoneVerifiedAt = now, 
+                        EmailVerifiedAt = now,
+                        PhoneVerifiedAt = now,
                     },
                     new User
                     {
@@ -477,7 +480,8 @@ namespace DAL.Context
                         Name = "Cây Trong Nhà",
                         Slug = "cay-trong-nha",
                         Description = "Các loại cây phù hợp trồng trong nhà, văn phòng.",
-                        Image = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620174/trong-cay-van-phong-cay-trong-van-phong-dep-1_otymq5.jpg",
+                        Image =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620174/trong-cay-van-phong-cay-trong-van-phong-dep-1_otymq5.jpg",
                         IsActive = true,
                         SortOrder = 1,
                         ParentId = null,
@@ -490,7 +494,8 @@ namespace DAL.Context
                         Name = "Cây Ngoài Trời",
                         Slug = "cay-ngoai-troi",
                         Description = "Các loại cây cảnh, cây ăn quả trồng ngoài trời.",
-                        Image = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620241/147202426979463-collage_tl9zw4.jpg",
+                        Image =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620241/147202426979463-collage_tl9zw4.jpg",
                         IsActive = true,
                         SortOrder = 2,
                         ParentId = null,
@@ -518,7 +523,8 @@ namespace DAL.Context
                             "Tưới nước vừa phải khi đất khô. Tránh ánh nắng trực tiếp quá gắt.",
                         PlantSize = "Nhỏ (30-40cm)",
                         Dimensions = "Chậu 15cm",
-                        Image = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620341/cay-luoi-ho-ten-khoa-hoc-sansevieria-trifasciata_v0kubp.jpg",
+                        Image =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620341/cay-luoi-ho-ten-khoa-hoc-sansevieria-trifasciata_v0kubp.jpg",
                         CostPrice = 200000,
                         SellPrice = 150000,
                         Quantity = 50,
@@ -547,7 +553,8 @@ namespace DAL.Context
                         CareInstructions = "Ưa bóng râm, tưới nước 2-3 lần/tuần. Bón phân định kỳ.",
                         PlantSize = "Trung bình (60-80cm)",
                         Dimensions = "Chậu 25cm",
-                        Image = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620487/ca_CC_81ch-cha_CC_86m-so_CC_81c-ca_CC_82y-pha_CC_81t-ta_CC_80i-de_CC_82_CC_89-trong-nha_CC_80_mmkhjo.jpg",
+                        Image =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620487/ca_CC_81ch-cha_CC_86m-so_CC_81c-ca_CC_82y-pha_CC_81t-ta_CC_80i-de_CC_82_CC_89-trong-nha_CC_80_mmkhjo.jpg",
                         CostPrice = 350000,
                         SellPrice = 250000,
                         Quantity = 30,
@@ -572,9 +579,10 @@ namespace DAL.Context
                 .HasData(
                     new ProductImage
                     {
-                        Id = 1, 
+                        Id = 1,
                         ProductId = productId1,
-                        ImageUrl = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620780/cay-luoi-ho-2_fxisjk.jpg",
+                        ImageUrl =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620780/cay-luoi-ho-2_fxisjk.jpg",
                         AltText = "Ảnh chi tiết cây Lưỡi Hổ",
                         IsPrimary = false,
                         SortOrder = 1,
@@ -584,7 +592,8 @@ namespace DAL.Context
                     {
                         Id = 2,
                         ProductId = productId1,
-                        ImageUrl = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620716/chau-cay-hoa-de-ban-2_apigsc.jpg",
+                        ImageUrl =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620716/chau-cay-hoa-de-ban-2_apigsc.jpg",
                         AltText = "Chậu cây Lưỡi Hổ",
                         IsPrimary = false,
                         SortOrder = 2,
@@ -594,7 +603,8 @@ namespace DAL.Context
                     {
                         Id = 3,
                         ProductId = productId2,
-                        ImageUrl = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620845/cay-phat-tai-1-goc-dep_u5pi5c.jpg",
+                        ImageUrl =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620845/cay-phat-tai-1-goc-dep_u5pi5c.jpg",
                         AltText = "Thân cây Phát Tài",
                         IsPrimary = false,
                         SortOrder = 1,
@@ -761,9 +771,11 @@ namespace DAL.Context
                         Id = blogId1,
                         Title = "Cách chăm sóc cây cảnh trong nhà",
                         Slug = "cach-cham-soc-cay-canh-trong-nha",
-                        Excerpt = "Hướng dẫn chi tiết cách chăm sóc cây cảnh trong nhà để cây luôn xanh tươi, khỏe mạnh.",
+                        Excerpt =
+                            "Hướng dẫn chi tiết cách chăm sóc cây cảnh trong nhà để cây luôn xanh tươi, khỏe mạnh.",
                         Content = "Nội dung chi tiết về cách chăm sóc cây cảnh...",
-                        FeaturedImage = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761618345/cach-cham-soc-cay-xanh-trong-nha-3_jwt3pb.webp",
+                        FeaturedImage =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761618345/cach-cham-soc-cay-xanh-trong-nha-3_jwt3pb.webp",
                         AuthorId = adminUserId,
                         CategoryId = indoorCategoryId,
                         Tags = "cham-soc-cay,cay-trong-nha,meo-hay",
@@ -772,7 +784,8 @@ namespace DAL.Context
                         IsPublished = true,
                         PublishedAt = now,
                         SeoTitle = "Cách chăm sóc cây cảnh trong nhà - Hướng dẫn chi tiết",
-                        SeoDescription = "Tổng hợp những bí quyết chăm sóc cây cảnh trong nhà hiệu quả, giúp không gian sống thêm xanh.",
+                        SeoDescription =
+                            "Tổng hợp những bí quyết chăm sóc cây cảnh trong nhà hiệu quả, giúp không gian sống thêm xanh.",
                         CreatedAt = now,
                         UpdatedAt = now,
                     },
@@ -781,9 +794,11 @@ namespace DAL.Context
                         Id = 2,
                         Title = "Top 10 loại cây phong thủy",
                         Slug = "top-10-loai-cay-phong-thuy",
-                        Excerpt = "Khám phá 10 loại cây phong thủy mang lại tài lộc, may mắn cho gia đình.",
+                        Excerpt =
+                            "Khám phá 10 loại cây phong thủy mang lại tài lộc, may mắn cho gia đình.",
                         Content = "Nội dung chi tiết về các loại cây phong thủy...",
-                        FeaturedImage = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761618409/top-19-loai-cay-canh-trong-nha-hop-phong-thuy-va-de-cham-soc-nhat-hien-nay-651645fae15e8c8b38af38ad_flrmui.webp",
+                        FeaturedImage =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761618409/top-19-loai-cay-canh-trong-nha-hop-phong-thuy-va-de-cham-soc-nhat-hien-nay-651645fae15e8c8b38af38ad_flrmui.webp",
                         AuthorId = adminUserId,
                         CategoryId = indoorCategoryId,
                         Tags = "phong-thuy,cay-phong-thuy,tai-loc",
@@ -792,7 +807,8 @@ namespace DAL.Context
                         IsPublished = true,
                         PublishedAt = now,
                         SeoTitle = "Top 10 cây phong thủy - Mang tài lộc vào nhà",
-                        SeoDescription = "Danh sách các loại cây phong thủy nên trồng trong nhà để mang lại may mắn và tài lộc.",
+                        SeoDescription =
+                            "Danh sách các loại cây phong thủy nên trồng trong nhà để mang lại may mắn và tài lộc.",
                         CreatedAt = now,
                         UpdatedAt = now,
                     }
@@ -807,7 +823,8 @@ namespace DAL.Context
                         Id = 1,
                         Title = "Chào mừng đến với GreenTech",
                         Description = "Nền tảng mua sắm cây cảnh số 1 Việt Nam",
-                        ImageUrl = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761619562/Screenshot_2081_gnwkty.png",
+                        ImageUrl =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761619562/Screenshot_2081_gnwkty.png",
                         LinkUrl = "/#",
                         Position = BannerPosition.HOME_SLIDER,
                         SortOrder = 1,
@@ -824,7 +841,8 @@ namespace DAL.Context
                         Id = 2,
                         Title = "Giảm giá 20% cho đơn đầu tiên",
                         Description = "Áp dụng cho khách hàng mới",
-                        ImageUrl = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761618541/Baner_m0uvff.jpg",
+                        ImageUrl =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761618541/Baner_m0uvff.jpg",
                         LinkUrl = "/#",
                         Position = BannerPosition.HOME_SLIDER,
                         SortOrder = 2,
@@ -908,11 +926,14 @@ namespace DAL.Context
                         Slug = "cay-trau-ba",
                         Sku = "CTB003",
                         ShortDescription = "Cây lọc không khí tuyệt vời, dễ trồng.",
-                        Description = "Cây Trầu Bà (Epipremnum aureum) là một trong những cây lọc không khí tốt nhất. Cây dễ chăm sóc, phù hợp cho người mới bắt đầu.",
-                        CareInstructions = "Tưới nước khi đất khô. Không cần ánh sáng trực tiếp. Bón phân mỗi tháng một lần.",
+                        Description =
+                            "Cây Trầu Bà (Epipremnum aureum) là một trong những cây lọc không khí tốt nhất. Cây dễ chăm sóc, phù hợp cho người mới bắt đầu.",
+                        CareInstructions =
+                            "Tưới nước khi đất khô. Không cần ánh sáng trực tiếp. Bón phân mỗi tháng một lần.",
                         PlantSize = "Nhỏ (20-30cm)",
                         Dimensions = "Chậu 12cm",
-                        Image = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761619808/images_vm4li5.jpg",
+                        Image =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761619808/images_vm4li5.jpg",
                         CostPrice = 150000,
                         SellPrice = 80000,
                         Quantity = 80,
@@ -922,7 +943,8 @@ namespace DAL.Context
                         Weight = 0.8m,
                         Tags = "cay-trong-nha,loc-khong-khi,de-cham",
                         SeoTitle = "Mua Cây Trầu Bà - Lọc Không Khí Hiệu Quả",
-                        SeoDescription = "Cây Trầu Bà đẹp, dễ chăm, giúp thanh lọc không khí trong nhà hiệu quả.",
+                        SeoDescription =
+                            "Cây Trầu Bà đẹp, dễ chăm, giúp thanh lọc không khí trong nhà hiệu quả.",
                         CategoryId = indoorCategoryId,
                         SupplierId = supplierId2,
                         CreatedAt = now,
@@ -935,11 +957,14 @@ namespace DAL.Context
                         Slug = "cay-da-bup-do",
                         Sku = "CDB004",
                         ShortDescription = "Cây để bàn làm việc đẹp mắt.",
-                        Description = "Cây Đa Búp Đỏ (Ficus elastica) với lá bóng, xanh mướt, mang lại không gian tươi mát cho phòng làm việc.",
-                        CareInstructions = "Tưới nước 1-2 lần/tuần. Nên đặt nơi có ánh sáng gián tiếp. Lau lá thường xuyên.",
+                        Description =
+                            "Cây Đa Búp Đỏ (Ficus elastica) với lá bóng, xanh mướt, mang lại không gian tươi mát cho phòng làm việc.",
+                        CareInstructions =
+                            "Tưới nước 1-2 lần/tuần. Nên đặt nơi có ánh sáng gián tiếp. Lau lá thường xuyên.",
                         PlantSize = "Nhỏ (25-35cm)",
                         Dimensions = "Chậu 15cm",
-                        Image = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761619886/Cay-da-bup-do_p1whyu.png",
+                        Image =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761619886/Cay-da-bup-do_p1whyu.png",
                         CostPrice = 150000,
                         SellPrice = 100000,
                         Quantity = 60,
@@ -949,9 +974,144 @@ namespace DAL.Context
                         Weight = 1.2m,
                         Tags = "cay-de-ban,tin-cay,xanh-mat",
                         SeoTitle = "Cây Đa Búp Đỏ - Trang Trí Văn Phòng",
-                        SeoDescription = "Cây Đa Búp Đỏ đẹp, dễ chăm, phù hợp trang trí bàn làm việc, phòng khách.",
+                        SeoDescription =
+                            "Cây Đa Búp Đỏ đẹp, dễ chăm, phù hợp trang trí bàn làm việc, phòng khách.",
                         CategoryId = indoorCategoryId,
                         SupplierId = supplierId3,
+                        CreatedAt = now,
+                        UpdatedAt = now,
+                    }
+                );
+
+            // --- Products (Cây Ngoài Trời) ---
+            var productId5 = 5;
+            var productId6 = 6;
+            var productId7 = 7;
+            var productId8 = 8;
+            modelBuilder
+                .Entity<Product>()
+                .HasData(
+                    new Product
+                    {
+                        Id = productId5,
+                        Name = "Cây Hoa Giấy",
+                        Slug = "cay-hoa-giay",
+                        Sku = "CHG005",
+                        ShortDescription = "Cây hoa giấy đẹp rực rỡ, trồng ngoài trời.",
+                        Description =
+                            "Cây Hoa Giấy (Bougainvillea) là loại cây leo có hoa đẹp rực rỡ, nhiều màu sắc. Cây thích hợp trồng ngoài trời, chịu nắng tốt, dễ chăm sóc và có thể cắt tỉa tạo dáng đẹp.",
+                        CareInstructions =
+                            "Tưới nước đều đặn, tránh úng. Cần ánh sáng đầy đủ, bón phân định kỳ để cây ra hoa nhiều. Cắt tỉa sau mỗi đợt hoa.",
+                        PlantSize = "Trung bình (80-120cm)",
+                        Dimensions = "Chậu 30cm",
+                        Image =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761983435/cay-hoa-giay-canh-nhieu-mau_gpageh.jpg",
+                        CostPrice = 400000,
+                        SellPrice = 300000,
+                        Quantity = 40,
+                        PointsEarned = 30,
+                        IsActive = true,
+                        IsFeatured = true,
+                        Weight = 5.0m,
+                        Tags = "cay-ngoai-troi,hoa-dep,leo,trang-tri",
+                        SeoTitle = "Mua Cây Hoa Giấy - Cây Leo Đẹp, Nhiều Màu Sắc",
+                        SeoDescription =
+                            "Cây Hoa Giấy đẹp rực rỡ, nhiều màu, dễ trồng ngoài trời. Phù hợp trang trí sân vườn, ban công.",
+                        CategoryId = outdoorCategoryId,
+                        SupplierId = supplierId1,
+                        CreatedAt = now,
+                        UpdatedAt = now,
+                    },
+                    new Product
+                    {
+                        Id = productId6,
+                        Name = "Cây Mai Vàng",
+                        Slug = "cay-mai-vang",
+                        Sku = "CMV006",
+                        ShortDescription = "Cây mai vàng truyền thống, chưng Tết.",
+                        Description =
+                            "Cây Mai Vàng (Ochna integerrima) là loại cây cảnh truyền thống của Việt Nam, đặc biệt phổ biến vào dịp Tết. Cây có hoa vàng đẹp, mang ý nghĩa may mắn, tài lộc.",
+                        CareInstructions =
+                            "Cần ánh sáng đầy đủ, tưới nước vừa phải. Bón phân định kỳ. Cắt tỉa sau Tết để cây phát triển tốt. Cần chăm sóc đặc biệt trước Tết để hoa nở đúng thời điểm.",
+                        PlantSize = "Lớn (100-150cm)",
+                        Dimensions = "Chậu 40cm",
+                        Image =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761983794/cay-hoa-mai-vang_qhbl3q.jpg",
+                        CostPrice = 800000,
+                        SellPrice = 600000,
+                        Quantity = 25,
+                        PointsEarned = 60,
+                        IsActive = true,
+                        IsFeatured = true,
+                        Weight = 8.0m,
+                        Tags = "cay-ngoai-troi,mai-vang,tet,phong-thuy",
+                        SeoTitle = "Mua Cây Mai Vàng - Chưng Tết, Mang May Mắn",
+                        SeoDescription =
+                            "Cây Mai Vàng đẹp, hợp phong thủy, chưng Tết truyền thống. Mang lại may mắn, tài lộc cho gia đình.",
+                        CategoryId = outdoorCategoryId,
+                        SupplierId = supplierId2,
+                        CreatedAt = now,
+                        UpdatedAt = now,
+                    },
+                    new Product
+                    {
+                        Id = productId7,
+                        Name = "Cây Chuối Cảnh",
+                        Slug = "cay-chuoi-canh",
+                        Sku = "CCC007",
+                        ShortDescription = "Cây chuối cảnh nhiệt đới, xanh mát.",
+                        Description =
+                            "Cây Chuối Cảnh (Musa spp.) có lá to, xanh mướt tạo cảnh quan nhiệt đới đẹp mắt. Cây phù hợp trồng ngoài sân vườn, tạo điểm nhấn cho không gian xanh.",
+                        CareInstructions =
+                            "Tưới nước thường xuyên, đặc biệt vào mùa khô. Cần ánh sáng đầy đủ hoặc bán bóng. Bón phân hữu cơ định kỳ. Cắt bỏ lá già để cây đẹp hơn.",
+                        PlantSize = "Lớn (120-180cm)",
+                        Dimensions = "Chậu 50cm",
+                        Image =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761984589/hoa-lua-180-366280e2-3c49-4bba-8f3f-c9a9cb3cda71_l5tzes.jpg",
+                        CostPrice = 500000,
+                        SellPrice = 350000,
+                        Quantity = 35,
+                        PointsEarned = 35,
+                        IsActive = true,
+                        IsFeatured = false,
+                        Weight = 10.0m,
+                        Tags = "cay-ngoai-troi,nhiet-doi,xanh-mat,trang-tri-san",
+                        SeoTitle = "Cây Chuối Cảnh - Tạo Không Gian Nhiệt Đới Xanh Mát",
+                        SeoDescription =
+                            "Cây Chuối Cảnh đẹp, xanh mướt, phù hợp trang trí sân vườn. Tạo không gian nhiệt đới sinh động.",
+                        CategoryId = outdoorCategoryId,
+                        SupplierId = supplierId3,
+                        CreatedAt = now,
+                        UpdatedAt = now,
+                    },
+                    new Product
+                    {
+                        Id = productId8,
+                        Name = "Cây Tre Cảnh",
+                        Slug = "cay-tre-canh",
+                        Sku = "CTC008",
+                        ShortDescription = "Tre cảnh thanh tao, phong thủy tốt.",
+                        Description =
+                            "Cây Tre Cảnh (Bambusa spp.) mang vẻ đẹp thanh tao, cổ điển. Theo phong thủy, tre mang lại may mắn, thịnh vượng và bảo vệ gia đình. Cây dễ trồng, chịu được nhiều điều kiện khí hậu.",
+                        CareInstructions =
+                            "Tưới nước đều đặn, không để khô hoàn toàn. Cần ánh sáng tốt. Bón phân định kỳ. Kiểm soát sâu bệnh đặc biệt là mối. Cắt tỉa thân già để cây trẻ đẹp hơn.",
+                        PlantSize = "Trung bình (100-150cm)",
+                        Dimensions = "Chậu 35cm",
+                        Image =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761984743/cay-tre-3-638371520309931454_mgmsko.webp",
+                        CostPrice = 450000,
+                        SellPrice = 320000,
+                        Quantity = 30,
+                        PointsEarned = 32,
+                        IsActive = true,
+                        IsFeatured = false,
+                        Weight = 7.0m,
+                        Tags = "cay-ngoai-troi,tre-canh,phong-thuy,thanh-tao",
+                        SeoTitle = "Cây Tre Cảnh - Phong Thủy, Thanh Tao, May Mắn",
+                        SeoDescription =
+                            "Cây Tre Cảnh đẹp thanh tao, hợp phong thủy. Mang lại may mắn, thịnh vượng cho gia đình. Dễ trồng, dễ chăm sóc.",
+                        CategoryId = outdoorCategoryId,
+                        SupplierId = supplierId1,
                         CreatedAt = now,
                         UpdatedAt = now,
                     }
@@ -988,6 +1148,62 @@ namespace DAL.Context
                         WithContentCount = 0,
                         WithMediaCount = 0,
                         LastUpdated = now,
+                    },
+                    new ProductRatingStat
+                    {
+                        ProductId = productId5,
+                        AverageRating = 0,
+                        TotalReviews = 0,
+                        Star1Count = 0,
+                        Star2Count = 0,
+                        Star3Count = 0,
+                        Star4Count = 0,
+                        Star5Count = 0,
+                        WithContentCount = 0,
+                        WithMediaCount = 0,
+                        LastUpdated = now,
+                    },
+                    new ProductRatingStat
+                    {
+                        ProductId = productId6,
+                        AverageRating = 0,
+                        TotalReviews = 0,
+                        Star1Count = 0,
+                        Star2Count = 0,
+                        Star3Count = 0,
+                        Star4Count = 0,
+                        Star5Count = 0,
+                        WithContentCount = 0,
+                        WithMediaCount = 0,
+                        LastUpdated = now,
+                    },
+                    new ProductRatingStat
+                    {
+                        ProductId = productId7,
+                        AverageRating = 0,
+                        TotalReviews = 0,
+                        Star1Count = 0,
+                        Star2Count = 0,
+                        Star3Count = 0,
+                        Star4Count = 0,
+                        Star5Count = 0,
+                        WithContentCount = 0,
+                        WithMediaCount = 0,
+                        LastUpdated = now,
+                    },
+                    new ProductRatingStat
+                    {
+                        ProductId = productId8,
+                        AverageRating = 0,
+                        TotalReviews = 0,
+                        Star1Count = 0,
+                        Star2Count = 0,
+                        Star3Count = 0,
+                        Star4Count = 0,
+                        Star5Count = 0,
+                        WithContentCount = 0,
+                        WithMediaCount = 0,
+                        LastUpdated = now,
                     }
                 );
 
@@ -999,7 +1215,8 @@ namespace DAL.Context
                     {
                         Id = 4,
                         ProductId = productId3,
-                        ImageUrl = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620927/trau-ba-mini_jdnmjk.jpg",
+                        ImageUrl =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620927/trau-ba-mini_jdnmjk.jpg",
                         AltText = "Cây Trầu Bà nhỏ xinh",
                         IsPrimary = false,
                         SortOrder = 1,
@@ -1009,8 +1226,53 @@ namespace DAL.Context
                     {
                         Id = 5,
                         ProductId = productId4,
-                        ImageUrl = "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620976/cay-da-bup-do_b7k0h6.jpg",
+                        ImageUrl =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761620976/cay-da-bup-do_b7k0h6.jpg",
                         AltText = "Cây Đa Búp Đỏ đẹp mắt",
+                        IsPrimary = false,
+                        SortOrder = 1,
+                        CreatedAt = now,
+                    },
+                    new ProductImage
+                    {
+                        Id = 6,
+                        ProductId = productId5,
+                        ImageUrl =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761983631/hoa-giay-5_p7inkl.jpg",
+                        AltText = "Hoa giấy nhiều màu sắc",
+                        IsPrimary = false,
+                        SortOrder = 1,
+                        CreatedAt = now,
+                    },
+                    new ProductImage
+                    {
+                        Id = 7,
+                        ProductId = productId6,
+                        ImageUrl =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761986192/A_CC_89nh-C_C3_A2y-Mai-300x300_fey4bn.jpg",
+                        AltText = "Cây mai vàng nở hoa",
+                        IsPrimary = false,
+                        SortOrder = 1,
+                        CreatedAt = now,
+                    },
+                    new ProductImage
+                    {
+                        Id = 8,
+                        ProductId = productId7,
+                        ImageUrl =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761984662/chuoi-canh3jpg_vbbfsa.jpg",
+                        AltText = "Chuối cảnh trang trí sân vườn",
+                        IsPrimary = false,
+                        SortOrder = 1,
+                        CreatedAt = now,
+                    },
+                    new ProductImage
+                    {
+                        Id = 9,
+                        ProductId = productId8,
+                        ImageUrl =
+                            "https://res.cloudinary.com/dvsqjznt2/image/upload/v1761984792/cay-tre-canh_grande_b49xkr.jpg",
+                        AltText = "Tre cảnh thanh tao",
                         IsPrimary = false,
                         SortOrder = 1,
                         CreatedAt = now,
@@ -1035,7 +1297,16 @@ namespace DAL.Context
             string dataWithSalt = $"{password}{fixedSaltBase64}";
 
             // Compute HMAC-SHA512
-            string hmacHash = CryptoUtil.HMacBase64Encode(CryptoUtil.HMACSHA512, key, dataWithSalt);
+            string? hmacHash = CryptoUtil.HMacBase64Encode(
+                CryptoUtil.HMACSHA512,
+                key,
+                dataWithSalt
+            );
+
+            if (hmacHash == null)
+            {
+                throw new InvalidOperationException("Failed to generate password hash");
+            }
 
             // Return salt:hash format
             return $"{fixedSaltBase64}:{hmacHash}";
