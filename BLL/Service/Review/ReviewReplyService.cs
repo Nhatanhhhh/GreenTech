@@ -39,5 +39,9 @@ namespace BLL.Service.ReviewReply
         {
             return await _replyRepository.DeleteReplyAsync(replyId, userId);
         }
+        public async Task<ReviewReplyModel?> UpdateReplyAsync(int replyId, int userId, string content)
+        {
+            return await _replyRepository.UpdateReplyAsync(replyId, userId, content);
+        }
     }
 }
