@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Text.RegularExpressions;
 using BLL.Service.Payments.Interface;
 using DAL.DTOs.Payment;
@@ -7,6 +8,7 @@ using DAL.Models.Enum;
 using DAL.Utils.CryptoUtil;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace BLL.Service.Payments
 {
@@ -14,14 +16,17 @@ namespace BLL.Service.Payments
     {
         private readonly IConfiguration _config;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ILogger<VnPayPaymentProcessor> _logger;
 
         public VnPayPaymentProcessor(
             IConfiguration config,
-            IHttpContextAccessor httpContextAccessor
+            IHttpContextAccessor httpContextAccessor,
+            ILogger<VnPayPaymentProcessor> logger
         )
         {
             _config = config;
             _httpContextAccessor = httpContextAccessor;
+            _logger = logger;
         }
 
         public PaymentGateway Gateway => PaymentGateway.VNPAY;
@@ -58,16 +63,34 @@ namespace BLL.Service.Payments
             if (string.IsNullOrEmpty(returnUrl) && httpContext != null)
             {
                 var request = httpContext.Request;
-                returnUrl = $"{request.Scheme}://{request.Host}{request.PathBase}/Wallet/Return";
+                var scheme = request.Scheme;
+                var host = request.Host;
+
+                // For localhost with HTTPS, VNPay sandbox may have issues with self-signed certificates
+                // Use HTTP for localhost development (VNPay sandbox accepts localhost HTTP)
+                if (host.Host == "localhost" || host.Host == "127.0.0.1")
+                {
+                    scheme = "http";
+                    // Remove port if it's the default HTTPS port
+                    if (host.Port == 7135 || host.Port == 443)
+                    {
+                        host = new Microsoft.AspNetCore.Http.HostString(host.Host, 5045); // Use HTTP port
+                    }
+                }
+
+                returnUrl = $"{scheme}://{host}{request.PathBase}/Wallet/Return";
             }
 
             // Fallback if still empty
             if (string.IsNullOrEmpty(returnUrl))
             {
-                returnUrl = "https://localhost:7135/Wallet/Return";
+                // Use HTTP for localhost (VNPay sandbox works better with HTTP for localhost)
+                returnUrl = "http://localhost:5045/Wallet/Return";
             }
 
             // Get client IP address (VNPay requires IPv4 format)
+            // IMPORTANT: For VNPay sandbox testing, IP address is critical
+            // VNPay sandbox accepts localhost IP, but some configurations may require a valid public IP
             var ipAddress = "127.0.0.1";
             if (httpContext != null)
             {
@@ -88,6 +111,7 @@ namespace BLL.Service.Payments
                             )
                         )
                         {
+                            // For VNPay sandbox, localhost IP should work
                             ipAddress = "127.0.0.1";
                         }
                         // If IPv4, use as is
@@ -131,6 +155,10 @@ namespace BLL.Service.Payments
                 }
             }
 
+            // VNPay sandbox note: If IP is still localhost and having issues,
+            // you may need to configure a valid IP in your VNPay merchant account
+            // or use a service like ngrok to expose localhost with a public IP
+
             // Format: Timestamp + UserId to ensure uniqueness (như trong demo của VNPay)
             var txnRef = DateTime.Now.Ticks.ToString(); // Hoặc có thể dùng: $"{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}_{userId}"
 
@@ -166,20 +194,62 @@ namespace BLL.Service.Payments
                 ["vnp_Version"] = "2.1.0",
             };
 
-            // IMPORTANT: For VNPay hash calculation (version 2.1.0), do NOT URL encode values
-            // Chỉ encode khi build final URL
-            // Theo doc: "Dữ liệu checksum được thành lập dựa trên việc sắp xếp tăng dần của tên tham số (QueryString)"
-            var rawData = string.Join('&', query.Select(kv => $"{kv.Key}={kv.Value}"));
+            // Tạo query string đã URL encode (theo cách code tham khảo)
+            var queryStringBuilder = new StringBuilder();
+            foreach (
+                var kv in query.Where(kv => kv.Value != null && !string.IsNullOrEmpty(kv.Value))
+            )
+            {
+                queryStringBuilder.Append(
+                    $"{WebUtility.UrlEncode(kv.Key)}={WebUtility.UrlEncode(kv.Value)}&"
+                );
+            }
 
-            // Sử dụng HMACSHA512 để tạo SecureHash (theo doc version 2.1.0)
-            var signData = CryptoUtil.HMacHexStringEncode(CryptoUtil.HMACSHA512, secret, rawData);
+            var queryString = queryStringBuilder.ToString();
 
-            // Build URL with URL-encoded parameters (for final URL only)
-            var urlParams = string.Join(
-                '&',
-                query.Select(kv => $"{kv.Key}={Uri.EscapeDataString(kv.Value)}")
+            // Tạo signData từ queryString đã encode (remove trailing &)
+            var signDataString = queryString.TrimEnd('&');
+            string signData = string.Empty;
+            if (signDataString.Length > 0)
+            {
+                signData = CryptoUtil.HMacHexStringEncode(
+                    CryptoUtil.HMACSHA512,
+                    secret,
+                    signDataString
+                );
+            }
+
+            // Tạo URL với queryString và hash
+            var url = payUrl + "?" + queryString + "vnp_SecureHash=" + signData;
+
+            // Log important information for debugging VNPay errors
+            // Code 70: Return URL not registered or IP not whitelisted
+            // Code 97: Invalid Checksum (hash mismatch)
+            _logger.LogInformation(
+                "[VNPay Payment Init] Creating payment request - "
+                    + "Return URL: {ReturnUrl}, IP: {IpAddress}, Amount: {Amount}, TxnRef: {TxnRef}",
+                returnUrl,
+                ipAddress,
+                amount,
+                txnRef
             );
-            var url = payUrl + "?" + urlParams + "&vnp_SecureHash=" + signData;
+            _logger.LogDebug(
+                "[VNPay Debug] Data for hash calculation (encoded): {RawData}",
+                signDataString
+            );
+            _logger.LogDebug("[VNPay Debug] Computed hash: {Hash}", signData);
+            _logger.LogDebug("[VNPay Debug] Full payment URL (before redirect): {PaymentUrl}", url);
+
+            // Warning if using localhost (common cause of Code 70)
+            if (returnUrl.Contains("localhost") || returnUrl.Contains("127.0.0.1"))
+            {
+                _logger.LogWarning(
+                    "[VNPay Warning] Using localhost URL: {ReturnUrl}. "
+                        + "Code 70 may occur if this URL is not registered in VNPay merchant account. "
+                        + "Solution: 1) Register URL in VNPay merchant portal, or 2) Use ngrok for public HTTPS URL.",
+                    returnUrl
+                );
+            }
 
             return Task.FromResult(
                 new PaymentInitResult { GatewayTransactionId = txnRef, PayUrl = url }
@@ -194,12 +264,16 @@ namespace BLL.Service.Payments
         {
             if (!callbackParams.TryGetValue("vnp_SecureHash", out var receivedHash))
             {
+                _logger.LogWarning("[VNPay] Callback verification failed: Missing vnp_SecureHash");
                 return false;
             }
 
             var secret = _config["VNPAY_HASH_SECRET"] ?? string.Empty;
             if (string.IsNullOrEmpty(secret))
             {
+                _logger.LogError(
+                    "[VNPay] Callback verification failed: VNPAY_HASH_SECRET is not configured"
+                );
                 return false;
             }
 
@@ -210,9 +284,23 @@ namespace BLL.Service.Payments
                 .OrderBy(kv => kv.Key) // Sắp xếp tăng dần theo tên tham số (theo doc)
                 .ToDictionary(kv => kv.Key, kv => kv.Value);
 
-            // IMPORTANT: For VNPay hash verification (version 2.1.0), do NOT URL encode values
-            // Chỉ lấy giá trị raw từ query string, không encode
-            var rawData = string.Join('&', paramsForSign.Select(kv => $"{kv.Key}={kv.Value}"));
+            // Tạo query string đã URL encode để tính hash (giống như khi tạo payment)
+            // ASP.NET Core đã decode query string, nhưng để tính hash cần encode lại
+            var dataBuilder = new StringBuilder();
+            foreach (
+                var kv in paramsForSign.Where(kv =>
+                    kv.Value != null && !string.IsNullOrEmpty(kv.Value)
+                )
+            )
+            {
+                dataBuilder.Append(
+                    $"{WebUtility.UrlEncode(kv.Key)}={WebUtility.UrlEncode(kv.Value)}&"
+                );
+            }
+
+            // Remove trailing & trước khi tính hash
+            var rawData =
+                dataBuilder.Length > 0 ? dataBuilder.ToString().TrimEnd('&') : string.Empty;
 
             // Sử dụng HMACSHA512 để verify (theo doc version 2.1.0)
             var computedHash = CryptoUtil.HMacHexStringEncode(
@@ -222,7 +310,28 @@ namespace BLL.Service.Payments
             );
 
             // So sánh case-sensitive
-            return string.Equals(computedHash, receivedHash, StringComparison.OrdinalIgnoreCase);
+            var isValid = string.Equals(
+                computedHash,
+                receivedHash,
+                StringComparison.OrdinalIgnoreCase
+            );
+
+            if (!isValid)
+            {
+                _logger.LogWarning(
+                    "[VNPay] Callback hash verification failed. "
+                        + "Received: {ReceivedHash}, Computed: {ComputedHash}",
+                    receivedHash,
+                    computedHash
+                );
+                _logger.LogDebug("[VNPay] Raw data for verification: {RawData}", rawData);
+            }
+            else
+            {
+                _logger.LogInformation("[VNPay] Callback hash verification succeeded");
+            }
+
+            return isValid;
         }
 
         /// <summary>
@@ -256,6 +365,29 @@ namespace BLL.Service.Payments
             var transactionStatus = callbackParams.GetValueOrDefault("vnp_TransactionStatus");
             var amount = callbackParams.GetValueOrDefault("vnp_Amount");
             var message = callbackParams.GetValueOrDefault("vnp_Message");
+
+            // Log response codes for debugging
+            if (responseCode == "70")
+            {
+                _logger.LogError(
+                    "[VNPay Code 70] Transaction failed. "
+                        + "Common causes: 1) Return URL not registered in merchant account, "
+                        + "2) IP address not whitelisted. "
+                        + "TxnRef: {TxnRef}, Message: {Message}",
+                    txnRef,
+                    message
+                );
+            }
+            else if (responseCode == "97")
+            {
+                _logger.LogError(
+                    "[VNPay Code 97] Invalid Checksum - Hash verification failed. "
+                        + "This usually means the hash calculation is incorrect. "
+                        + "TxnRef: {TxnRef}, Message: {Message}",
+                    txnRef,
+                    message
+                );
+            }
 
             // VNPay: ResponseCode = "00" and TransactionStatus = "00" means success
             var isSuccess = responseCode == "00" && transactionStatus == "00";

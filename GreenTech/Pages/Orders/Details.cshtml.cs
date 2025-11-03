@@ -244,7 +244,7 @@ namespace GreenTech.Pages.Orders
             try
             {
                 // Get MVC base URL from configuration or use default
-                var mvcBaseUrl = _configuration["MVCBaseUrl"] ?? "https://localhost:7135";
+                var mvcBaseUrl = _configuration["MVCBaseUrl"] ?? "http://localhost:5045";
 
                 var notification = new
                 {

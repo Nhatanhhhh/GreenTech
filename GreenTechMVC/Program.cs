@@ -22,7 +22,7 @@ builder.Services.AddDistributedMemoryCache();
 builder.Services.AddMemoryCache(); // For OTP service
 builder.Services.AddHttpClient(); // For logout synchronization
 
-// Add CORS to allow requests from Razor Pages project
+// Add CORS to allow requests from Razor Pages project and self (for SignalR)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(
@@ -30,7 +30,7 @@ builder.Services.AddCors(options =>
         policy =>
         {
             policy
-                .WithOrigins("https://localhost:7142", "http://localhost:5174")
+                .WithOrigins("http://localhost:5174", "http://localhost:5045")
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials();
@@ -120,10 +120,10 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+    // app.UseHsts(); // Disabled for HTTP-only setup
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Disabled for HTTP-only setup
 app.UseStaticFiles();
 
 app.UseSession();

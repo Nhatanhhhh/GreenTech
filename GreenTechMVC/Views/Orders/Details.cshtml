@@ -108,23 +108,35 @@
                     <div class="space-y-4">
                         @foreach (var item in Model.OrderItems)
                         {
-                            <div class="flex items-center justify-between py-4 border-b border-gray-200">
-                                <div class="flex items-center space-x-4">
-                                    @if (!string.IsNullOrEmpty(item.ProductImage))
-                                    {
-                                        <img src="@item.ProductImage" alt="@item.ProductName"
-                                            class="w-20 h-20 object-cover rounded">
-                                    }
-                                    <div>
-                                        <h3 class="font-medium text-gray-900">@item.ProductName</h3>
-                                        <p class="text-sm text-gray-500">SKU: @item.ProductSku</p>
-                                        <p class="text-sm text-gray-500">Số lượng: @item.Quantity</p>
+                            <div class="border-b border-gray-200 pb-4 space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-4">
+                                        @if (!string.IsNullOrEmpty(item.ProductImage))
+                                        {
+                                            <img src="@item.ProductImage" alt="@item.ProductName"
+                                                class="w-20 h-20 object-cover rounded">
+                                        }
+                                        <div>
+                                            <h3 class="font-medium text-gray-900">@item.ProductName</h3>
+                                            <p class="text-sm text-gray-500">SKU: @item.ProductSku</p>
+                                            <p class="text-sm text-gray-500">Số lượng: @item.Quantity</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-semibold text-gray-900">@item.UnitSellPrice.ToString("N0") ₫</p>
+                                        <p class="text-sm text-gray-500">Tổng: @item.Total.ToString("N0") ₫</p>
                                     </div>
                                 </div>
-                                <div class="text-right">
-                                    <p class="font-semibold text-gray-900">@item.UnitSellPrice.ToString("N0") ₫</p>
-                                    <p class="text-sm text-gray-500">Tổng: @item.Total.ToString("N0") ₫</p>
-                                </div>
+                                
+                                @* Review Section - chỉ hiển thị khi order đã DELIVERED *@
+                                @if (Model.Status == OrderStatus.DELIVERED)
+                                {
+                                    <div class="mt-4 pt-4 border-t border-gray-200">
+                                        <div id="review-section-@item.Id" data-order-item-id="@item.Id" data-product-id="@item.ProductId">
+                                            @* Review form sẽ được load bằng AJAX hoặc render trực tiếp *@
+                                        </div>
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
@@ -634,6 +646,160 @@
                     clearInterval(checkSignalR);
                 }
             }, 100);
+        }
+    })();
+
+    // Review Form Handler
+    (function() {
+        const orderStatus = '@Model.Status';
+        if (orderStatus !== 'DELIVERED') return;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            @foreach (var item in Model.OrderItems)
+            {
+                <text>
+                initReviewForm(@item.Id, @item.ProductId);
+                </text>
+            }
+        });
+
+        async function initReviewForm(orderItemId, productId) {
+            const reviewSection = document.getElementById(`review-section-${orderItemId}`);
+            if (!reviewSection) return;
+
+            // Check if review already exists
+            try {
+                const response = await fetch(`/Reviews/CheckReviewExists?orderItemId=${orderItemId}`);
+                const data = await response.json();
+                
+                if (data.exists) {
+                    reviewSection.innerHTML = `
+                        <div class="p-3 bg-green-50 border border-green-200 rounded-md">
+                            <p class="text-green-800 text-sm">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                Bạn đã đánh giá sản phẩm này rồi.
+                            </p>
+                        </div>
+                    `;
+                    return;
+                }
+            } catch (error) {
+                console.error('Error checking review:', error);
+            }
+
+            // Render review form
+            reviewSection.innerHTML = `
+                <h4 class="text-sm font-semibold text-gray-700 mb-3">Đánh giá sản phẩm</h4>
+                <form class="review-form" data-order-item-id="${orderItemId}" data-product-id="${productId}">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="OrderItemId" value="${orderItemId}" />
+                    <input type="hidden" name="ProductId" value="${productId}" />
+                    
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Đánh giá</label>
+                        <div class="flex gap-1">
+                            <button type="button" class="star-btn" data-rating="1" onclick="setRating(this, 1)">
+                                <i class="far fa-star text-2xl text-gray-300"></i>
+                            </button>
+                            <button type="button" class="star-btn" data-rating="2" onclick="setRating(this, 2)">
+                                <i class="far fa-star text-2xl text-gray-300"></i>
+                            </button>
+                            <button type="button" class="star-btn" data-rating="3" onclick="setRating(this, 3)">
+                                <i class="far fa-star text-2xl text-gray-300"></i>
+                            </button>
+                            <button type="button" class="star-btn" data-rating="4" onclick="setRating(this, 4)">
+                                <i class="far fa-star text-2xl text-gray-300"></i>
+                            </button>
+                            <button type="button" class="star-btn" data-rating="5" onclick="setRating(this, 5)">
+                                <i class="far fa-star text-2xl text-gray-300"></i>
+                            </button>
+                        </div>
+                        <input type="hidden" name="Rating" value="0" required />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nhận xét (tùy chọn)</label>
+                        <textarea name="Content" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="IsAnonymous" class="mr-2" />
+                            <span class="text-sm text-gray-700">Đánh giá ẩn danh</span>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm">
+                        Gửi đánh giá
+                    </button>
+                </form>
+            `;
+
+            // Attach submit handler
+            const form = reviewSection.querySelector('.review-form');
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await submitReview(form, orderItemId, productId);
+            });
+        }
+
+        function setRating(btn, rating) {
+            const form = btn.closest('.review-form');
+            const starBtns = form.querySelectorAll('.star-btn');
+            const hiddenInput = form.querySelector('input[name="Rating"]');
+            
+            starBtns.forEach((b, index) => {
+                const star = b.querySelector('i');
+                if (index < rating) {
+                    star.classList.remove('far');
+                    star.classList.add('fas');
+                    star.classList.remove('text-gray-300');
+                    star.classList.add('text-yellow-400');
+                } else {
+                    star.classList.remove('fas');
+                    star.classList.add('far');
+                    star.classList.remove('text-yellow-400');
+                    star.classList.add('text-gray-300');
+                }
+            });
+            
+            hiddenInput.value = rating;
+        }
+
+        async function submitReview(form, orderItemId, productId) {
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Đang gửi...';
+
+            try {
+                const response = await fetch('/Reviews/Create', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    form.innerHTML = `
+                        <div class="p-3 bg-green-50 border border-green-200 rounded-md">
+                            <p class="text-green-800 text-sm">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                ${result.message || 'Đánh giá thành công!'}
+                            </p>
+                        </div>
+                    `;
+                } else {
+                    alert(result.message || 'Có lỗi xảy ra khi gửi đánh giá.');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Gửi đánh giá';
+                }
+            } catch (error) {
+                alert('Có lỗi xảy ra: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Gửi đánh giá';
+            }
         }
     })();
 </script>

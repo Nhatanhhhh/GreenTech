@@ -73,7 +73,7 @@ namespace GreenTech.Filters
                         Console.WriteLine(
                             $"[AdminAuthorize] Session initialization failed: {ex.Message}"
                         );
-                        context.Result = new RedirectResult("https://localhost:7135/Auth/Login");
+                        context.Result = new RedirectResult("http://localhost:5045/Auth/Login");
                         return;
                     }
                 }
@@ -86,7 +86,7 @@ namespace GreenTech.Filters
                 if (!session.IsAvailable)
                 {
                     Console.WriteLine("[AdminAuthorize] Session became unavailable after read");
-                    context.Result = new RedirectResult("https://localhost:7135/Auth/Login");
+                    context.Result = new RedirectResult("http://localhost:5045/Auth/Login");
                     return;
                 }
             }
@@ -97,7 +97,7 @@ namespace GreenTech.Filters
                 Console.WriteLine($"[AdminAuthorize] Stack trace: {ex.StackTrace}");
 
                 // Redirect to login if session read fails
-                context.Result = new RedirectResult("https://localhost:7135/Auth/Login");
+                context.Result = new RedirectResult("http://localhost:5045/Auth/Login");
                 return;
             }
 
@@ -105,7 +105,7 @@ namespace GreenTech.Filters
             if (string.IsNullOrEmpty(isAuthenticated))
             {
                 ClearSessionCookie(httpContext);
-                context.Result = new RedirectResult("https://localhost:7135/Auth/Login");
+                context.Result = new RedirectResult("http://localhost:5045/Auth/Login");
                 return;
             }
 
@@ -113,14 +113,14 @@ namespace GreenTech.Filters
             if (isAuthenticated != "true")
             {
                 ClearSessionCookie(httpContext);
-                context.Result = new RedirectResult("https://localhost:7135/Auth/Login");
+                context.Result = new RedirectResult("http://localhost:5045/Auth/Login");
                 return;
             }
 
             // Check if user has admin role
             if (string.IsNullOrEmpty(userRoles) || !userRoles.Contains("ROLE_ADMIN"))
             {
-                context.Result = new RedirectResult("https://localhost:7135/Home/Index");
+                context.Result = new RedirectResult("http://localhost:5045/Home/Index");
                 return;
             }
         }
