@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using System.Threading;
 using GreenTech.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,20 +8,50 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace GreenTech.Filters
 {
-    public class AdminAuthorizeAttribute : Attribute, IPageFilter
+    /// <summary>
+    /// Filter to restrict Staff access to only allowed pages:
+    /// - Orders (view, update status)
+    /// - Reviews (view, reply)
+    /// - Blogs (view, create, update, delete)
+    /// - Banners (view, create, update, delete, sort)
+    /// - Profile (view only, no update/change password)
+    /// </summary>
+    public class StaffAuthorizeAttribute : Attribute, IPageFilter
     {
+        // Allowed routes for Staff
+        private static readonly string[] AllowedRoutes = new[]
+        {
+            "/Orders",
+            "/Reviews",
+            "/Blogs",
+            "/Banners",
+            "/Profile",
+            "/Index", // Dashboard
+            "/Error", // Error page
+        };
+
+        // Blocked routes for Staff (only Admin can access)
+        private static readonly string[] BlockedRoutes = new[]
+        {
+            "/Products",
+            "/Categories",
+            "/CouponTemplates",
+            "/Suppliers",
+            "/Users",
+        };
+
         public void OnPageHandlerExecuting(PageHandlerExecutingContext context)
         {
             var request = context.HttpContext.Request;
             var isPostRequest = request.Method.Equals("POST", StringComparison.OrdinalIgnoreCase);
 
+            // Skip authorization check for POST requests (handled in page handlers)
             if (isPostRequest)
             {
                 return;
             }
 
             // Only check authorization for GET requests (when entering the page)
-            // Skip authorization if handler has [IgnoreAntiforgeryToken]
             var handlerMethod = context.HandlerMethod;
             if (handlerMethod?.MethodInfo != null)
             {
@@ -39,7 +68,7 @@ namespace GreenTech.Filters
                         .GetCustomAttributes(typeof(IgnoreAntiforgeryTokenAttribute), false)
                         .Any();
 
-                // Also skip for AJAX handlers by name (e.g., ValidateDiscountValue)
+                // Also skip for AJAX handlers by name
                 var handlerName = handlerMethod.Name;
                 var isAjaxHandler =
                     handlerName != null
@@ -53,7 +82,6 @@ namespace GreenTech.Filters
                 }
             }
 
-            // Only perform session check for GET requests
             var session = context.HttpContext.Session;
             var httpContext = context.HttpContext;
 
@@ -72,7 +100,7 @@ namespace GreenTech.Filters
                     catch (Exception ex)
                     {
                         Console.WriteLine(
-                            $"[AdminAuthorize] Session initialization failed: {ex.Message}"
+                            $"[StaffAuthorize] Session initialization failed: {ex.Message}"
                         );
                         var loginUrl = UrlHelper.GetLoginUrl(httpContext);
                         context.Result = new RedirectResult(loginUrl);
@@ -87,7 +115,7 @@ namespace GreenTech.Filters
                 // Verify session is still available after read
                 if (!session.IsAvailable)
                 {
-                    Console.WriteLine("[AdminAuthorize] Session became unavailable after read");
+                    Console.WriteLine("[StaffAuthorize] Session became unavailable after read");
                     var loginUrl = UrlHelper.GetLoginUrl(httpContext);
                     context.Result = new RedirectResult(loginUrl);
                     return;
@@ -95,11 +123,9 @@ namespace GreenTech.Filters
             }
             catch (Exception ex)
             {
-                // Log exception for debugging
-                Console.WriteLine($"[AdminAuthorize] Session error: {ex.Message}");
-                Console.WriteLine($"[AdminAuthorize] Stack trace: {ex.StackTrace}");
+                Console.WriteLine($"[StaffAuthorize] Session error: {ex.Message}");
+                Console.WriteLine($"[StaffAuthorize] Stack trace: {ex.StackTrace}");
 
-                // Redirect to login if session read fails
                 var loginUrl = UrlHelper.GetLoginUrl(httpContext);
                 context.Result = new RedirectResult(loginUrl);
                 return;
@@ -134,60 +160,59 @@ namespace GreenTech.Filters
             var isAdmin = userRoles.Contains("ROLE_ADMIN");
             var isStaff = userRoles.Contains("ROLE_STAFF");
 
-            // If not admin or staff, redirect to home
-            if (!isAdmin && !isStaff)
+            // Admin can access all pages
+            if (isAdmin)
             {
-                var homeUrl = UrlHelper.GetHomeUrl(httpContext);
-                context.Result = new RedirectResult(homeUrl);
                 return;
             }
 
-            // If Staff, check if they can access this page
-            if (isStaff && !isAdmin)
+            // If user is Staff, check if they can access this page
+            if (isStaff)
             {
                 var path = httpContext.Request.Path.Value ?? "";
 
-                // Block Dashboard (Index page) for Staff
-                if (
-                    path.Equals("/Index", StringComparison.OrdinalIgnoreCase)
-                    || path.Equals("/", StringComparison.OrdinalIgnoreCase)
-                )
-                {
-                    Console.WriteLine("[AdminAuthorize] Staff tried to access Dashboard");
-                    httpContext.Session.SetString(
-                        "ErrorMessage",
-                        "Bạn không có quyền truy cập trang Dashboard. Vui lòng sử dụng trang Quản lý đơn hàng."
-                    );
-                    context.Result = new RedirectResult("/Orders/Index");
-                    return;
-                }
-
-                // Blocked routes for Staff (only Admin can access)
-                var blockedRoutes = new[]
-                {
-                    "/Products",
-                    "/Categories",
-                    "/CouponTemplates",
-                    "/Suppliers",
-                    "/Users",
-                };
-
-                var isBlockedRoute = blockedRoutes.Any(route =>
+                // Check if trying to access blocked route
+                var isBlockedRoute = BlockedRoutes.Any(route =>
                     path.StartsWith(route, StringComparison.OrdinalIgnoreCase)
                 );
-
                 if (isBlockedRoute)
                 {
                     Console.WriteLine(
-                        $"[AdminAuthorize] Staff tried to access blocked route: {path}"
+                        $"[StaffAuthorize] Staff tried to access blocked route: {path}"
                     );
+                    // Store error message in session for display on next page
                     httpContext.Session.SetString(
                         "ErrorMessage",
                         "Bạn không có quyền truy cập trang này. Chỉ Admin mới có quyền truy cập."
                     );
-                    context.Result = new RedirectResult("/Orders/Index");
+                    context.Result = new RedirectResult("/Index");
                     return;
                 }
+
+                // Check if trying to access allowed route
+                var isAllowedRoute = AllowedRoutes.Any(route =>
+                    path.StartsWith(route, StringComparison.OrdinalIgnoreCase)
+                );
+                if (!isAllowedRoute)
+                {
+                    Console.WriteLine(
+                        $"[StaffAuthorize] Staff tried to access unknown route: {path}"
+                    );
+                    // Store error message in session for display on next page
+                    httpContext.Session.SetString(
+                        "ErrorMessage",
+                        "Bạn không có quyền truy cập trang này."
+                    );
+                    context.Result = new RedirectResult("/Index");
+                    return;
+                }
+            }
+            else
+            {
+                // Not admin or staff - redirect to home
+                var homeUrl = UrlHelper.GetHomeUrl(httpContext);
+                context.Result = new RedirectResult(homeUrl);
+                return;
             }
         }
 

@@ -24,6 +24,8 @@ using BLL.Service.Point;
 using BLL.Service.Point.Interface;
 using BLL.Service.Product;
 using BLL.Service.Product.Interface;
+using BLL.Service.Review;
+using BLL.Service.Review.Interface;
 using BLL.Service.Supplier;
 using BLL.Service.Supplier.Interface;
 using BLL.Service.User;
@@ -40,6 +42,8 @@ using DAL.Repositories.Cart;
 using DAL.Repositories.Cart.Interface;
 using DAL.Repositories.Category;
 using DAL.Repositories.Category.Interface;
+using DAL.Repositories.Coupon;
+using DAL.Repositories.Coupon.Interface;
 using DAL.Repositories.CouponTemplate;
 using DAL.Repositories.CouponTemplate.Interface;
 using DAL.Repositories.Order;
@@ -48,6 +52,8 @@ using DAL.Repositories.Point;
 using DAL.Repositories.Point.Interface;
 using DAL.Repositories.Product;
 using DAL.Repositories.Product.Interface;
+using DAL.Repositories.Review;
+using DAL.Repositories.Review.Interface;
 using DAL.Repositories.Supplier;
 using DAL.Repositories.Supplier.Interface;
 using DAL.Repositories.User;
@@ -74,6 +80,7 @@ namespace GreenTechMVC.DI
         {
             services.AddScoped<IAuthRepository, AuthRepository>();
             services.AddScoped<ICouponTemplateRepository, CouponTemplateRepository>();
+            services.AddScoped<ICouponRepository, CouponRepository>();
             services.AddScoped<IBannerRepository, BannerRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
@@ -81,6 +88,8 @@ namespace GreenTechMVC.DI
             services.AddScoped<ICartRepository, CartRepository>();
             services.AddScoped<IWalletRepository, WalletRepository>();
             services.AddScoped<IPointsRepository, PointsRepository>();
+            services.AddScoped<IReviewRepository, ReviewRepository>();
+            services.AddScoped<ISupplierRepository, SupplierRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             return services;
@@ -98,6 +107,8 @@ namespace GreenTechMVC.DI
             services.AddScoped<ICartService, CartService>();
             services.AddScoped<IWalletService, WalletService>();
             services.AddScoped<IPointsService, PointsService>();
+            services.AddScoped<IReviewService, ReviewService>();
+            services.AddScoped<ISupplierService, SupplierService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IOrderService, OrderService>();
 

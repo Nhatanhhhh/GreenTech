@@ -1,0 +1,94 @@
+@{
+    ViewData["Title"] = "Liên hệ";
+}
+
+<!-- Breadcrumb -->
+<div class="bg-gray-50 py-6 mb-8">
+    <div class="container mx-auto px-4">
+        <nav class="text-sm">
+            <a asp-controller="Home" asp-action="Index" class="text-green-600 hover:text-green-700">Trang chủ</a>
+            <span class="mx-2 text-gray-500">/</span>
+            <span class="text-gray-700">Liên hệ</span>
+        </nav>
+        <h1 class="text-3xl font-bold text-gray-900 mt-2">Liên hệ</h1>
+    </div>
+</div>
+
+<div class="container mx-auto px-4 mb-12">
+    <!-- Contact Info and Map Section -->
+    <div class="mb-12">
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8">
+                <!-- Map -->
+                <div class="order-2 lg:order-1">
+                    <div class="h-full rounded-lg overflow-hidden">
+                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3726.6790759915475!2d106.33350451424356!3d20.925227396682168!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31359b2fef558af9%3A0x42ad4c3550350d9e!2zMzAgTmd1eeG7hW4gVsSDbiBOZ-G7jWMsIFAuIE5n4buNYyBDaMOidSwgVGjDoG5oIHBo4buRIEjhuqNpIETGsMahbmcsIEjhuqNpIETGsMahbmcsIFZp4buHdCBOYW0!5e0!3m2!1svi!2s!4v1660791077106!5m2!1svi!2s" 
+                                width="100%" 
+                                height="450" 
+                                style="border:0;" 
+                                allowfullscreen="" 
+                                loading="lazy" 
+                                referrerpolicy="no-referrer-when-downgrade"
+                                class="w-full h-full min-h-[450px]">
+                        </iframe>
+                    </div>
+                </div>
+
+                <!-- Company Info -->
+                <div class="order-1 lg:order-2">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Công ty cổ phần GreenTech</h2>
+                    <p class="text-gray-600 mb-6">
+                        Ra đời và phát triển trong nền kinh tế thị trường, tận dụng những thuận lợi và đương đầu với những thử thách khắc nghiệt của cơ chế thị trường, Công ty cổ phần GreenTech đã, đang ngày càng trưởng thành và vững mạnh.
+                    </p>
+                    <p class="text-gray-600 mb-6">
+                        Với mục tiêu đáp ứng cao nhất các yêu cầu đa dạng và ngày một cao của khách hàng, chúng tôi luôn nỗ lực phát triển và hoàn thiện năng lực cung cấp cây xanh chất lượng cao của mình, luôn hướng tới những tầm cao mới.
+                    </p>
+
+                    <!-- Contact Locations -->
+                    <div class="space-y-6">
+                        <div class="border-l-4 border-green-600 pl-4">
+                            <h3 class="font-semibold text-gray-900 mb-2">Vườn cây số 1</h3>
+                            <p class="text-gray-600 mb-1">
+                                <strong>Địa chỉ:</strong> Vườn ươm tại Khu Tân Lập, P. Nam Đồng, tp Hải Dương, tỉnh Hải Dương
+                            </p>
+                            <p class="text-gray-600 mb-1">
+                                <strong>Hotline:</strong> <a href="tel:0906069669" class="text-green-600 hover:text-green-700">0906 06 9669</a>
+                            </p>
+                            <p class="text-gray-600">
+                                <strong>Email:</strong> <a href="mailto:greentech@gmail.com" class="text-green-600 hover:text-green-700">greentech@gmail.com</a>
+                            </p>
+                        </div>
+
+                        <div class="border-l-4 border-green-600 pl-4">
+                            <h3 class="font-semibold text-gray-900 mb-2">Vườn cây số 2</h3>
+                            <p class="text-gray-600 mb-1">
+                                <strong>Địa chỉ:</strong> Vườn cây công trình và cây hoa tại Thôn Thái An, xã Quang Phục, H. Tứ Kỳ, tỉnh Hải Dương
+                            </p>
+                            <p class="text-gray-600 mb-1">
+                                <strong>Hotline:</strong> <a href="tel:0906069669" class="text-green-600 hover:text-green-700">0906 06 9669</a>
+                            </p>
+                            <p class="text-gray-600">
+                                <strong>Email:</strong> <a href="mailto:greentech@gmail.com" class="text-green-600 hover:text-green-700">greentech@gmail.com</a>
+                            </p>
+                        </div>
+
+                        <div class="border-l-4 border-green-600 pl-4">
+                            <h3 class="font-semibold text-gray-900 mb-2">Trụ sở</h3>
+                            <p class="text-gray-600 mb-1">
+                                <strong>Địa chỉ:</strong> Số 4/52 Trương Mỹ, Phường Trần Phú, Thành phố Hải Dương
+                            </p>
+                            <p class="text-gray-600 mb-1">
+                                <strong>Hotline:</strong> <a href="tel:0906069669" class="text-green-600 hover:text-green-700">0906 06 9669</a>
+                            </p>
+                            <p class="text-gray-600">
+                                <strong>Email:</strong> <a href="mailto:greentech@gmail.com" class="text-green-600 hover:text-green-700">greentech@gmail.com</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+

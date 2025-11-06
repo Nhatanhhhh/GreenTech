@@ -1,11 +1,15 @@
 @model DAL.DTOs.Order.CreateOrderDTO
 @using DAL.DTOs.Cart
+@using DAL.DTOs.CouponTemplate
 
 @{
     ViewData["Title"] = "Thanh toán";
     var cart = ViewBag.Cart as CartResponseDTO;
     var walletBalanceValue = ViewBag.WalletBalance;
     var walletBalance = walletBalanceValue != null ? Convert.ToDecimal(walletBalanceValue) : 0m;
+    var userPoints = ViewBag.UserPoints != null ? Convert.ToInt32(ViewBag.UserPoints) : 0;
+    var couponTemplates = ViewBag.CouponTemplates as IEnumerable<CouponTemplateDTO> ?? new List<CouponTemplateDTO>();
+    var userCoupons = ViewBag.UserCoupons as IEnumerable<dynamic> ?? new List<dynamic>();
 }
 
 <div class="container mx-auto px-4 py-8">
@@ -91,17 +95,77 @@
                 <div class="lg:col-span-1">
                     <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
                         <h2 class="text-xl font-semibold text-gray-900 mb-4">Tóm tắt đơn hàng</h2>
+                        
+                        @{
+                            // Tính toán total order: không trừ discount khi vừa vào checkout (chỉ trừ khi user chọn coupon trong modal)
+                            var cartTotalAfterDiscount = cart.Subtotal - (cart.DiscountAmount > 0 && cart.CouponId.HasValue ? cart.DiscountAmount : 0);
+                            var totalOrderAmount = cartTotalAfterDiscount + Model.ShippingFee;
+                            var walletAmountUsed = Math.Min(walletBalance, totalOrderAmount);
+                            var remainingAmount = totalOrderAmount - walletAmountUsed;
+                            var walletRemaining = walletBalance - walletAmountUsed;
+                        }
 
                         <div class="space-y-3 mb-6">
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Tạm tính:</span>
                                 <span class="font-medium">@cart.Subtotal.ToString("N0") ₫</span>
                             </div>
-                            @if (cart.DiscountAmount > 0)
+                            <!-- Coupon Section -->
+                            <div class="mb-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-gray-700">Mã giảm giá:</span>
+                                    <button type="button" id="openCouponModal" class="text-sm text-green-600 hover:text-green-700 font-medium">
+                                        <i class="fas fa-ticket-alt mr-1"></i>Chọn coupon
+                                    </button>
+                                </div>
+                                @if (cart.CouponId.HasValue && !string.IsNullOrEmpty(cart.CouponCode))
+                                {
+                                    <div id="selectedCouponDisplay" class="p-3 bg-green-50 rounded-lg border border-green-200">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="font-semibold text-green-700" id="selectedCouponName">@(cart.CouponName ?? cart.CouponCode)</p>
+                                                <p class="text-xs text-gray-600" id="selectedCouponCode">Mã: @cart.CouponCode</p>
+                                            </div>
+                                            <button type="button" id="removeCoupon" class="text-red-500 hover:text-red-700">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" asp-for="CouponId" id="selectedCouponId" value="@cart.CouponId">
+                                }
+                                else
+                                {
+                                    <div id="selectedCouponDisplay" class="p-3 bg-green-50 rounded-lg border border-green-200 hidden">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="font-semibold text-green-700" id="selectedCouponName"></p>
+                                                <p class="text-xs text-gray-600" id="selectedCouponCode"></p>
+                                            </div>
+                                            <button type="button" id="removeCoupon" class="text-red-500 hover:text-red-700">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" asp-for="CouponId" id="selectedCouponId">
+                                }
+                            </div>
+                            @* Discount hiển thị khi có coupon đã được áp dụng *@
+                            @if (cart.CouponId.HasValue && cart.DiscountAmount > 0)
                             {
-                                <div class="flex justify-between text-green-600">
-                                    <span>Giảm giá:</span>
-                                    <span>-@cart.DiscountAmount.ToString("N0") ₫</span>
+                                <div id="discountDisplay">
+                                    <div class="flex justify-between text-green-600">
+                                        <span id="discountTypeText"></span>
+                                        <span id="discountAmountDisplay">-@cart.DiscountAmount.ToString("N0") ₫</span>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div id="discountDisplay" class="hidden">
+                                    <div class="flex justify-between text-green-600">
+                                        <span id="discountTypeText"></span>
+                                        <span id="discountAmountDisplay"></span>
+                                    </div>
                                 </div>
                             }
                             <div class="flex justify-between">
@@ -110,23 +174,12 @@
                             </div>
                             <input type="hidden" asp-for="ShippingFee" id="shippingFee">
                             <hr class="border-gray-200">
-                            <div class="flex justify-between text-lg font-semibold">
+                            <div class="text-lg font-semibold">
                                 <span>Tổng cộng (sau khi trừ ví):</span>
-                                <span class="text-green-600" id="totalAmount">
-                                    @{
-                                        var totalAfterWallet = (cart.Total + Model.ShippingFee) - Math.Min(walletBalance, cart.Total + Model.ShippingFee);
-                                    }
-                                    @totalAfterWallet.ToString("N0") ₫
-                                </span>
                             </div>
                         </div>
 
                         <!-- Wallet Usage - Auto apply -->
-                        @{
-                            var totalOrderAmount = cart.Total + Model.ShippingFee;
-                            var walletAmountUsed = Math.Min(walletBalance, totalOrderAmount);
-                            var remainingAmount = totalOrderAmount - walletAmountUsed;
-                        }
                         <div class="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
                             <div class="space-y-2 mb-3">
                                 <div class="flex justify-between items-center">
@@ -152,7 +205,7 @@
                                 {
                                     <div class="flex justify-between items-center pt-2 border-t border-green-200">
                                         <span class="text-sm font-medium text-gray-700">Số tiền còn lại trong ví:</span>
-                                        <span class="font-semibold text-green-600">@(walletBalance - walletAmountUsed).ToString("N0") ₫</span>
+                                        <span class="font-semibold text-green-600">@walletRemaining.ToString("N0") ₫</span>
                                     </div>
                                     <p class="text-xs text-green-600 mt-1 inline-flex items-center gap-1">
                                         <i class="fas fa-check-circle"></i>
@@ -174,16 +227,492 @@
     </div>
 </div>
 
+<!-- Coupon Modal -->
+<div id="couponModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="flex items-center justify-between p-6 border-b">
+            <h3 class="text-xl font-bold text-gray-900">Chọn hoặc quy đổi coupon</h3>
+            <button type="button" id="closeCouponModal" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+        <div class="p-6 overflow-y-auto flex-1">
+            <div class="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-700">Điểm tích lũy hiện có:</span>
+                    <span class="font-bold text-blue-700" id="userPointsDisplay">@userPoints điểm</span>
+                </div>
+            </div>
+            
+            <!-- User's Coupons -->
+            <div class="mb-6">
+                <h4 class="text-lg font-semibold text-gray-900 mb-3">Coupon của tôi</h4>
+                <div id="userCouponsList" class="space-y-3">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Available Templates -->
+            <div>
+                <h4 class="text-lg font-semibold text-gray-900 mb-3">Quy đổi coupon bằng điểm</h4>
+                <div id="couponTemplatesList" class="space-y-3">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal for Redeem Coupon -->
+<div id="redeemConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-lg max-w-md w-full shadow-xl">
+        <div class="p-6">
+            <div class="flex items-center justify-center w-12 h-12 mx-auto bg-yellow-100 rounded-full mb-4">
+                <i class="fas fa-exclamation-triangle text-yellow-600 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 text-center mb-2">Xác nhận quy đổi coupon</h3>
+            <p class="text-gray-600 text-center mb-6">
+                Bạn có chắc muốn quy đổi coupon này? Điểm sẽ bị trừ ngay lập tức và không thể hoàn lại.
+            </p>
+            <div class="flex gap-3">
+                <button type="button" id="cancelRedeem" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition">
+                    Hủy
+                </button>
+                <button type="button" id="confirmRedeem" class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition">
+                    Xác nhận
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+    // ============================================
+    // CONSTANTS & INITIALIZATION
+    // ============================================
     const walletBalance = @walletBalance;
-    const cartTotal = @(cart?.Total ?? 0);
+    const cartSubtotal = @(cart?.Subtotal ?? 0);
     const shippingFee = @(Model?.ShippingFee ?? 0);
-    const walletAmountUsed = Math.min(walletBalance, cartTotal + shippingFee);
-    const totalAmount = cartTotal + shippingFee - walletAmountUsed;
+    const userPoints = @userPoints;
+    const couponTemplates = @Html.Raw(Json.Serialize(couponTemplates));
+    const userCoupons = @Html.Raw(Json.Serialize(userCoupons));
     
-    // Update total display on page load
+    let pendingRedeemTemplateId = null;
+    
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function formatDate(dateString) {
+        return new Date(dateString).toLocaleDateString('vi-VN');
+    }
+    
+    // DiscountType enum: 0 = PERCENT, 1 = FIXED_AMOUNT
+    const DiscountType = {
+        PERCENT: 0,
+        FIXED_AMOUNT: 1
+    };
+    
+    function formatDiscountText(discountType, discountValue) {
+        return discountType === DiscountType.PERCENT 
+            ? `Giảm ${discountValue}%` 
+            : `Giảm ${discountValue.toLocaleString('vi-VN')} ₫`;
+    }
+    
+    function getDiscountTypeText(discountType) {
+        return discountType === DiscountType.PERCENT ? 'Giảm giá phần trăm' : 'Giảm giá tiền mặt';
+    }
+    
+    function calculateExpectedDiscount(discountType, discountValue, subtotal) {
+        let discount = 0;
+        if (discountType === DiscountType.PERCENT) {
+            discount = subtotal * (discountValue / 100);
+            if (discount > subtotal) discount = subtotal;
+        } else {
+            discount = discountValue;
+            if (discount > subtotal) discount = subtotal;
+        }
+        return discount;
+    }
+    
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+    }
+    
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
+    
+    function resetButtonState(button, originalText) {
+        if (button) {
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+    }
+    
+    function showNotification(message, type = 'success') {
+        const notificationId = 'notification-' + Date.now();
+        const bgColor = type === 'success' ? 'bg-green-50 border-green-400 text-green-800' : 'bg-red-50 border-red-400 text-red-800';
+        const iconColor = type === 'success' ? 'text-green-400' : 'text-red-400';
+        const iconPath = type === 'success'
+            ? 'M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z'
+            : 'M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z';
+        
+        const notificationHtml = `
+            <div id="${notificationId}" class="fixed top-4 right-4 ${bgColor} border-l-4 p-4 rounded-lg shadow-lg max-w-md z-[60] transform transition-all duration-300 ease-in-out">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 ${iconColor}" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="${iconPath}" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <p class="text-sm font-medium">${escapeHtml(message)}</p>
+                    </div>
+                    <div class="ml-auto pl-3">
+                        <button onclick="document.getElementById('${notificationId}').remove()" class="text-gray-400 hover:text-gray-600">
+                            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', notificationHtml);
+        
+        setTimeout(() => {
+            const notification = document.getElementById(notificationId);
+            if (notification) {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, 5000);
+    }
+    
+    // ============================================
+    // COUPON TEMPLATES RENDERING
+    // ============================================
+    function renderCouponTemplates() {
+        const container = document.getElementById('couponTemplatesList');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (couponTemplates.length === 0) {
+            container.innerHTML = '<p class="text-gray-500 text-sm">Không có coupon nào để quy đổi.</p>';
+            return;
+        }
+        
+        couponTemplates.forEach(template => {
+            const isActive = template.isActive;
+            const canAfford = userPoints >= template.pointsCost;
+            const canRedeem = isActive && canAfford;
+            
+            const card = document.createElement('div');
+            card.className = `p-4 rounded-lg border ${canRedeem ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-100 opacity-60'}`;
+            
+            const discountText = formatDiscountText(template.discountType, template.discountValue);
+            const discountTypeText = getDiscountTypeText(template.discountType);
+            
+            card.innerHTML = `
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <h5 class="font-semibold text-gray-900 mb-1">${escapeHtml(template.name)}</h5>
+                        ${template.description ? `<p class="text-sm text-gray-600 mb-2">${escapeHtml(template.description)}</p>` : ''}
+                        <div class="flex flex-wrap gap-2 text-xs">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded" title="${discountTypeText}">${discountText}</span>
+                            ${template.minOrderAmount > 0 ? `<span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded">Đơn tối thiểu ${template.minOrderAmount.toLocaleString('vi-VN')} ₫</span>` : ''}
+                            <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded">${template.pointsCost} điểm</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">${discountTypeText}</p>
+                    </div>
+                    <div class="ml-4">
+                        ${canRedeem ? 
+                            `<button type="button" onclick="redeemCoupon(${template.id})" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition">
+                                Quy đổi
+                            </button>` :
+                            `<button type="button" disabled class="px-4 py-2 bg-gray-400 text-white rounded-lg text-sm font-medium cursor-not-allowed">
+                                ${!isActive ? 'Không khả dụng' : !canAfford ? 'Không đủ điểm' : 'Không thể quy đổi'}
+                            </button>`
+                        }
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(card);
+        });
+    }
+    
+    // ============================================
+    // USER COUPONS RENDERING
+    // ============================================
+    function renderUserCoupons() {
+        const container = document.getElementById('userCouponsList');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (userCoupons.length === 0) {
+            container.innerHTML = '<p class="text-gray-500 text-sm">Bạn chưa có coupon nào.</p>';
+            return;
+        }
+        
+        userCoupons.forEach(coupon => {
+            const now = new Date();
+            const startDate = new Date(coupon.startDate);
+            const endDate = new Date(coupon.endDate);
+            const isValid = coupon.isActive && now >= startDate && now <= endDate;
+            const canUse = isValid && cartSubtotal >= coupon.minOrderAmount && coupon.usedCount < coupon.usageLimit;
+            
+            const card = document.createElement('div');
+            card.className = `p-4 rounded-lg border ${canUse ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-100 opacity-60'}`;
+            
+            const discountText = formatDiscountText(coupon.discountType, coupon.discountValue);
+            const discountTypeText = getDiscountTypeText(coupon.discountType);
+            const expectedDiscount = calculateExpectedDiscount(coupon.discountType, coupon.discountValue, cartSubtotal);
+            
+            card.innerHTML = `
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <h5 class="font-semibold text-gray-900 mb-1">${escapeHtml(coupon.name)}</h5>
+                        <p class="text-xs text-gray-600 mb-2">Mã: <code class="bg-gray-200 px-1 rounded">${escapeHtml(coupon.code)}</code></p>
+                        <div class="flex flex-wrap gap-2 text-xs mb-2">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded" title="${discountTypeText}">${discountText}</span>
+                            ${coupon.minOrderAmount > 0 ? `<span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded">Đơn tối thiểu ${coupon.minOrderAmount.toLocaleString('vi-VN')} ₫</span>` : ''}
+                            <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded">HSD: ${formatDate(coupon.endDate)}</span>
+                        </div>
+                        <p class="text-xs text-green-600 font-medium">${discountTypeText} - Tiết kiệm: ${expectedDiscount.toLocaleString('vi-VN')} ₫</p>
+                        ${!canUse ? `<p class="text-xs text-red-600 mt-1">${!isValid ? 'Coupon đã hết hạn' : cartSubtotal < coupon.minOrderAmount ? 'Đơn hàng chưa đạt giá trị tối thiểu' : 'Coupon đã hết lượt sử dụng'}</p>` : ''}
+                    </div>
+                    <div class="ml-4">
+                        ${canUse ? 
+                            `<button type="button" data-coupon-id="${coupon.id}" data-coupon-name="${coupon.name.replace(/"/g, '&quot;')}" data-coupon-code="${coupon.code.replace(/"/g, '&quot;')}" class="apply-coupon-btn px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition">
+                                Áp dụng
+                            </button>` :
+                            `<button type="button" disabled class="px-4 py-2 bg-gray-400 text-white rounded-lg text-sm font-medium cursor-not-allowed">
+                                Không thể dùng
+                            </button>`
+                        }
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(card);
+        });
+    }
+    
+    // ============================================
+    // COUPON ACTIONS
+    // ============================================
+    function selectCoupon(couponId, couponName, couponCode, applyButton) {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        const originalText = applyButton?.innerHTML || 'Áp dụng';
+        
+        if (applyButton) {
+            applyButton.disabled = true;
+            applyButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Đang áp dụng...';
+        }
+        
+        fetch('@Url.Action("ApplyCoupon", "Cart")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'RequestVerificationToken': token
+            },
+            body: `couponId=${couponId}&__RequestVerificationToken=${encodeURIComponent(token)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update UI
+                document.getElementById('selectedCouponId').value = couponId;
+                document.getElementById('selectedCouponName').textContent = couponName;
+                document.getElementById('selectedCouponCode').textContent = 'Mã: ' + couponCode;
+                document.getElementById('selectedCouponDisplay').classList.remove('hidden');
+                
+                // Update discount display
+                const coupon = userCoupons.find(c => c.id === couponId);
+                if (coupon) {
+                    const discountTypeText = coupon.discountType === DiscountType.PERCENT ? 'Giảm giá (%)' : 'Giảm giá (tiền mặt)';
+                    const discountAmount = data.discountAmount || 0;
+                    
+                    document.getElementById('discountTypeText').textContent = discountTypeText + ':';
+                    document.getElementById('discountAmountDisplay').textContent = '-' + discountAmount.toLocaleString('vi-VN') + ' ₫';
+                    document.getElementById('discountDisplay').classList.remove('hidden');
+                }
+                
+                closeModal('couponModal');
+                showNotification('Áp dụng coupon thành công!', 'success');
+                
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                resetButtonState(applyButton, originalText);
+                alert(data.message || 'Áp dụng coupon thất bại. Vui lòng thử lại.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            resetButtonState(applyButton, originalText);
+            alert('Đã có lỗi xảy ra khi áp dụng coupon. Vui lòng thử lại.');
+        });
+    }
+    
+    function removeCoupon() {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        
+        fetch('@Url.Action("RemoveCoupon", "Cart")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'RequestVerificationToken': token
+            },
+            body: `__RequestVerificationToken=${encodeURIComponent(token)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('selectedCouponDisplay').classList.add('hidden');
+                document.getElementById('selectedCouponId').value = '';
+                document.getElementById('discountDisplay').classList.add('hidden');
+                location.reload();
+            } else {
+                alert(data.message || 'Xóa coupon thất bại. Vui lòng thử lại.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Đã có lỗi xảy ra khi xóa coupon. Vui lòng thử lại.');
+        });
+    }
+    
+    function redeemCoupon(templateId) {
+        pendingRedeemTemplateId = templateId;
+        openModal('redeemConfirmModal');
+    }
+    
+    function confirmRedeem() {
+        if (pendingRedeemTemplateId === null) return;
+        
+        const templateId = pendingRedeemTemplateId;
+        const confirmBtn = document.getElementById('confirmRedeem');
+        const cancelBtn = document.getElementById('cancelRedeem');
+        const originalText = confirmBtn.innerHTML;
+        
+        confirmBtn.disabled = true;
+        cancelBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang xử lý...';
+        
+        fetch('@Url.Action("RedeemCoupon", "Orders")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
+            body: JSON.stringify({ templateId: templateId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                closeModal('redeemConfirmModal');
+                resetButtonState(confirmBtn, originalText);
+                resetButtonState(cancelBtn, 'Hủy');
+                pendingRedeemTemplateId = null;
+                
+                showNotification('Quy đổi coupon thành công!', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                resetButtonState(confirmBtn, originalText);
+                resetButtonState(cancelBtn, 'Hủy');
+                showNotification(data.message || 'Quy đổi coupon thất bại. Vui lòng thử lại.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            resetButtonState(confirmBtn, originalText);
+            resetButtonState(cancelBtn, 'Hủy');
+            showNotification('Đã có lỗi xảy ra. Vui lòng thử lại.', 'error');
+        });
+    }
+    
+    // ============================================
+    // EVENT HANDLERS
+    // ============================================
     document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('totalAmount').textContent = Math.max(0, totalAmount).toLocaleString('vi-VN') + ' ₫';
+        renderCouponTemplates();
+        renderUserCoupons();
+        
+        // Update discount display if coupon is already applied (after reload)
+        @if (cart.CouponId.HasValue && cart.DiscountAmount > 0)
+        {
+            <text>
+            const appliedCouponId = @cart.CouponId.Value;
+            const appliedCoupon = userCoupons.find(c => c.id === appliedCouponId);
+            if (appliedCoupon) {
+                const discountTypeText = appliedCoupon.discountType === DiscountType.PERCENT ? 'Giảm giá (%)' : 'Giảm giá (tiền mặt)';
+                document.getElementById('discountTypeText').textContent = discountTypeText + ':';
+                document.getElementById('discountDisplay').classList.remove('hidden');
+            }
+            </text>
+        }
+    });
+    
+    // Coupon Modal
+    document.getElementById('openCouponModal')?.addEventListener('click', function() {
+        openModal('couponModal');
+        document.getElementById('userPointsDisplay').textContent = userPoints + ' điểm';
+    });
+    
+    document.getElementById('closeCouponModal')?.addEventListener('click', () => closeModal('couponModal'));
+    
+    document.getElementById('couponModal')?.addEventListener('click', function(e) {
+        if (e.target === this) closeModal('couponModal');
+    });
+    
+    // Apply Coupon Button
+    document.addEventListener('click', function(e) {
+        if (e.target?.classList.contains('apply-coupon-btn')) {
+            const button = e.target;
+            selectCoupon(
+                parseInt(button.getAttribute('data-coupon-id')),
+                button.getAttribute('data-coupon-name'),
+                button.getAttribute('data-coupon-code'),
+                button
+            );
+        }
+    });
+    
+    // Remove Coupon
+    document.getElementById('removeCoupon')?.addEventListener('click', removeCoupon);
+    
+    // Redeem Coupon
+    document.getElementById('confirmRedeem')?.addEventListener('click', confirmRedeem);
+    
+    document.getElementById('cancelRedeem')?.addEventListener('click', function() {
+        closeModal('redeemConfirmModal');
+        pendingRedeemTemplateId = null;
+    });
+    
+    document.getElementById('redeemConfirmModal')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal('redeemConfirmModal');
+            pendingRedeemTemplateId = null;
+        }
     });
 </script>
 

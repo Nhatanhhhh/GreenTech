@@ -4,6 +4,13 @@
     ViewData["Title"] = "Dashboard";
 }
 
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
 <!-- Dashboard Header -->
 <div class="mb-8">
     <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>

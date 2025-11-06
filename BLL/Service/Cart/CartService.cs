@@ -1,10 +1,10 @@
 using BLL.Service.Cart.Interface;
-using DAL.Context;
 using DAL.DTOs.Cart;
+using DAL.Models.Enum;
 using DAL.Repositories.Cart.Interface;
+using DAL.Repositories.Coupon.Interface;
 using DAL.Repositories.Product.Interface;
 using DAL.Utils.AutoMapper;
-using Microsoft.EntityFrameworkCore;
 using CartItemModel = DAL.Models.CartItem;
 using CartModel = DAL.Models.Cart;
 
@@ -14,17 +14,17 @@ namespace BLL.Service.Cart
     {
         private readonly ICartRepository _cartRepository;
         private readonly IProductRepository _productRepository;
-        private readonly AppDbContext _context;
+        private readonly ICouponRepository _couponRepository;
 
         public CartService(
             ICartRepository cartRepository,
             IProductRepository productRepository,
-            AppDbContext context
+            ICouponRepository couponRepository
         )
         {
             _cartRepository = cartRepository;
             _productRepository = productRepository;
-            _context = context;
+            _couponRepository = couponRepository;
         }
 
         public async Task<CartResponseDTO> GetCartByUserIdAsync(int userId)
@@ -195,16 +195,142 @@ namespace BLL.Service.Cart
             return cartItem != null && cartItem.Cart.UserId == userId;
         }
 
+        public async Task<CartResponseDTO> ApplyCouponAsync(int userId, int couponId)
+        {
+            // Get cart
+            var cart = await _cartRepository.GetCartByUserIdAsync(userId);
+            if (cart == null)
+            {
+                throw new ArgumentException("Giỏ hàng không tồn tại");
+            }
+
+            // Get coupon
+            var coupon = await _couponRepository.GetByIdAndUserIdAsync(couponId, userId);
+            if (coupon == null)
+            {
+                throw new ArgumentException("Coupon không tồn tại hoặc không thuộc về bạn");
+            }
+
+            // Validate coupon
+            var now = DateTime.Now;
+            if (now < coupon.StartDate || now > coupon.EndDate)
+            {
+                throw new ArgumentException("Coupon đã hết hạn hoặc chưa đến thời gian sử dụng");
+            }
+
+            if (coupon.UsedCount >= coupon.UsageLimit)
+            {
+                throw new ArgumentException("Coupon đã hết lượt sử dụng");
+            }
+
+            // Recalculate subtotal
+            await UpdateCartTotalsAsync(cart.Id);
+            cart = await _cartRepository.GetCartWithCouponAsync(cart.Id);
+            if (cart == null)
+            {
+                throw new ArgumentException("Giỏ hàng không tồn tại");
+            }
+
+            // Validate min order amount
+            if (cart.Subtotal < coupon.MinOrderAmount)
+            {
+                throw new ArgumentException(
+                    $"Đơn hàng phải có giá trị tối thiểu {coupon.MinOrderAmount.ToString("N0")} ₫ để sử dụng coupon này"
+                );
+            }
+
+            // Calculate discount based on discount type
+            // PERCENT: Tính theo phần trăm của subtotal
+            // FIXED_AMOUNT: Trừ trực tiếp số tiền cố định
+            decimal discountAmount = 0;
+            if (coupon.DiscountType == DiscountType.PERCENT)
+            {
+                // Giảm giá phần trăm: subtotal * (discountValue / 100)
+                discountAmount = cart.Subtotal * (coupon.DiscountValue / 100m);
+                // Đảm bảo không giảm quá subtotal
+                if (discountAmount > cart.Subtotal)
+                {
+                    discountAmount = cart.Subtotal;
+                }
+            }
+            else if (coupon.DiscountType == DiscountType.FIXED_AMOUNT)
+            {
+                // Giảm giá tiền mặt: trừ trực tiếp số tiền cố định
+                discountAmount = coupon.DiscountValue;
+                // Đảm bảo không giảm quá subtotal
+                if (discountAmount > cart.Subtotal)
+                {
+                    discountAmount = cart.Subtotal;
+                }
+            }
+
+            // Apply coupon to cart
+            cart.CouponId = couponId;
+            cart.DiscountAmount = discountAmount;
+            cart.UpdatedAt = DateTime.Now;
+
+            await _cartRepository.UpdateCartAsync(cart);
+
+            return await GetCartByUserIdAsync(userId);
+        }
+
+        public async Task<CartResponseDTO> RemoveCouponAsync(int userId)
+        {
+            var cart = await _cartRepository.GetCartByUserIdAsync(userId);
+            if (cart == null)
+            {
+                throw new ArgumentException("Giỏ hàng không tồn tại");
+            }
+
+            cart.CouponId = null;
+            cart.DiscountAmount = 0;
+            cart.UpdatedAt = DateTime.Now;
+
+            await _cartRepository.UpdateCartAsync(cart);
+
+            return await GetCartByUserIdAsync(userId);
+        }
+
         private async Task UpdateCartTotalsAsync(int cartId)
         {
-            var cart = await _context
-                .Carts.Include(c => c.CartItems)
-                .FirstOrDefaultAsync(c => c.Id == cartId);
+            var cart = await _cartRepository.GetCartWithCouponAsync(cartId);
 
             if (cart != null)
             {
                 cart.TotalItems = cart.CartItems.Sum(ci => ci.Quantity);
                 cart.Subtotal = cart.CartItems.Sum(ci => ci.Subtotal);
+
+                // Recalculate discount if coupon exists
+                // Tính lại discount mỗi khi subtotal thay đổi (cập nhật số lượng, thêm/xóa sản phẩm)
+                if (cart.CouponId.HasValue && cart.Coupon != null)
+                {
+                    var coupon = cart.Coupon;
+                    decimal discountAmount = 0;
+                    if (coupon.DiscountType == DiscountType.PERCENT)
+                    {
+                        // Giảm giá phần trăm: tính theo % của subtotal
+                        discountAmount = cart.Subtotal * (coupon.DiscountValue / 100m);
+                        if (discountAmount > cart.Subtotal)
+                        {
+                            discountAmount = cart.Subtotal;
+                        }
+                    }
+                    else if (coupon.DiscountType == DiscountType.FIXED_AMOUNT)
+                    {
+                        // Giảm giá tiền mặt: trừ trực tiếp số tiền cố định
+                        discountAmount = coupon.DiscountValue;
+                        if (discountAmount > cart.Subtotal)
+                        {
+                            discountAmount = cart.Subtotal;
+                        }
+                    }
+                    cart.DiscountAmount = discountAmount;
+                }
+                else
+                {
+                    cart.DiscountAmount = 0;
+                }
+
                 cart.UpdatedAt = DateTime.Now;
 
                 await _cartRepository.UpdateCartAsync(cart);

@@ -68,6 +68,10 @@ namespace DAL.Repositories.Review
                 .Reviews.Include(r => r.User)
                 .Include(r => r.Product)
                 .Include(r => r.OrderItem)
+                .Include(r => r.ReviewReplies)
+                .ThenInclude(rr => rr.User)
+                .ThenInclude(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
         }
@@ -82,6 +86,8 @@ namespace DAL.Repositories.Review
                 .Reviews.Include(r => r.User)
                 .Include(r => r.ReviewReplies)
                 .ThenInclude(rr => rr.User)
+                .ThenInclude(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
                 .Include(r => r.ReviewVotes)
                 .Where(r => r.ProductId == productId && r.Status == ReviewStatus.APPROVED)
                 .OrderByDescending(r => r.CreatedAt)
