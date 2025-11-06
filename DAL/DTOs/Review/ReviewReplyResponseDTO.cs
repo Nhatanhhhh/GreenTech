@@ -1,3 +1,5 @@
+using DAL.Models.Enum;
+
 namespace DAL.DTOs.Review
 {
     public class ReviewReplyResponseDTO
@@ -10,5 +12,6 @@ namespace DAL.DTOs.Review
         public string Content { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public List<string> UserRoles { get; set; } = new List<string>();
     }
 }

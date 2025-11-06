@@ -11,5 +11,7 @@ namespace BLL.Service.Cart.Interface
         Task<bool> ClearCartAsync(int userId);
         Task<decimal> CalculateCartTotalAsync(int cartId);
         Task<bool> ValidateCartItemAsync(int cartItemId, int userId);
+        Task<CartResponseDTO> ApplyCouponAsync(int userId, int couponId);
+        Task<CartResponseDTO> RemoveCouponAsync(int userId);
     }
 }

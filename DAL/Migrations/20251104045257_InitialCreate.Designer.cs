@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DAL.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251103165039_InitialCreate")]
+    [Migration("20251104045257_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -1826,7 +1826,6 @@ namespace DAL.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Content")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("content");
 
@@ -1843,7 +1842,6 @@ namespace DAL.Migrations
                         .HasColumnName("is_anonymous");
 
                     b.Property<string>("MediaUrls")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("media_urls");
 

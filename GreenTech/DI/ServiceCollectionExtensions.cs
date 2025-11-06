@@ -26,6 +26,8 @@ using BLL.Service.Product;
 using BLL.Service.Product.Interface;
 using BLL.Service.Review;
 using BLL.Service.Review.Interface;
+using BLL.Service.ReviewReply;
+using BLL.Service.ReviewReply.Interface;
 using BLL.Service.Supplier;
 using BLL.Service.Supplier.Interface;
 using BLL.Service.User;
@@ -42,6 +44,8 @@ using DAL.Repositories.Cart;
 using DAL.Repositories.Cart.Interface;
 using DAL.Repositories.Category;
 using DAL.Repositories.Category.Interface;
+using DAL.Repositories.Coupon;
+using DAL.Repositories.Coupon.Interface;
 using DAL.Repositories.CouponTemplate;
 using DAL.Repositories.CouponTemplate.Interface;
 using DAL.Repositories.Order;
@@ -52,6 +56,8 @@ using DAL.Repositories.Product;
 using DAL.Repositories.Product.Interface;
 using DAL.Repositories.Review;
 using DAL.Repositories.Review.Interface;
+using DAL.Repositories.ReviewReply;
+using DAL.Repositories.ReviewReply.Interface;
 using DAL.Repositories.Supplier;
 using DAL.Repositories.Supplier.Interface;
 using DAL.Repositories.User;
@@ -78,6 +84,7 @@ namespace GreenTech.DI
         {
             services.AddScoped<IAuthRepository, AuthRepository>();
             services.AddScoped<ICouponTemplateRepository, CouponTemplateRepository>();
+            services.AddScoped<ICouponRepository, CouponRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<ISupplierRepository, SupplierRepository>();
@@ -87,6 +94,7 @@ namespace GreenTech.DI
             services.AddScoped<IWalletRepository, WalletRepository>();
             services.AddScoped<IPointsRepository, PointsRepository>();
             services.AddScoped<IReviewRepository, ReviewRepository>();
+            services.AddScoped<IReviewReplyRepository, ReviewReplyRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             return services;
@@ -118,6 +126,7 @@ namespace GreenTech.DI
 
             // Review
             services.AddScoped<IReviewService, ReviewService>();
+            services.AddScoped<IReviewReplyService, ReviewReplyService>();
 
             // Order
             services.AddScoped<IOrderService, OrderService>();

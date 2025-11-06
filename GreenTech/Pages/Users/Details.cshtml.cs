@@ -173,7 +173,7 @@ namespace GreenTech.Pages.Users
             try
             {
                 var httpClient = _httpClientFactory.CreateClient();
-                var mvcBaseUrl = "http://localhost:5045"; // MVC base URL
+                var mvcBaseUrl = GreenTech.Utils.UrlHelper.GetMvcBaseUrl(HttpContext);
 
                 var notification = new
                 {

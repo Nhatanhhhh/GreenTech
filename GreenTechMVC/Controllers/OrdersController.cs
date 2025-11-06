@@ -1,15 +1,22 @@
 using System.Text;
 using System.Text.Json;
 using BLL.Service.Cart.Interface;
+using BLL.Service.CouponTemplate.Interface;
 using BLL.Service.Order.Interface;
+using BLL.Service.Point.Interface;
 using BLL.Service.User.Interface;
 using BLL.Service.Wallet.Interface;
+using DAL.Context;
 using DAL.DTOs.Order;
 using DAL.DTOs.User;
+using DAL.Models;
 using DAL.Models.Enum;
+using DAL.Utils.AutoMapper;
 using GreenTechMVC.Hubs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using UserModel = DAL.Models.User;
 
 namespace GreenTechMVC.Controllers
 {
@@ -19,6 +26,9 @@ namespace GreenTechMVC.Controllers
         private readonly ICartService _cartService;
         private readonly IWalletService _walletService;
         private readonly IUserService _userService;
+        private readonly IPointsService _pointsService;
+        private readonly ICouponTemplateService _couponTemplateService;
+        private readonly AppDbContext _dbContext;
         private readonly IHubContext<NotificationHub> _hubContext;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
@@ -29,6 +39,9 @@ namespace GreenTechMVC.Controllers
             ICartService cartService,
             IWalletService walletService,
             IUserService userService,
+            IPointsService pointsService,
+            ICouponTemplateService couponTemplateService,
+            AppDbContext dbContext,
             IHubContext<NotificationHub> hubContext,
             IHttpClientFactory httpClientFactory,
             IConfiguration configuration,
@@ -39,6 +52,9 @@ namespace GreenTechMVC.Controllers
             _cartService = cartService;
             _walletService = walletService;
             _userService = userService;
+            _pointsService = pointsService;
+            _couponTemplateService = couponTemplateService;
+            _dbContext = dbContext;
             _hubContext = hubContext;
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;
@@ -116,6 +132,33 @@ namespace GreenTechMVC.Controllers
             // Get user wallet balance
             var walletBalance = await _walletService.GetWalletBalanceAsync(userId);
 
+            // Get user points
+            var userPoints = await _pointsService.GetPointsBalanceAsync(userId);
+
+            // Get available coupon templates (active only)
+            var couponTemplates = await _couponTemplateService.GetAllAsync();
+            var activeTemplates = couponTemplates.Where(t => t.IsActive).ToList();
+
+            // Get user's coupons
+            var userCoupons = await _dbContext
+                .Coupons.Where(c => c.UserId == userId && c.IsActive)
+                .OrderByDescending(c => c.EndDate)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Code,
+                    c.Name,
+                    c.DiscountType,
+                    c.DiscountValue,
+                    c.MinOrderAmount,
+                    c.UsageLimit,
+                    c.UsedCount,
+                    c.StartDate,
+                    c.EndDate,
+                    c.IsActive,
+                })
+                .ToListAsync();
+
             // Calculate total order amount
             var shippingFee = 30000m; // Default shipping fee
             var totalAmount = cart.Total + shippingFee;
@@ -124,8 +167,11 @@ namespace GreenTechMVC.Controllers
             var walletAmountUsed = Math.Min(walletBalance, totalAmount);
 
             ViewBag.WalletBalance = walletBalance;
+            ViewBag.UserPoints = userPoints;
             ViewBag.Cart = cart;
             ViewBag.UserProfile = userProfile;
+            ViewBag.CouponTemplates = activeTemplates;
+            ViewBag.UserCoupons = userCoupons;
 
             // Build shipping address from user profile if available
             var shippingAddress = "";
@@ -497,5 +543,169 @@ namespace GreenTechMVC.Controllers
                 );
             }
         }
+
+        /// <summary>
+        /// Quy đổi coupon từ template bằng điểm tích lũy
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RedeemCoupon([FromBody] RedeemCouponRequest request)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+            {
+                return Json(
+                    new { success = false, message = "Vui lòng đăng nhập để quy đổi coupon" }
+                );
+            }
+
+            try
+            {
+                // Get template
+                var template = await _couponTemplateService.GetByIdAsync(request.TemplateId);
+                if (template == null)
+                {
+                    return Json(new { success = false, message = "Coupon template không tồn tại" });
+                }
+
+                if (!template.IsActive)
+                {
+                    return Json(
+                        new { success = false, message = "Coupon template không còn khả dụng" }
+                    );
+                }
+
+                // Check user points
+                var userPoints = await _pointsService.GetPointsBalanceAsync(userId);
+                if (userPoints < template.PointsCost)
+                {
+                    return Json(
+                        new
+                        {
+                            success = false,
+                            message = $"Bạn không đủ điểm. Cần {template.PointsCost} điểm, hiện có {userPoints} điểm",
+                        }
+                    );
+                }
+
+                // Check if user has reached usage limit
+                var userCouponCount = await _dbContext.Coupons.CountAsync(c =>
+                    c.UserId == userId && c.TemplateId == template.Id && c.IsActive
+                );
+
+                if (userCouponCount >= template.UsageLimitPerUser)
+                {
+                    return Json(
+                        new
+                        {
+                            success = false,
+                            message = $"Bạn đã đạt giới hạn quy đổi coupon này ({template.UsageLimitPerUser} lần)",
+                        }
+                    );
+                }
+
+                // Check total usage limit
+                if (template.TotalUsageLimit.HasValue)
+                {
+                    var totalUsage = await _dbContext.Coupons.CountAsync(c =>
+                        c.TemplateId == template.Id && c.IsActive
+                    );
+
+                    if (totalUsage >= template.TotalUsageLimit.Value)
+                    {
+                        return Json(
+                            new { success = false, message = "Coupon này đã hết lượt quy đổi" }
+                        );
+                    }
+                }
+
+                // Get user
+                var user = await _dbContext.Users.FindAsync(userId);
+                if (user == null)
+                {
+                    return Json(new { success = false, message = "Người dùng không tồn tại" });
+                }
+
+                // Generate coupon code
+                var couponCode = $"COUPON{DateTime.Now:yyyyMMddHHmmss}{userId % 10000:D4}";
+
+                // Create coupon
+                var coupon = new Coupon
+                {
+                    Code = couponCode,
+                    TemplateId = template.Id,
+                    UserId = userId,
+                    Name = template.Name,
+                    DiscountType = template.DiscountType,
+                    DiscountValue = template.DiscountValue,
+                    MinOrderAmount = template.MinOrderAmount,
+                    UsageLimit = 1,
+                    UsedCount = 0,
+                    Source = CouponSource.PROMOTION,
+                    PointsUsed = template.PointsCost,
+                    StartDate = DateTime.Now,
+                    EndDate = DateTime.Now.AddDays(template.ValidDays),
+                    IsActive = true,
+                    CreatedAt = DateTime.Now,
+                };
+
+                _dbContext.Coupons.Add(coupon);
+
+                // Deduct points from user
+                user.Points -= template.PointsCost;
+                user.UpdatedAt = DateTime.Now;
+
+                // Create point transaction
+                var pointTransaction = new PointTransaction
+                {
+                    UserId = userId,
+                    TransactionType = PointTransactionType.SPENT,
+                    Points = template.PointsCost,
+                    ReferenceType = ReferenceType.COUPON,
+                    ReferenceId = null, // Will be set after saving coupon
+                    Description = $"Quy đổi coupon: {template.Name}",
+                    PointsBefore = userPoints,
+                    PointsAfter = user.Points,
+                    CreatedAt = DateTime.Now,
+                };
+
+                _dbContext.PointTransactions.Add(pointTransaction);
+
+                await _dbContext.SaveChangesAsync();
+
+                // Update point transaction reference
+                pointTransaction.ReferenceId = coupon.Id;
+                await _dbContext.SaveChangesAsync();
+
+                return Json(
+                    new
+                    {
+                        success = true,
+                        message = $"Quy đổi coupon thành công! Mã coupon: {couponCode}",
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error redeeming coupon for TemplateId={TemplateId}, UserId={UserId}",
+                    request.TemplateId,
+                    userId
+                );
+                return Json(
+                    new
+                    {
+                        success = false,
+                        message = "Đã có lỗi xảy ra khi quy đổi coupon. Vui lòng thử lại.",
+                    }
+                );
+            }
+        }
+    }
+
+    public class RedeemCouponRequest
+    {
+        public int TemplateId { get; set; }
     }
 }

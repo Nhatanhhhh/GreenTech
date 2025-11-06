@@ -1,5 +1,6 @@
 @model DAL.DTOs.Order.OrderResponseDTO
 @using DAL.Models.Enum
+@using PaymentStatus = DAL.Models.Enum.PaymentStatus
 
 @{
     ViewData["Title"] = $"Đơn hàng #{Model.OrderNumber}";
@@ -11,12 +12,13 @@
             transform: translateX(100%);
             opacity: 0;
         }
+
         to {
             transform: translateX(0);
             opacity: 1;
         }
     }
-    
+
     .animate-slide-in {
         animation: slideInRight 0.3s ease-out;
     }
@@ -127,13 +129,108 @@
                                         <p class="text-sm text-gray-500">Tổng: @item.Total.ToString("N0") ₫</p>
                                     </div>
                                 </div>
-                                
-                                @* Review Section - chỉ hiển thị khi order đã DELIVERED *@
+
+                                @* Review Section - chỉ hiển thị khi đơn hàng đã giao hàng *@
+                                @* Điều kiện: Đơn hàng phải ở trạng thái DELIVERED (đã giao) *@
                                 @if (Model.Status == OrderStatus.DELIVERED)
                                 {
                                     <div class="mt-4 pt-4 border-t border-gray-200">
-                                        <div id="review-section-@item.Id" data-order-item-id="@item.Id" data-product-id="@item.ProductId">
-                                            @* Review form sẽ được load bằng AJAX hoặc render trực tiếp *@
+                                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Đánh giá sản phẩm</h4>
+                                        <div id="review-section-@item.Id" data-order-item-id="@item.Id"
+                                            data-product-id="@item.ProductId" data-order-status="@Model.Status.ToString()">
+                                            @* Review form được render trực tiếp *@
+                                            <form class="review-form" data-order-item-id="@item.Id"
+                                                data-product-id="@item.ProductId" enctype="multipart/form-data">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="OrderItemId" value="@item.Id" />
+                                                <input type="hidden" name="ProductId" value="@item.ProductId" />
+
+                                                <div class="mb-3">
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">Đánh giá <span
+                                                            class="text-red-500">*</span></label>
+                                                    <div class="flex gap-1 star-rating-container">
+                                                        <button type="button" class="star-btn" data-rating="1">
+                                                            <i class="far fa-star text-2xl text-gray-300"></i>
+                                                        </button>
+                                                        <button type="button" class="star-btn" data-rating="2">
+                                                            <i class="far fa-star text-2xl text-gray-300"></i>
+                                                        </button>
+                                                        <button type="button" class="star-btn" data-rating="3">
+                                                            <i class="far fa-star text-2xl text-gray-300"></i>
+                                                        </button>
+                                                        <button type="button" class="star-btn" data-rating="4">
+                                                            <i class="far fa-star text-2xl text-gray-300"></i>
+                                                        </button>
+                                                        <button type="button" class="star-btn" data-rating="5">
+                                                            <i class="far fa-star text-2xl text-gray-300"></i>
+                                                        </button>
+                                                    </div>
+                                                    <input type="hidden" name="Rating" value="0" required />
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nhận xét (tùy
+                                                        chọn)</label>
+                                                    <textarea name="Content" rows="3"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"></textarea>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="block text-sm font-medium text-gray-700 mb-1">Thêm ảnh (tùy
+                                                        chọn, tối đa 5 ảnh)</label>
+                                                    <div class="flex gap-2 mb-2">
+                                                        <label class="flex-1 cursor-pointer">
+                                                            <input type="file" id="file-input-@item.Id" accept="image/*"
+                                                                multiple class="hidden"
+                                                                onchange="handleMediaFiles(this, '@item.Id')" />
+                                                            <div
+                                                                class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-center text-sm">
+                                                                <i class="fas fa-image mr-2"></i>Chọn ảnh từ thiết bị
+                                                            </div>
+                                                        </label>
+                                                        <label class="flex-1 cursor-pointer">
+                                                            <input type="file" id="camera-input-@item.Id" accept="image/*"
+                                                                capture="environment" multiple class="hidden"
+                                                                onchange="handleMediaFiles(this, '@item.Id')" />
+                                                            <div
+                                                                class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-center text-sm">
+                                                                <i class="fas fa-camera mr-2"></i>Chụp ảnh
+                                                            </div>
+                                                        </label>
+                                                    </div>
+                                                    <div id="media-preview-@item.Id" class="grid grid-cols-5 gap-2 mt-2"></div>
+                                                    <p class="text-xs text-gray-500 mt-1">Chỉ chấp nhận: JPG, PNG, GIF, WEBP
+                                                        (tối đa 10MB/ảnh)</p>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="flex items-center cursor-pointer">
+                                                        <input type="checkbox" name="IsAnonymous"
+                                                            class="mr-2 w-4 h-4 text-green-600 border-2 border-gray-300 rounded focus:ring-green-500 focus:ring-2 cursor-pointer" />
+                                                        <span class="text-sm text-gray-700">Đánh giá ẩn danh</span>
+                                                    </label>
+                                                </div>
+
+                                                <button type="submit"
+                                                    class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm">
+                                                    Gửi đánh giá
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    @* Thông báo khi đơn hàng chưa được giao *@
+                                    <div class="mt-4 pt-4 border-t border-gray-200">
+                                        <div class="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                            <p class="text-blue-800 text-sm">
+                                                <i class="fas fa-info-circle mr-1"></i>
+                                                Bạn có thể đánh giá sản phẩm sau khi đơn hàng đã được giao.
+                                            </p>
+                                            <p class="text-blue-700 text-xs mt-1">
+                                                Trạng thái hiện tại: @Model.Status.ToString()
+                                            </p>
                                         </div>
                                     </div>
                                 }
@@ -602,8 +699,8 @@
         function showNotification(message, type) {
             const notification = document.createElement('div');
             notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg ${type === 'success' ? 'bg-green-500 text-white' :
-                    type === 'error' ? 'bg-red-500 text-white' :
-                        'bg-blue-500 text-white'
+                type === 'error' ? 'bg-red-500 text-white' :
+                    'bg-blue-500 text-white'
                 }`;
             notification.textContent = message;
             document.body.appendChild(notification);
@@ -650,96 +747,87 @@
     })();
 
     // Review Form Handler
-    (function() {
-        const orderStatus = '@Model.Status';
-        if (orderStatus !== 'DELIVERED') return;
-
-        document.addEventListener('DOMContentLoaded', function() {
+    (function () {
+        document.addEventListener('DOMContentLoaded', function () {
             @foreach (var item in Model.OrderItems)
-            {
-                <text>
-                initReviewForm(@item.Id, @item.ProductId);
-                </text>
+                {
+                    <text>
+                                        // Kiểm tra điều kiện từ data attributes
+                        const reviewSection_@(item.Id) = document.getElementById('review-section-@item.Id');
+                        if (reviewSection_@(item.Id)) {
+                                            const orderStatus = reviewSection_@(item.Id).getAttribute('data-order-status');
+
+                        console.log('[Review Form] Order Item @item.Id - OrderStatus:', orderStatus);
+
+                        // Chỉ xử lý form review khi đơn hàng đã giao hàng (DELIVERED)
+                        if (orderStatus === 'DELIVERED') {
+                            console.log('[Review Form] Initializing review form for order item @item.Id');
+                        checkAndInitReviewForm(@item.Id, @item.ProductId);
+                                            } else {
+                            console.log('[Review Form] Skipping review form for order item @item.Id - Order not delivered yet');
+                                            }
+                                        } else {
+                            console.warn('[Review Form] Review section not found for order item @item.Id');
+                                        }
+                    </text>
             }
         });
 
-        async function initReviewForm(orderItemId, productId) {
+        async function checkAndInitReviewForm(orderItemId, productId) {
             const reviewSection = document.getElementById(`review-section-${orderItemId}`);
             if (!reviewSection) return;
+
+            const form = reviewSection.querySelector('.review-form');
+            if (!form) return;
 
             // Check if review already exists
             try {
                 const response = await fetch(`/Reviews/CheckReviewExists?orderItemId=${orderItemId}`);
                 const data = await response.json();
-                
+
                 if (data.exists) {
-                    reviewSection.innerHTML = `
-                        <div class="p-3 bg-green-50 border border-green-200 rounded-md">
-                            <p class="text-green-800 text-sm">
-                                <i class="fas fa-check-circle mr-1"></i>
-                                Bạn đã đánh giá sản phẩm này rồi.
-                            </p>
+                    // Ẩn form và hiển thị thông báo rõ ràng
+                    form.style.display = 'none';
+                    const existingMessage = document.createElement('div');
+                    existingMessage.className = 'p-4 bg-green-50 border-2 border-green-300 rounded-lg';
+                    existingMessage.innerHTML = `
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h5 class="font-semibold text-green-900 mb-1">Đã đánh giá</h5>
+                                <p class="text-green-800 text-sm">
+                                    Bạn đã đánh giá sản phẩm này rồi. Mỗi sản phẩm chỉ có thể đánh giá một lần.
+                                </p>
+                                <p class="text-green-700 text-xs mt-2">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Bạn có thể xem đánh giá của mình tại trang chi tiết sản phẩm.
+                                </p>
+                            </div>
                         </div>
                     `;
+                    reviewSection.insertBefore(existingMessage, form);
                     return;
                 }
             } catch (error) {
                 console.error('Error checking review:', error);
+                // Nếu có lỗi, vẫn hiển thị form để user có thể thử lại
             }
 
-            // Render review form
-            reviewSection.innerHTML = `
-                <h4 class="text-sm font-semibold text-gray-700 mb-3">Đánh giá sản phẩm</h4>
-                <form class="review-form" data-order-item-id="${orderItemId}" data-product-id="${productId}">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="OrderItemId" value="${orderItemId}" />
-                    <input type="hidden" name="ProductId" value="${productId}" />
-                    
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Đánh giá</label>
-                        <div class="flex gap-1">
-                            <button type="button" class="star-btn" data-rating="1" onclick="setRating(this, 1)">
-                                <i class="far fa-star text-2xl text-gray-300"></i>
-                            </button>
-                            <button type="button" class="star-btn" data-rating="2" onclick="setRating(this, 2)">
-                                <i class="far fa-star text-2xl text-gray-300"></i>
-                            </button>
-                            <button type="button" class="star-btn" data-rating="3" onclick="setRating(this, 3)">
-                                <i class="far fa-star text-2xl text-gray-300"></i>
-                            </button>
-                            <button type="button" class="star-btn" data-rating="4" onclick="setRating(this, 4)">
-                                <i class="far fa-star text-2xl text-gray-300"></i>
-                            </button>
-                            <button type="button" class="star-btn" data-rating="5" onclick="setRating(this, 5)">
-                                <i class="far fa-star text-2xl text-gray-300"></i>
-                            </button>
-                        </div>
-                        <input type="hidden" name="Rating" value="0" required />
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nhận xét (tùy chọn)</label>
-                        <textarea name="Content" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"></textarea>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="flex items-center">
-                            <input type="checkbox" name="IsAnonymous" class="mr-2" />
-                            <span class="text-sm text-gray-700">Đánh giá ẩn danh</span>
-                        </label>
-                    </div>
-                    
-                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm">
-                        Gửi đánh giá
-                    </button>
-                </form>
-            `;
-
             // Attach submit handler
-            const form = reviewSection.querySelector('.review-form');
-            form.addEventListener('submit', async function(e) {
+            form.addEventListener('submit', async function (e) {
                 e.preventDefault();
                 await submitReview(form, orderItemId, productId);
+            });
+
+            // Attach star rating click handlers
+            const starBtns = form.querySelectorAll('.star-btn');
+            starBtns.forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const rating = parseInt(this.getAttribute('data-rating'));
+                    setRating(this, rating);
+                });
             });
         }
 
@@ -747,7 +835,7 @@
             const form = btn.closest('.review-form');
             const starBtns = form.querySelectorAll('.star-btn');
             const hiddenInput = form.querySelector('input[name="Rating"]');
-            
+
             starBtns.forEach((b, index) => {
                 const star = b.querySelector('i');
                 if (index < rating) {
@@ -762,14 +850,139 @@
                     star.classList.add('text-gray-300');
                 }
             });
-            
+
             hiddenInput.value = rating;
         }
 
+        function handleMediaFiles(input, orderItemId) {
+            const previewContainer = document.getElementById(`media-preview-${orderItemId}`);
+            if (!previewContainer) return;
+
+            const newFiles = Array.from(input.files);
+            const maxFiles = 5;
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+
+            // Lấy files hiện có từ form
+            const existingFiles = input.form._mediaFiles || [];
+
+            // Combine files mới với files hiện có
+            let allFiles = [...existingFiles, ...newFiles];
+
+            // Validate và filter files
+            const validatedFiles = [];
+            allFiles.forEach(file => {
+                if (!allowedTypes.includes(file.type)) {
+                    showToastNotification(`File ${file.name} không đúng định dạng. Chỉ chấp nhận JPG, PNG, GIF, WEBP.`, 'error');
+                    return;
+                }
+                if (file.size > maxSize) {
+                    showToastNotification(`File ${file.name} quá lớn (tối đa 10MB).`, 'error');
+                    return;
+                }
+                validatedFiles.push(file);
+            });
+
+            // Giới hạn số lượng files
+            allFiles = validatedFiles.slice(0, maxFiles);
+
+            // Clear file inputs
+            const fileInput = document.getElementById(`file-input-${orderItemId}`);
+            const cameraInput = document.getElementById(`camera-input-${orderItemId}`);
+            if (fileInput) fileInput.value = '';
+            if (cameraInput) cameraInput.value = '';
+
+            // Preview images
+            previewContainer.innerHTML = '';
+            allFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const div = document.createElement('div');
+                    div.className = 'relative';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview ${index + 1}" 
+                             class="w-full h-20 object-cover rounded border border-gray-300">
+                        <button type="button" onclick="removeMediaFile(this, '${orderItemId}', ${index})" 
+                                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    previewContainer.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // Store files in form for submission
+            input.form._mediaFiles = allFiles;
+        }
+
+        function removeMediaFile(btn, orderItemId, index) {
+            const form = btn.closest('.review-form');
+            if (form._mediaFiles) {
+                form._mediaFiles.splice(index, 1);
+                // Re-render preview
+                const previewContainer = document.getElementById(`media-preview-${orderItemId}`);
+                if (previewContainer) {
+                    previewContainer.innerHTML = '';
+                    form._mediaFiles.forEach((file, idx) => {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            const div = document.createElement('div');
+                            div.className = 'relative';
+                            div.innerHTML = `
+                                <img src="${e.target.result}" alt="Preview ${idx + 1}" 
+                                     class="w-full h-20 object-cover rounded border border-gray-300">
+                                <button type="button" onclick="removeMediaFile(this, '${orderItemId}', ${idx})" 
+                                        class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            `;
+                            previewContainer.appendChild(div);
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                }
+            }
+        }
+
         async function submitReview(form, orderItemId, productId) {
+            // Validate rating
+            const rating = form.querySelector('input[name="Rating"]').value;
+            if (!rating || rating === '0') {
+                showToastNotification('Vui lòng chọn đánh giá (sao).', 'error');
+                return;
+            }
+
             const formData = new FormData(form);
             const submitBtn = form.querySelector('button[type="submit"]');
-            
+
+            // Đảm bảo tất cả các field được gửi đúng cách
+            const contentTextarea = form.querySelector('textarea[name="Content"]');
+            if (contentTextarea && contentTextarea.value) {
+                formData.set('Content', contentTextarea.value);
+            }
+
+            const isAnonymousCheckbox = form.querySelector('input[name="IsAnonymous"]');
+            if (isAnonymousCheckbox) {
+                formData.set('IsAnonymous', isAnonymousCheckbox.checked ? 'true' : 'false');
+            }
+
+            // Add media files if any
+            if (form._mediaFiles && form._mediaFiles.length > 0) {
+                form._mediaFiles.forEach((file) => {
+                    formData.append('mediaFiles', file);
+                });
+            }
+
+            // Debug: Log dữ liệu gửi đi
+            console.log('[Frontend] Sending FormData:');
+            console.log('- OrderItemId:', formData.get('OrderItemId'));
+            console.log('- ProductId:', formData.get('ProductId'));
+            console.log('- Rating:', formData.get('Rating'));
+            console.log('- Content:', formData.get('Content'));
+            console.log('- IsAnonymous:', formData.get('IsAnonymous'));
+            console.log('- MediaFiles count:', form._mediaFiles?.length || 0);
+
             submitBtn.disabled = true;
             submitBtn.textContent = 'Đang gửi...';
 
@@ -780,7 +993,7 @@
                 });
 
                 const result = await response.json();
-                
+
                 if (result.success) {
                     form.innerHTML = `
                         <div class="p-3 bg-green-50 border border-green-200 rounded-md">
@@ -790,16 +1003,18 @@
                             </p>
                         </div>
                     `;
+                    // Review submitted successfully
                 } else {
-                    alert(result.message || 'Có lỗi xảy ra khi gửi đánh giá.');
+                    showToastNotification(result.message || 'Có lỗi xảy ra khi gửi đánh giá.', 'error');
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Gửi đánh giá';
                 }
             } catch (error) {
-                alert('Có lỗi xảy ra: ' + error.message);
+                showToastNotification('Có lỗi xảy ra: ' + error.message, 'error');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Gửi đánh giá';
             }
         }
+
     })();
 </script>

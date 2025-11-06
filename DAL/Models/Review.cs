@@ -29,10 +29,10 @@ namespace DAL.Models
         public int Rating { get; set; }
 
         [Column("content")]
-        public string Content { get; set; }
+        public string? Content { get; set; }
 
         [Column("media_urls")]
-        public string MediaUrls { get; set; }
+        public string? MediaUrls { get; set; }
 
         [Column("helpful_count")]
         public int HelpfulCount { get; set; } = 0;

@@ -388,6 +388,108 @@ namespace GreenTechMVC.Controllers
         }
 
         /// <summary>
+        /// Áp dụng coupon vào giỏ hàng
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ApplyCoupon(int couponId)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (userId == 0)
+                {
+                    return Json(new { success = false, message = "Vui lòng đăng nhập" });
+                }
+
+                var cart = await _cartService.ApplyCouponAsync(userId, couponId);
+
+                await _hubContext.Clients.All.SendAsync(
+                    "CartUpdated",
+                    new
+                    {
+                        userId = userId,
+                        totalItems = cart.TotalItems,
+                        total = cart.Total,
+                        discountAmount = cart.DiscountAmount,
+                    }
+                );
+
+                return Json(
+                    new
+                    {
+                        success = true,
+                        message = "Áp dụng coupon thành công",
+                        cartTotal = cart.Total,
+                        discountAmount = cart.DiscountAmount,
+                        subtotal = cart.Subtotal,
+                    }
+                );
+            }
+            catch (ArgumentException ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return Json(
+                    new { success = false, message = "Có lỗi xảy ra khi áp dụng coupon" }
+                );
+            }
+        }
+
+        /// <summary>
+        /// Xóa coupon khỏi giỏ hàng
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveCoupon()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (userId == 0)
+                {
+                    return Json(new { success = false, message = "Vui lòng đăng nhập" });
+                }
+
+                var cart = await _cartService.RemoveCouponAsync(userId);
+
+                await _hubContext.Clients.All.SendAsync(
+                    "CartUpdated",
+                    new
+                    {
+                        userId = userId,
+                        totalItems = cart.TotalItems,
+                        total = cart.Total,
+                        discountAmount = 0,
+                    }
+                );
+
+                return Json(
+                    new
+                    {
+                        success = true,
+                        message = "Đã xóa coupon khỏi giỏ hàng",
+                        cartTotal = cart.Total,
+                        discountAmount = 0,
+                        subtotal = cart.Subtotal,
+                    }
+                );
+            }
+            catch (ArgumentException ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+            catch (Exception)
+            {
+                return Json(
+                    new { success = false, message = "Có lỗi xảy ra khi xóa coupon" }
+                );
+            }
+        }
+
+        /// <summary>
         /// Lấy user ID hiện tại từ session hoặc claims
         /// </summary>
         private int GetCurrentUserId()
