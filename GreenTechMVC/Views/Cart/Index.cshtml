@@ -100,18 +100,14 @@
                                 <span class="text-gray-600">Tạm tính:</span>
                                 <span class="font-medium" id="subtotal">@Model.Subtotal.ToString("N0") ₫</span>
                             </div>
-                            @if (Model.DiscountAmount > 0)
-                            {
-                                <div class="flex justify-between text-green-600">
-                                    <span>Giảm giá:</span>
-                                    <span>-@Model.DiscountAmount.ToString("N0") ₫</span>
-                                </div>
-                            }
                             <hr class="border-gray-200">
                             <div class="flex justify-between text-lg font-semibold">
                                 <span>Tổng cộng:</span>
-                                <span class="text-green-600" id="total">@Model.Total.ToString("N0") ₫</span>
+                                <span class="text-green-600" id="total">@Model.Subtotal.ToString("N0") ₫</span>
                             </div>
+                            <p class="text-sm text-gray-500 mt-2 text-center">
+                                <i class="fas fa-info-circle mr-1"></i>Bạn có thể áp dụng mã giảm giá tại trang thanh toán
+                            </p>
                         </div>
 
                         <button type="button" id="btnProceedCheckout"
@@ -207,7 +203,12 @@
                 if (typeof payload.totalItems === 'number') {
                     $('#total-items').text(payload.totalItems);
                 }
-                if (typeof payload.total === 'number') {
+                // Ở Cart Index, chỉ hiển thị subtotal (không có discount)
+                if (typeof payload.subtotal === 'number') {
+                    var n = Number(payload.subtotal || 0);
+                    $('#subtotal').text(n.toLocaleString() + ' ₫');
+                    $('#total').text(n.toLocaleString() + ' ₫');
+                } else if (typeof payload.total === 'number') {
                     var n = Number(payload.total || 0);
                     $('#subtotal').text(n.toLocaleString() + ' ₫');
                     $('#total').text(n.toLocaleString() + ' ₫');
@@ -359,8 +360,9 @@
             // Update cart UI
             function updateCartUI(response) {
                 $('#total-items').text(response.totalItems);
-                $('#subtotal').text(response.cartTotal.toLocaleString() + ' ₫');
-                $('#total').text(response.cartTotal.toLocaleString() + ' ₫');
+                $('#subtotal').text(response.subtotal ? response.subtotal.toLocaleString() + ' ₫' : response.cartTotal.toLocaleString() + ' ₫');
+                // Total ở Cart Index = Subtotal (không trừ discount, vì discount chỉ áp dụng ở Checkout)
+                $('#total').text(response.subtotal ? response.subtotal.toLocaleString() + ' ₫' : response.cartTotal.toLocaleString() + ' ₫');
             }
 
             // Realtime subscription hook (set in layout)
@@ -370,7 +372,12 @@
                 if (typeof payload.totalItems === 'number') {
                     $('#total-items').text(payload.totalItems);
                 }
-                if (typeof payload.total === 'number') {
+                // Ở Cart Index, chỉ hiển thị subtotal (không có discount)
+                if (typeof payload.subtotal === 'number') {
+                    var n = Number(payload.subtotal || 0);
+                    $('#subtotal').text(n.toLocaleString() + ' ₫');
+                    $('#total').text(n.toLocaleString() + ' ₫');
+                } else if (typeof payload.total === 'number') {
                     var n = Number(payload.total || 0);
                     $('#subtotal').text(n.toLocaleString() + ' ₫');
                     $('#total').text(n.toLocaleString() + ' ₫');

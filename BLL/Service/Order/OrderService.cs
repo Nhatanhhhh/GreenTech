@@ -1,7 +1,6 @@
 using BLL.Service.Cart.Interface;
 using BLL.Service.Order.Interface;
 using BLL.Service.Point.Interface;
-using DAL.Context;
 using DAL.DTOs.Cart;
 using DAL.DTOs.Order;
 using DAL.Models;
@@ -12,7 +11,6 @@ using DAL.Repositories.Product.Interface;
 using DAL.Repositories.User.Interface;
 using DAL.Repositories.Wallet.Interface;
 using DAL.Utils.AutoMapper;
-using Microsoft.EntityFrameworkCore;
 using OrderItemModel = DAL.Models.OrderItem;
 using OrderModel = DAL.Models.Order;
 using UserModel = DAL.Models.User;
@@ -28,7 +26,6 @@ namespace BLL.Service.Order
         private readonly IUserRepository _userRepository;
         private readonly IPointsService _pointsService;
         private readonly IWalletRepository _walletRepository;
-        private readonly AppDbContext _context;
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -37,8 +34,7 @@ namespace BLL.Service.Order
             IProductRepository productRepository,
             IUserRepository userRepository,
             IPointsService pointsService,
-            IWalletRepository walletRepository,
-            AppDbContext context
+            IWalletRepository walletRepository
         )
         {
             _orderRepository = orderRepository;
@@ -48,7 +44,6 @@ namespace BLL.Service.Order
             _userRepository = userRepository;
             _pointsService = pointsService;
             _walletRepository = walletRepository;
-            _context = context;
         }
 
         public async Task<OrderResponseDTO> CreateOrderAsync(CreateOrderDTO createOrderDTO)
@@ -128,6 +123,9 @@ namespace BLL.Service.Order
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,
             };
+
+            // Calculate points earned for this order (based on total amount)
+            order.PointsEarned = await _pointsService.CalculatePointsForOrderAsync(total);
 
             // Save order first to get the OrderId
             order = await _orderRepository.CreateOrderAsync(order);
@@ -320,12 +318,26 @@ namespace BLL.Service.Order
             if (updateOrderStatusDTO.Status == OrderStatus.DELIVERED && order.DeliveredAt == null)
             {
                 order.DeliveredAt = DateTime.Now;
+
                 // Award points if not already awarded
                 if (order.PointsEarned > 0 && order.PointsAwardedAt == null)
                 {
-                    // Award points through points service
-                    // This would need to be implemented in PointsService
-                    order.PointsAwardedAt = DateTime.Now;
+                    try
+                    {
+                        // Award points through points service
+                        await _pointsService.AwardPointsForOrderAsync(
+                            order.UserId,
+                            order.Id,
+                            order.Total
+                        );
+                        order.PointsAwardedAt = DateTime.Now;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log error but don't fail the order status update
+                        // Points will be awarded on next status update attempt if needed
+                        System.Diagnostics.Debug.WriteLine($"Error awarding points: {ex.Message}");
+                    }
                 }
 
                 // Confirm wallet hold transaction (PENDING → SUCCESS) - actually deduct money

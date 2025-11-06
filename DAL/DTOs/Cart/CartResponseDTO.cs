@@ -7,6 +7,7 @@ namespace DAL.DTOs.Cart
         public string UserName { get; set; }
         public int? CouponId { get; set; }
         public string CouponCode { get; set; }
+        public string CouponName { get; set; }
         public int TotalItems { get; set; }
         public decimal Subtotal { get; set; }
         public decimal DiscountAmount { get; set; }

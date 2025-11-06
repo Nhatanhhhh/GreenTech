@@ -17,5 +17,6 @@ namespace DAL.Repositories.Cart.Interface
         Task<IEnumerable<CartItemModel>> GetCartItemsByCartIdAsync(int cartId);
         Task<bool> CartExistsAsync(int userId);
         Task<bool> CartItemExistsAsync(int cartItemId);
+        Task<CartModel?> GetCartWithCouponAsync(int cartId);
     }
 }

@@ -670,6 +670,7 @@ namespace DAL.Utils.AutoMapper
                 UserName = cart.User?.FullName,
                 CouponId = cart.CouponId,
                 CouponCode = cart.Coupon?.Code,
+                CouponName = cart.Coupon?.Name,
                 TotalItems = cart.TotalItems,
                 Subtotal = cart.Subtotal,
                 DiscountAmount = cart.DiscountAmount,
@@ -967,8 +968,8 @@ namespace DAL.Utils.AutoMapper
                 UserId = dto.UserId,
                 OrderItemId = dto.OrderItemId,
                 Rating = dto.Rating,
-                Content = dto.Content,
-                MediaUrls = dto.MediaUrls,
+                Content = dto.Content ?? string.Empty,
+                MediaUrls = dto.MediaUrls ?? string.Empty,
                 IsAnonymous = dto.IsAnonymous,
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,
@@ -998,7 +999,10 @@ namespace DAL.Utils.AutoMapper
                 UserName = review.IsAnonymous
                     ? "Người dùng ẩn danh"
                     : (review.User?.FullName ?? "Người dùng"),
-                UserAvatar = review.User?.Avatar ?? "",
+                UserAvatar =
+                    (review.User?.Avatar != null && !review.User.Avatar.Contains("no-avatar"))
+                        ? review.User.Avatar
+                        : "",
                 OrderItemId = review.OrderItemId,
                 Rating = review.Rating,
                 Content = review.Content ?? "",
@@ -1037,16 +1041,29 @@ namespace DAL.Utils.AutoMapper
             if (reviewReply == null)
                 return null;
 
+            var userRoles =
+                reviewReply
+                    .User?.UserRoles?.Select(ur => ur.Role?.RoleName.ToString())
+                    .Where(r => r != null)
+                    .ToList() ?? new List<string>();
+
             return new ReviewReplyResponseDTO
             {
                 Id = reviewReply.Id,
                 ReviewId = reviewReply.ReviewId,
                 UserId = reviewReply.UserId,
                 UserName = reviewReply.User?.FullName ?? "Người dùng",
-                UserAvatar = reviewReply.User?.Avatar ?? "",
+                UserAvatar =
+                    (
+                        reviewReply.User?.Avatar != null
+                        && !reviewReply.User.Avatar.Contains("no-avatar")
+                    )
+                        ? reviewReply.User.Avatar
+                        : "",
                 Content = reviewReply.Content,
                 CreatedAt = reviewReply.CreatedAt,
                 UpdatedAt = reviewReply.UpdatedAt,
+                UserRoles = userRoles,
             };
         }
 

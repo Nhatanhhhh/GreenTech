@@ -243,8 +243,8 @@ namespace GreenTech.Pages.Orders
         {
             try
             {
-                // Get MVC base URL from configuration or use default
-                var mvcBaseUrl = _configuration["MVCBaseUrl"] ?? "http://localhost:5045";
+                // Get MVC base URL using helper
+                var mvcBaseUrl = GreenTech.Utils.UrlHelper.GetMvcBaseUrl(HttpContext);
 
                 var notification = new
                 {

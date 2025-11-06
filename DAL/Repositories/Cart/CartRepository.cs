@@ -114,5 +114,13 @@ namespace DAL.Repositories.Cart
         {
             return await _context.CartItems.AnyAsync(ci => ci.Id == cartItemId);
         }
+
+        public async Task<CartModel?> GetCartWithCouponAsync(int cartId)
+        {
+            return await _context
+                .Carts.Include(c => c.CartItems)
+                .Include(c => c.Coupon)
+                .FirstOrDefaultAsync(c => c.Id == cartId);
+        }
     }
 }
