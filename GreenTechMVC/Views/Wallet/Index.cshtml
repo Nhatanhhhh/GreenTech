@@ -1,15 +1,299 @@
 @{
     ViewData["Title"] = "Ví của tôi";
+    
+    // Kiểm tra session - nếu chưa đăng nhập thì redirect về trang login
+    var userId = Context.Session.GetInt32("UserId");
+    var isAuthenticated = Context.Session.GetString("IsAuthenticated");
+    
+    if (!userId.HasValue || userId.Value == 0 || string.IsNullOrEmpty(isAuthenticated) || isAuthenticated != "true")
+    {
+        // Redirect về trang login nếu chưa đăng nhập
+        Context.Response.Redirect("/Auth/Login?returnUrl=/Wallet/Index");
+        return;
+    }
+    
+    var walletBalance = ViewBag.WalletBalance as decimal? ?? 0m;
 }
 
-<div class="max-w-3xl mx-auto mt-8">
-    <div class="bg-white rounded-lg shadow p-6">
-        <h1 class="text-2xl font-semibold text-gray-900 mb-2">Ví của tôi</h1>
-        <p class="text-gray-600 mb-6">Số dư hiện tại: <span id="wallet-balance"
-                class="text-green-700 font-bold">@((ViewBag.WalletBalance as decimal?)?.ToString("N0")) ₫</span></p>
+<style>
+    /* Wallet Card Animation */
+    .wallet-card {
+        position: relative;
+        background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+        overflow: hidden;
+        animation: walletPulse 3s ease-in-out infinite;
+    }
 
-        <a asp-controller="Wallet" asp-action="TopUp"
-            class="inline-flex items-center bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg">Nạp
-            tiền</a>
+    .wallet-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            45deg,
+            transparent 30%,
+            rgba(255, 255, 255, 0.1) 50%,
+            transparent 70%
+        );
+        animation: shimmer 3s infinite;
+    }
+
+    .wallet-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.2) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
+        animation: sparkle 4s ease-in-out infinite;
+    }
+
+    @@keyframes shimmer {
+        0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+        100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    }
+
+    @@keyframes walletPulse {
+        0%, 100% { box-shadow: 0 20px 60px rgba(16, 185, 129, 0.4); }
+        50% { box-shadow: 0 20px 80px rgba(16, 185, 129, 0.6), 0 0 40px rgba(255, 255, 255, 0.3); }
+    }
+
+    @@keyframes sparkle {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 0.6; }
+    }
+
+    /* Wallet Icon Animation */
+    .wallet-icon {
+        animation: float 3s ease-in-out infinite;
+        filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+    }
+
+    @@keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-10px) rotate(5deg); }
+    }
+
+    /* Balance Text Animation */
+    .balance-amount {
+        animation: balanceGlow 2s ease-in-out infinite;
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.5),
+                     0 0 40px rgba(255, 255, 255, 0.3);
+    }
+
+    @@keyframes balanceGlow {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    /* Top Up Button Bling Effect */
+    .topup-btn {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .topup-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+
+    .topup-btn:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    .topup-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(34, 197, 94, 0.4);
+    }
+
+    /* Sparkle Particles */
+    .sparkle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: #10b981;
+        border-radius: 50%;
+        animation: sparkleFloat 3s infinite;
+        opacity: 0;
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
+    }
+
+    @@keyframes sparkleFloat {
+        0% {
+            opacity: 0;
+            transform: translateY(0) scale(0);
+        }
+        10% {
+            opacity: 1;
+            transform: translateY(-20px) scale(1);
+        }
+        90% {
+            opacity: 1;
+            transform: translateY(-100px) scale(1);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-120px) scale(0);
+        }
+    }
+
+    /* Quick Action Cards */
+    .action-card {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .action-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .action-card:hover::before {
+        left: 100%;
+    }
+
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Background Pattern */
+    .bg-pattern {
+        background-image: 
+            radial-gradient(circle at 20% 20%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(5, 150, 105, 0.1) 0%, transparent 50%);
+    }
+</style>
+
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 bg-pattern">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Ví của tôi</h1>
+            <p class="text-gray-600">Quản lý số dư và giao dịch của bạn</p>
+        </div>
+
+        <!-- Main Wallet Card -->
+        <div class="wallet-card rounded-3xl shadow-2xl p-8 mb-8 relative text-white">
+            <!-- Sparkle Particles -->
+            <div class="sparkle" style="left: 10%; top: 20%; animation-delay: 0s;"></div>
+            <div class="sparkle" style="left: 30%; top: 40%; animation-delay: 1s;"></div>
+            <div class="sparkle" style="left: 70%; top: 30%; animation-delay: 2s;"></div>
+            <div class="sparkle" style="left: 90%; top: 60%; animation-delay: 0.5s;"></div>
+            <div class="sparkle" style="left: 50%; top: 80%; animation-delay: 1.5s;"></div>
+
+            <div class="relative z-10">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-xl text-white/90 mb-2">Số dư ví</h2>
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-wallet text-4xl wallet-icon"></i>
+                            <div>
+                                <p class="text-sm text-white/80">Tài khoản của bạn</p>
+                                <p class="text-5xl font-bold balance-amount" id="wallet-balance">
+                                    @walletBalance.ToString("N0") ₫
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                            <i class="fas fa-coins text-4xl text-white"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-6 border-t border-white/20">
+                    <div>
+                        <p class="text-sm text-white/80 mb-1">Trạng thái</p>
+                        <p class="text-lg font-semibold flex items-center">
+                            <span class="w-3 h-3 bg-green-400 rounded-full mr-2 animate-pulse"></span>
+                            Đang hoạt động
+                        </p>
+                    </div>
+                    <a asp-controller="Wallet" asp-action="TopUp"
+                       class="topup-btn bg-white text-green-600 font-bold px-8 py-3 rounded-xl hover:bg-green-50 relative z-10 flex items-center space-x-2">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Nạp tiền</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Card -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-info-circle text-green-600 mr-2"></i>
+                Thông tin ví
+            </h3>
+            <div class="space-y-3 text-sm text-gray-600">
+                <div class="flex items-center justify-between">
+                    <span>Ví của bạn được bảo vệ bởi hệ thống bảo mật cao cấp</span>
+                    <i class="fas fa-check-circle text-green-500"></i>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span>Giao dịch nạp tiền được xử lý an toàn</span>
+                    <i class="fas fa-check-circle text-green-500"></i>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span>Số dư có thể sử dụng ngay lập tức</span>
+                    <i class="fas fa-check-circle text-green-500"></i>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<script>
+    // Kiểm tra session khi trang load
+    document.addEventListener('DOMContentLoaded', function() {
+        // Kiểm tra xem có session không (kiểm tra qua cookie hoặc localStorage nếu có)
+        // Nếu không có session, redirect về trang login
+        @if (!userId.HasValue || userId.Value == 0 || string.IsNullOrEmpty(isAuthenticated) || isAuthenticated != "true")
+        {
+            <text>
+            window.location.href = '/Auth/Login?returnUrl=/Wallet/Index';
+            return;
+            </text>
+        }
+        
+        // Animate balance on page load
+        const balanceElement = document.getElementById('wallet-balance');
+        if (balanceElement) {
+            const finalBalance = parseFloat(balanceElement.textContent.replace(/[^\d]/g, ''));
+            
+            // Count up animation
+            let currentBalance = 0;
+            const increment = finalBalance / 50;
+            const timer = setInterval(() => {
+                currentBalance += increment;
+                if (currentBalance >= finalBalance) {
+                    currentBalance = finalBalance;
+                    clearInterval(timer);
+                }
+                balanceElement.textContent = Math.floor(currentBalance).toLocaleString('vi-VN') + ' ₫';
+            }, 30);
+        }
+    });
+</script>
