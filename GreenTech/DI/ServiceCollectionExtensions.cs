@@ -14,6 +14,8 @@ using BLL.Service.CouponTemplate;
 using BLL.Service.CouponTemplate.Interface;
 using BLL.Service.Email;
 using BLL.Service.Email.Interface;
+using BLL.Service.Notification;
+using BLL.Service.Notification.Interface;
 using BLL.Service.Order;
 using BLL.Service.Order.Interface;
 using BLL.Service.OTP;
@@ -48,6 +50,8 @@ using DAL.Repositories.Coupon;
 using DAL.Repositories.Coupon.Interface;
 using DAL.Repositories.CouponTemplate;
 using DAL.Repositories.CouponTemplate.Interface;
+using DAL.Repositories.Notification;
+using DAL.Repositories.Notification.Interface;
 using DAL.Repositories.Order;
 using DAL.Repositories.Order.Interface;
 using DAL.Repositories.Point;
@@ -97,6 +101,7 @@ namespace GreenTech.DI
             services.AddScoped<IReviewReplyRepository, ReviewReplyRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<INotificationRepository, NotificationRepository>();
             return services;
         }
 
@@ -130,6 +135,9 @@ namespace GreenTech.DI
 
             // Order
             services.AddScoped<IOrderService, OrderService>();
+
+            // Notification
+            services.AddScoped<INotificationService, NotificationService>();
 
             return services;
         }
