@@ -368,6 +368,27 @@
             // Realtime subscription hook (set in layout)
             window.onCartRealtimeUpdate = function (payload) {
                 if (!payload) return;
+
+                // Clear cart from other tabs
+                if (payload.clearAll) {
+                    location.reload();
+                    return;
+                }
+
+                // Remove specific item from DOM if needed
+                if (payload.isRemoved && typeof payload.cartItemId === 'number') {
+                    const id = payload.cartItemId;
+                    const $row = $(`.cart-item[data-cart-item-id="${id}"]`);
+                    if ($row.length) {
+                        $row.fadeOut(300, function () {
+                            $(this).remove();
+                            if ($('.cart-item').length === 0) {
+                                location.reload();
+                            }
+                        });
+                    }
+                }
+
                 // Update totals
                 if (typeof payload.totalItems === 'number') {
                     $('#total-items').text(payload.totalItems);
@@ -383,7 +404,7 @@
                     $('#total').text(n.toLocaleString() + ' ₫');
                 }
                 // Update specific row if provided
-                if (typeof payload.cartItemId === 'number') {
+                if (!payload.isRemoved && typeof payload.cartItemId === 'number') {
                     const id = payload.cartItemId;
                     if (typeof payload.itemQuantity === 'number') {
                         const $input = $(`input[data-cart-item-id="${id}"]`);

@@ -6,10 +6,16 @@ namespace BLL.Service.Product.Interface
 {
     public interface IProductService
     {
-        Task<ProductResponseDTO> CreateProductAsync(CreateProductDTO createProductDto);
+        Task<ProductResponseDTO> CreateProductAsync(
+            CreateProductDTO createProductDto,
+            IFormFile? mainImage = null,
+            List<IFormFile>? additionalImages = null
+        );
         Task<ProductResponseDTO> UpdateProductAsync(
             int productId,
-            UpdateProductDTO updateProductDto
+            UpdateProductDTO updateProductDto,
+            IFormFile? mainImage = null,
+            List<IFormFile>? additionalImages = null
         );
         Task DeleteProductAsync(int productId);
         Task<IEnumerable<ProductResponseDTO>> GetProductsAsync(ProductQueryParamsDTO queryParams);
