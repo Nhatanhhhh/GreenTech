@@ -22,6 +22,28 @@ builder.Services.AddDistributedMemoryCache();
 builder.Services.AddMemoryCache(); // For OTP service
 builder.Services.AddHttpClient(); // For logout synchronization
 
+// Add CORS to allow MVC site to connect to hubs if needed
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(
+        "AllowMvc",
+        policy =>
+        {
+            policy
+                .WithOrigins(
+                    "https://localhost:7135", // MVC app (observed)
+                    "https://localhost:7142",
+                    "http://localhost:5174",
+                    "https://localhost:5001",
+                    "http://localhost:5000"
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        }
+    );
+});
+
 // Configure DataProtection to use SHARED keys with MVC project
 // This allows both projects to decrypt the same session cookies
 if (builder.Environment.IsDevelopment())
@@ -115,11 +137,16 @@ app.UseStaticFiles();
 app.UseSession();
 app.UseRouting();
 
+// Enable CORS before endpoints
+app.UseCors("AllowMvc");
+
 app.UseAuthorization();
 
 app.MapRazorPages();
 
 // SignalR hubs
 app.MapHub<GreenTech.Hubs.OrderHub>("/hubs/order");
+app.MapHub<GreenTech.Hubs.CategoryHub>("/hubs/category");
+app.MapHub<GreenTech.Hubs.SupplierHub>("/hubs/supplier");
 
 app.Run();

@@ -4,6 +4,10 @@ using GreenTech.Filters;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Http;
+using System.IO;
+using Microsoft.AspNetCore.SignalR;
+using GreenTech.Hubs;
 
 namespace GreenTech.Pages.Categories
 {
@@ -11,10 +15,12 @@ namespace GreenTech.Pages.Categories
     public class EditModel : PageModel
     {
         private readonly ICategoryService _categoryService;
+        private readonly IHubContext<CategoryHub> _categoryHubContext;
 
-        public EditModel(ICategoryService categoryService)
+        public EditModel(ICategoryService categoryService, IHubContext<CategoryHub> categoryHubContext)
         {
             _categoryService = categoryService;
+            _categoryHubContext = categoryHubContext;
         }
 
         [BindProperty(SupportsGet = true)]
@@ -22,6 +28,9 @@ namespace GreenTech.Pages.Categories
 
         [BindProperty]
         public UpdateCategoryDTO Category { get; set; } = new UpdateCategoryDTO();
+
+        [BindProperty]
+        public IFormFile? ImageFile { get; set; }
 
         public CategoryDTO? CategoryDetails { get; set; }
         public SelectList ParentCategories { get; set; } =
@@ -61,7 +70,41 @@ namespace GreenTech.Pages.Categories
 
             try
             {
-                await _categoryService.UpdateAsync(Id, Category);
+                if (ImageFile != null && ImageFile.Length > 0)
+                {
+                    var current = await _categoryService.GetByIdAsync(Id);
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "categories");
+                    Directory.CreateDirectory(uploadsFolder);
+                    var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(ImageFile.FileName)}";
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await ImageFile.CopyToAsync(stream);
+                    }
+                    if (!string.IsNullOrWhiteSpace(current?.Image) && current.Image.StartsWith("/uploads/categories/", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", current.Image.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                        if (System.IO.File.Exists(oldPath))
+                        {
+                            try { System.IO.File.Delete(oldPath); } catch { }
+                        }
+                    }
+                    Category.Image = $"/uploads/categories/{uniqueFileName}";
+                }
+                var updated = await _categoryService.UpdateAsync(Id, Category);
+
+                await _categoryHubContext.Clients.All.SendAsync("CategoryChanged", new
+                {
+                    action = "updated",
+                    categoryId = updated.Id,
+                    name = updated.Name,
+                    slug = updated.Slug,
+                    image = updated.Image,
+                    parentCategoryName = updated.ParentCategoryName,
+                    productsCount = updated.ProductsCount,
+                    sortOrder = updated.SortOrder,
+                    isActive = updated.IsActive
+                });
                 return RedirectToPage("./Index");
             }
             catch (KeyNotFoundException)
