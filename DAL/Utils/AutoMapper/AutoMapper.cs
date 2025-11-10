@@ -419,21 +419,24 @@ namespace DAL.Utils.AutoMapper
             {
                 Sku = createDto.Sku,
                 Name = createDto.Name,
-                Description = createDto.Description,
-                ShortDescription = createDto.ShortDescription,
+                Description = createDto.Description ?? string.Empty,
+                ShortDescription = createDto.ShortDescription ?? string.Empty,
                 CategoryId = createDto.CategoryId,
                 SupplierId = createDto.SupplierId,
                 CostPrice = createDto.CostPrice,
                 SellPrice = createDto.SellPrice,
                 Quantity = createDto.Quantity,
-                CareInstructions = createDto.CareInstructions,
-                PlantSize = createDto.PlantSize,
+                Image = string.Empty, // Will be set when images are uploaded
+                CareInstructions = createDto.CareInstructions ?? string.Empty,
+                PlantSize = createDto.PlantSize ?? string.Empty,
                 Weight = createDto.Weight,
-                Dimensions = createDto.Dimensions,
-                Tags = createDto.Tags,
+                Dimensions = createDto.Dimensions ?? string.Empty,
+                Tags = createDto.Tags ?? string.Empty,
                 PointsEarned = createDto.PointsEarned,
                 IsFeatured = createDto.IsFeatured,
                 IsActive = createDto.IsActive,
+                SeoTitle = createDto.Name ?? string.Empty, // Use product name as default SEO title
+                SeoDescription = createDto.ShortDescription ?? string.Empty, // Use short description as default SEO description
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
             };

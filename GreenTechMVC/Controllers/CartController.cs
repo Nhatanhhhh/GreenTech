@@ -248,6 +248,8 @@ namespace GreenTechMVC.Controllers
                             userId = userId,
                             totalItems = cart.TotalItems,
                             total = cart.Total,
+                            cartItemId = cartItemId,
+                            isRemoved = true,
                         }
                     );
                     return Json(
@@ -257,6 +259,7 @@ namespace GreenTechMVC.Controllers
                             message = "Đã xóa sản phẩm khỏi giỏ hàng",
                             cartTotal = cart.Total,
                             totalItems = cart.TotalItems,
+                            removedCartItemId = cartItemId,
                         }
                     );
                 }
@@ -304,6 +307,7 @@ namespace GreenTechMVC.Controllers
                             userId = userId,
                             totalItems = 0,
                             total = 0m,
+                            clearAll = true,
                         }
                     );
                     return Json(

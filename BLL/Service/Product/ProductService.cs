@@ -24,9 +24,14 @@ namespace BLL.Service.Product
             _fileStorageService = fileStorageService;
         }
 
-        public async Task<ProductResponseDTO> CreateProductAsync(CreateProductDTO createProductDto)
+        public async Task<ProductResponseDTO> CreateProductAsync(
+            CreateProductDTO createProductDto,
+            IFormFile? mainImage = null,
+            List<IFormFile>? additionalImages = null
+        )
         {
-            if (await _productRepository.GetBySkuAsync(createProductDto.Sku) != null)
+            // Check for duplicate SKU including inactive products
+            if (await _productRepository.GetBySkuAsync(createProductDto.Sku, includeInactive: true) != null)
             {
                 throw new ArgumentException(
                     $"Product with SKU '{createProductDto.Sku}' already exists."
@@ -36,8 +41,70 @@ namespace BLL.Service.Product
             var product = AutoMapper.ToProduct(createProductDto);
             product.Slug = GenerateSlug(product.Name); // Generate slug from name
 
+            // Upload main image if provided
+            if (mainImage != null && mainImage.Length > 0)
+            {
+                var imageUrl = await _fileStorageService.SaveFileAsync(mainImage, "products");
+                product.Image = imageUrl;
+
+                // Create ProductImage entry for main image
+                var productImage = new ProductImage
+                {
+                    ProductId = 0, // Will be set after product is created
+                    ImageUrl = imageUrl,
+                    AltText = $"{product.Name} - main image",
+                    IsPrimary = true,
+                    CreatedAt = DateTime.UtcNow,
+                };
+                // Note: We'll add this after product is created
+            }
+
             var createdProduct = await _productRepository.CreateAsync(product);
-            return AutoMapper.ToProductResponseDTO(createdProduct);
+
+            // Upload and add main image to ProductImages if provided
+            if (mainImage != null && mainImage.Length > 0)
+            {
+                var mainImageUrl = product.Image;
+                if (!string.IsNullOrEmpty(mainImageUrl))
+                {
+                    var mainProductImage = new ProductImage
+                    {
+                        ProductId = createdProduct.Id,
+                        ImageUrl = mainImageUrl,
+                        AltText = $"{createdProduct.Name} - main image",
+                        IsPrimary = true,
+                        CreatedAt = DateTime.UtcNow,
+                    };
+                    await _productRepository.AddImageAsync(mainProductImage);
+                }
+            }
+
+            // Upload additional images if provided
+            if (additionalImages != null && additionalImages.Count > 0)
+            {
+                int imageIndex = 1;
+                foreach (var imageFile in additionalImages)
+                {
+                    if (imageFile != null && imageFile.Length > 0)
+                    {
+                        var imageUrl = await _fileStorageService.SaveFileAsync(imageFile, "products");
+                        var productImage = new ProductImage
+                        {
+                            ProductId = createdProduct.Id,
+                            ImageUrl = imageUrl,
+                            AltText = $"{createdProduct.Name} - image {imageIndex}",
+                            IsPrimary = false,
+                            CreatedAt = DateTime.UtcNow,
+                        };
+                        await _productRepository.AddImageAsync(productImage);
+                        imageIndex++;
+                    }
+                }
+            }
+
+            // Refresh product to get all images
+            var updatedProduct = await _productRepository.GetByIdAsync(createdProduct.Id);
+            return AutoMapper.ToProductResponseDTO(updatedProduct);
         }
 
         public async Task DeleteProductAsync(int productId)
@@ -127,7 +194,9 @@ namespace BLL.Service.Product
 
         public async Task<ProductResponseDTO> UpdateProductAsync(
             int productId,
-            UpdateProductDTO updateProductDto
+            UpdateProductDTO updateProductDto,
+            IFormFile? mainImage = null,
+            List<IFormFile>? additionalImages = null
         )
         {
             // Use includeInactive: true để có thể update cả products đã inactive
@@ -143,8 +212,69 @@ namespace BLL.Service.Product
             AutoMapper.ApplyUpdatesToProduct(updateProductDto, existingProduct);
             existingProduct.Slug = GenerateSlug(updateProductDto.Name); // Regenerate slug if name changes
 
+            // Upload new main image if provided
+            if (mainImage != null && mainImage.Length > 0)
+            {
+                // Delete old main image if exists
+                if (!string.IsNullOrEmpty(existingProduct.Image))
+                {
+                    await _fileStorageService.DeleteFileAsync(existingProduct.Image);
+                }
+
+                var imageUrl = await _fileStorageService.SaveFileAsync(mainImage, "products");
+                existingProduct.Image = imageUrl;
+
+                // Update or create ProductImage entry for main image
+                var existingMainImage = existingProduct.ProductImages.FirstOrDefault(img => img.IsPrimary);
+                if (existingMainImage != null)
+                {
+                    // Delete old main image file
+                    await _fileStorageService.DeleteFileAsync(existingMainImage.ImageUrl);
+                    await _productRepository.DeleteImageAsync(existingMainImage);
+                }
+
+                var mainProductImage = new ProductImage
+                {
+                    ProductId = productId,
+                    ImageUrl = imageUrl,
+                    AltText = $"{updateProductDto.Name} - main image",
+                    IsPrimary = true,
+                    CreatedAt = DateTime.UtcNow,
+                };
+                await _productRepository.AddImageAsync(mainProductImage);
+            }
+
+            // Upload additional images if provided
+            if (additionalImages != null && additionalImages.Count > 0)
+            {
+                // Get current image count before adding new ones
+                var currentImageCount = existingProduct.ProductImages?.Count ?? 0;
+                int imageIndex = currentImageCount + 1;
+                
+                foreach (var imageFile in additionalImages)
+                {
+                    if (imageFile != null && imageFile.Length > 0)
+                    {
+                        var imageUrl = await _fileStorageService.SaveFileAsync(imageFile, "products");
+                        var productImage = new ProductImage
+                        {
+                            ProductId = productId,
+                            ImageUrl = imageUrl,
+                            AltText = $"{updateProductDto.Name} - image {imageIndex}",
+                            IsPrimary = false,
+                            CreatedAt = DateTime.UtcNow,
+                        };
+                        await _productRepository.AddImageAsync(productImage);
+                        imageIndex++;
+                    }
+                }
+            }
+
             await _productRepository.UpdateAsync(existingProduct);
-            return AutoMapper.ToProductResponseDTO(existingProduct);
+
+            // Refresh product to get all images
+            var updatedProduct = await _productRepository.GetByIdAsync(productId, includeInactive: true);
+            return AutoMapper.ToProductResponseDTO(updatedProduct);
         }
 
         public async Task<List<ProductImageDTO>> UploadImagesAsync(

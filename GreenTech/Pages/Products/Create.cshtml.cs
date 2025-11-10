@@ -83,11 +83,22 @@ namespace GreenTech.Pages.Products
                 return Page();
             }
 
-            // Ensure Description and Dimensions are not null
+            // Ensure Description and Dimensions are not null BEFORE ModelState validation
             if (Product != null)
             {
                 Product.Description = Product.Description ?? string.Empty;
                 Product.Dimensions = Product.Dimensions ?? string.Empty;
+                
+                // Remove ModelState errors for Description and Dimensions if they were null
+                // since these fields are optional in the DTO
+                if (ModelState.ContainsKey("Product.Description"))
+                {
+                    ModelState["Product.Description"].Errors.Clear();
+                }
+                if (ModelState.ContainsKey("Product.Dimensions"))
+                {
+                    ModelState["Product.Dimensions"].Errors.Clear();
+                }
             }
 
             if (!ModelState.IsValid)
@@ -98,7 +109,27 @@ namespace GreenTech.Pages.Products
 
             try
             {
-                await _productService.CreateProductAsync(Product);
+                // Get uploaded files
+                var mainImage = Request.Form.Files["MainImage"];
+                var additionalImages = Request.Form.Files.GetFiles("AdditionalImages");
+
+                IFormFile? mainImageFile = null;
+                if (mainImage != null && mainImage.Length > 0)
+                {
+                    mainImageFile = mainImage;
+                }
+
+                List<IFormFile>? additionalImagesList = null;
+                if (additionalImages != null && additionalImages.Count > 0)
+                {
+                    additionalImagesList = additionalImages.Where(f => f.Length > 0).ToList();
+                }
+
+                await _productService.CreateProductAsync(
+                    Product,
+                    mainImageFile,
+                    additionalImagesList
+                );
                 TempData["SuccessMessage"] = "Tạo sản phẩm thành công!";
                 return RedirectToPage("./Index");
             }
@@ -108,9 +139,15 @@ namespace GreenTech.Pages.Products
                 await LoadSelectLists();
                 return Page();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, "Đã xảy ra lỗi khi tạo sản phẩm.");
+                ModelState.AddModelError(string.Empty, $"Đã xảy ra lỗi khi tạo sản phẩm: {ex.Message}");
+                // Log the full exception for debugging
+                System.Diagnostics.Debug.WriteLine($"Error creating product: {ex}");
+                if (ex.InnerException != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
                 await LoadSelectLists();
                 return Page();
             }
