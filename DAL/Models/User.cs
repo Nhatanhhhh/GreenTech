@@ -8,7 +8,7 @@ namespace DAL.Models
     public class User
     {
         [Key]
-        [Column("id")]
+        [Column("Id")]
         public int Id { get; set; }
 
         [Required]
