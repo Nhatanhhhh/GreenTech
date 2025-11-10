@@ -58,12 +58,12 @@
                     <th class="relative px-6 py-3"><span class="sr-only">Actions</span></th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody id="suppliers-body" class="bg-white divide-y divide-gray-200">
                 @if (Model.Suppliers != null && Model.Suppliers.Any())
                 {
                     @foreach (var supplier in Model.Suppliers)
                     {
-                        <tr class="hover:bg-gray-50">
+                        <tr class="hover:bg-gray-50" id="row-supplier-@supplier.Id" data-supplier-id="@supplier.Id">
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">@supplier.Code</td>
                             <td class="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs truncate">@supplier.Name</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">@supplier.ContactPerson</td>
@@ -83,7 +83,7 @@
                 }
                 else
                 {
-                    <tr>
+                    <tr id="no-suppliers-row">
                         <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">Không tìm thấy nhà cung cấp nào.</td>
                     </tr>
                 }
@@ -120,4 +120,208 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    <script>
+        // Stop any old SignalR initialization if running
+        if (window.supplierHubInitialized) {
+            console.warn('Old SignalR initialization detected, stopping...');
+        }
+        window.supplierHubInitialized = true;
+        
+        console.log('Supplier SignalR script starting... v2.0');
+        (function () {
+            // Load SignalR script dynamically
+            function loadSignalR() {
+                console.log('loadSignalR() called');
+                return new Promise((resolve, reject) => {
+                    // Check if already loaded
+                    if (window.signalR) {
+                        console.log('SignalR already loaded');
+                        resolve();
+                        return;
+                    }
+                    console.log('SignalR not found, loading script...');
+                    
+                    // Check if script tag already exists
+                    const existingScript = document.querySelector('script[src*="signalr"]');
+                    if (existingScript) {
+                        existingScript.addEventListener('load', () => {
+                            if (window.signalR) {
+                                resolve();
+                            } else {
+                                reject(new Error('SignalR script loaded but window.signalR is not available'));
+                            }
+                        });
+                        existingScript.addEventListener('error', () => reject(new Error('Failed to load SignalR script')));
+                        return;
+                    }
+                    
+                    // Create and load script tag
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.12/signalr.min.js';
+                    script.crossOrigin = 'anonymous';
+                    script.referrerPolicy = 'no-referrer';
+                    script.onload = () => {
+                        if (window.signalR) {
+                            console.log('SignalR script loaded successfully');
+                            resolve();
+                        } else {
+                            reject(new Error('SignalR script loaded but window.signalR is not available'));
+                        }
+                    };
+                    script.onerror = () => reject(new Error('Failed to load SignalR script from CDN'));
+                    document.head.appendChild(script);
+                });
+            }
+            
+            function initializeSupplierHub() {
+                console.log('SignalR loaded, initializing SupplierHub connection...');
+                const connection = new signalR.HubConnectionBuilder()
+                    .withUrl('/hubs/supplier')
+                    .withAutomaticReconnect()
+                    .build();
+
+                connection.onreconnecting(error => console.warn('SupplierHub reconnecting...', error));
+                connection.onreconnected(id => console.info('SupplierHub reconnected', id));
+                connection.onclose(error => console.warn('SupplierHub connection closed', error));
+
+                function statusPill(isActive) {
+                    return `<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${isActive ? 'Hoạt động' : 'Không hoạt động'}</span>`;
+                }
+
+                function rowHtml(s) {
+                    return `
+                    <tr class="hover:bg-gray-50" id="row-supplier-${s.supplierId}" data-supplier-id="${s.supplierId}">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${s.code || ''}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs truncate">${s.name || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${s.contactPerson || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${s.email || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${s.phone || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">${statusPill(!!s.isActive)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <a href="/Suppliers/Edit?id=${s.supplierId}" class="text-indigo-600 hover:text-indigo-900 mr-3">Sửa</a>
+                            <a href="/Suppliers/Delete?id=${s.supplierId}" class="text-red-600 hover:text-red-900">Xóa</a>
+                        </td>
+                    </tr>`;
+                }
+
+                // Đăng ký event handler TRƯỚC KHI start connection
+                connection.on('SupplierChanged', function (payload) {
+                    console.log('SupplierChanged event received:', payload);
+                    if (!payload) {
+                        console.warn('Empty payload received');
+                        return;
+                    }
+                    
+                    const tbody = document.getElementById('suppliers-body');
+                    if (!tbody) {
+                        console.warn('suppliers-body element not found');
+                        return;
+                    }
+                    
+                    const supplierId = payload.supplierId || payload.id;
+                    if (!supplierId) {
+                        console.warn('No supplierId in payload:', payload);
+                        return;
+                    }
+                    
+                    const existingRow = document.getElementById('row-supplier-' + supplierId);
+                    const noSuppliersRow = document.getElementById('no-suppliers-row');
+                    
+                    if (payload.action === 'created') {
+                        console.log('Adding new supplier:', supplierId);
+                        // Xóa dòng "Không tìm thấy" nếu có
+                        if (noSuppliersRow) {
+                            noSuppliersRow.remove();
+                        }
+                        
+                        // Chỉ thêm nếu chưa tồn tại
+                        if (!existingRow) {
+                            const newRow = document.createElement('tr');
+                            newRow.innerHTML = rowHtml(payload);
+                            newRow.id = 'row-supplier-' + supplierId;
+                            newRow.setAttribute('data-supplier-id', supplierId);
+                            newRow.className = 'hover:bg-gray-50';
+                            
+                            // Thêm vào đầu bảng
+                            tbody.insertBefore(newRow, tbody.firstChild);
+                            console.log('New supplier row added successfully');
+                        } else {
+                            console.log('Supplier already exists, skipping');
+                        }
+                    } else if (payload.action === 'updated') {
+                        console.log('Updating supplier:', supplierId);
+                        if (existingRow) {
+                            // Cập nhật các cell trong row
+                            const cells = existingRow.querySelectorAll('td');
+                            if (cells.length >= 6) {
+                                if (payload.code !== undefined) cells[0].textContent = payload.code || '';
+                                if (payload.name !== undefined) cells[1].textContent = payload.name || '';
+                                if (payload.contactPerson !== undefined) cells[2].textContent = payload.contactPerson || '';
+                                if (payload.email !== undefined) cells[3].textContent = payload.email || '';
+                                if (payload.phone !== undefined) cells[4].textContent = payload.phone || '';
+                                if (payload.isActive !== undefined) cells[5].innerHTML = statusPill(!!payload.isActive);
+                            }
+                            console.log('Supplier row updated successfully');
+                        } else {
+                            console.warn('Supplier row not found for update:', supplierId);
+                        }
+                    } else if (payload.action === 'deleted') {
+                        console.log('Deleting supplier:', supplierId);
+                        if (existingRow) {
+                            existingRow.remove();
+                            
+                            // Nếu không còn row nào, hiển thị thông báo
+                            const remainingRows = tbody.querySelectorAll('tr[data-supplier-id]');
+                            if (remainingRows.length === 0) {
+                                const noDataRow = document.createElement('tr');
+                                noDataRow.id = 'no-suppliers-row';
+                                noDataRow.innerHTML = '<td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">Không tìm thấy nhà cung cấp nào.</td>';
+                                tbody.appendChild(noDataRow);
+                            }
+                            console.log('Supplier row deleted successfully');
+                        } else {
+                            console.warn('Supplier row not found for deletion:', supplierId);
+                        }
+                    }
+                });
+
+                // Start connection SAU KHI đã đăng ký event handler
+                connection.start()
+                    .then(() => {
+                        console.info('✓ Connected to SupplierHub successfully');
+                        console.info('Connection state:', connection.state);
+                    })
+                    .catch(err => {
+                        console.error('✗ Error connecting to SupplierHub:', err);
+                        console.error('Error details:', JSON.stringify(err));
+                    });
+            }
+
+            // Đợi DOM ready và load SignalR
+            function start() {
+                console.log('Starting SignalR initialization...');
+                loadSignalR()
+                    .then(() => {
+                        console.log('SignalR loaded, calling initializeSupplierHub...');
+                        initializeSupplierHub();
+                    })
+                    .catch(err => {
+                        console.error('Failed to load SignalR:', err);
+                        console.error('Please check your internet connection and try refreshing the page.');
+                    });
+            }
+            
+            console.log('Document readyState:', document.readyState);
+            if (document.readyState === 'loading') {
+                console.log('Waiting for DOMContentLoaded...');
+                document.addEventListener('DOMContentLoaded', start);
+            } else {
+                console.log('DOM already ready, starting immediately...');
+                start();
+            }
+        })();
+    </script>
+}
 

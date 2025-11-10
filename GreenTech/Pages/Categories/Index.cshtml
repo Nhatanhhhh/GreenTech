@@ -56,12 +56,12 @@
                     <th class="relative px-6 py-3"><span class="sr-only">Actions</span></th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody class="bg-white divide-y divide-gray-200" id="categories-body">
                 @if (Model.Categories != null && Model.Categories.Any())
                 {
                     @foreach (var category in Model.Categories)
                     {
-                        <tr class="hover:bg-gray-50">
+                        <tr class="hover:bg-gray-50" id="row-category-@category.Id">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">@category.Id</td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <img src="@(category.Image ?? "/images/no-image.png")" alt="@category.Name" class="w-16 h-16 object-cover rounded-lg">
@@ -93,4 +93,73 @@
         </table>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.12/signalr.min.js" integrity="sha512-NvQ4F8m9gB8r8QHjS4G5l2E8JzvlJqtY4zq7+oZkJv7FQz7m2+4E2qS2iAq3t0oW1p1rN6g7sQ1+Q5Y8wW3xzQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        (function () {
+            if (!window.signalR) {
+                console.error('SignalR client library failed to load.');
+                return;
+            }
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl('/hubs/category')
+                .withAutomaticReconnect()
+                .build();
+
+            connection.onreconnecting(error => console.warn('Reconnecting...', error));
+            connection.onreconnected(id => console.info('Reconnected', id));
+            connection.onclose(error => console.warn('Connection closed', error));
+
+            function statusPill(isActive) {
+                return `<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${isActive ? 'Hoạt động' : 'Không hoạt động'}</span>`;
+            }
+
+            function rowHtml(c) {
+                const img = c.image || '/images/no-image.png';
+                const parentName = c.parentCategoryName || '-';
+                return `
+                <tr class="hover:bg-gray-50" id="row-category-${c.categoryId}">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${c.categoryId}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <img src="${img}" alt="${c.name}" class="w-16 h-16 object-cover rounded-lg">
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${c.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${c.slug ?? ''}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${parentName}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${c.productsCount ?? 0}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${c.sortOrder ?? 0}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${statusPill(!!c.isActive)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <a href="/Categories/Edit/${c.categoryId}" class="text-indigo-600 hover:text-indigo-900 mr-3">Sửa</a>
+                        <a href="/Categories/Delete/${c.categoryId}" class="text-red-600 hover:text-red-900">Xóa</a>
+                    </td>
+                </tr>`;
+            }
+
+            connection.on('CategoryChanged', function (payload) {
+                const body = document.getElementById('categories-body');
+                if (!body || !payload) return;
+                const id = payload.categoryId;
+                const rowId = `row-category-${id}`;
+                const existing = document.getElementById(rowId);
+
+                if (payload.action === 'created') {
+                    // Prepend new row
+                    body.insertAdjacentHTML('afterbegin', rowHtml(payload));
+                } else if (payload.action === 'updated') {
+                    if (existing) {
+                        existing.outerHTML = rowHtml(payload);
+                    }
+                } else if (payload.action === 'deleted') {
+                    if (existing) existing.remove();
+                }
+            });
+
+            connection.start()
+                .then(() => console.info('SignalR connected to /hubs/category'))
+                .catch(err => console.error('SignalR connect error', err));
+        })();
+    </script>
+}
 

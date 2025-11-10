@@ -3,6 +3,11 @@ using DAL.DTOs.User;
 using GreenTech.Filters;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
+using System.IO;
+
+
 
 namespace GreenTech.Pages.Profile
 {

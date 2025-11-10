@@ -1,5 +1,7 @@
 ﻿using DAL.DTOs.Banner;
 using DAL.Models;
+using Microsoft.AspNetCore.Http;
+
 
 namespace BLL.Service.Banner.Interface
 {

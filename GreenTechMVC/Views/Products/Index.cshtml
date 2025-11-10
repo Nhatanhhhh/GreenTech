@@ -46,7 +46,7 @@
                 <!-- Categories -->
                 <div class="mb-6">
                     <h3 class="mb-2 text-sm font-semibold text-gray-700">Danh mục</h3>
-                    <div class="space-y-2">
+                    <div class="space-y-2" id="category-list">
                         <a href="@Url.Action("Index")" 
                            class="block text-sm @(!categoryId.HasValue ? "font-semibold text-green-600" : "text-gray-600")">
                             Tất cả
@@ -148,6 +148,7 @@
 
 
 @section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.12/signalr.min.js" integrity="sha512-NvQ4F8m9gB8r8QHjS4G5l2E8JzvlJqtY4zq7+oZkJv7FQz7m2+4E2qS2iAq3t0oW1p1rN6g7sQ1+Q5Y8wW3xzQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
         // Wire up list page Add to Cart with login redirect handling
         function postAddToCart(productId) {
@@ -179,5 +180,71 @@
                 })
                 .fail(function () { /* ignore */ });
         });
+
+        // SignalR: Subscribe to Category changes from Razor Pages app
+        (function () {
+            function buildCategoryLink(id, name) {
+                var url = '@Url.Action("Index", new { categoryId = "__ID__", search = searchTerm })'.replace('__ID__', id);
+                var a = document.createElement('a');
+                a.href = url;
+                a.className = 'block text-sm text-gray-600';
+                a.textContent = name;
+                return a;
+            }
+
+            function ensureSignalR() {
+                if (!window.signalR) {
+                    console.warn('SignalR not loaded on Products Index');
+                    return false;
+                }
+                return true;
+            }
+
+            function connectCategoryHub() {
+                if (!ensureSignalR()) return;
+                // Razor Pages base URL hosting the CategoryHub (use HTTPS to avoid mixed-content)
+                var razorBase = 'https://localhost:7142'; // đổi sang URL thật của Razor Pages
+                var connection = new signalR.HubConnectionBuilder()
+                    .withUrl(razorBase + '/hubs/category', { withCredentials: true })
+                    .withAutomaticReconnect()
+                    .build();
+
+                connection.on('CategoryChanged', function (payload) {
+                    var list = document.getElementById('category-list');
+                    if (!list || !payload) return;
+                    if (payload.action === 'created') {
+                        var link = buildCategoryLink(payload.categoryId, payload.name);
+                        list.appendChild(link);
+                    } else if (payload.action === 'updated') {
+                        // naive update: reload category list entry text if found
+                        var anchors = list.querySelectorAll('a[href*="categoryId="]');
+                        anchors.forEach(function (a) {
+                            var url = new URL(a.href, window.location.origin);
+                            if (Number(url.searchParams.get('categoryId')) === Number(payload.categoryId)) {
+                                a.textContent = payload.name;
+                            }
+                        });
+                    } else if (payload.action === 'deleted') {
+                        var anchorsDel = list.querySelectorAll('a[href*="categoryId="]');
+                        anchorsDel.forEach(function (a) {
+                            var url = new URL(a.href, window.location.origin);
+                            if (Number(url.searchParams.get('categoryId')) === Number(payload.categoryId)) {
+                                a.remove();
+                            }
+                        });
+                    }
+                });
+
+                connection.start()
+                    .then(function () { console.info('Connected to CategoryHub from MVC at ' + razorBase); })
+                    .catch(function (err) { console.error('Connect CategoryHub error', err); });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', connectCategoryHub);
+            } else {
+                connectCategoryHub();
+            }
+        })();
     </script>
 }
