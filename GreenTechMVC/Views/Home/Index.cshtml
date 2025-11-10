@@ -46,11 +46,12 @@
 <section class="bg-gray-50 py-12">
     <div class="container mx-auto px-4">
         <h2 class="mb-8 text-center text-3xl font-bold text-gray-800">Danh mục sản phẩm</h2>
-        <div class="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
+        <div id="categories-container" class="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
             @foreach (var category in categories.Take(6))
             {
                 <a asp-controller="Products" asp-action="Index" asp-route-categoryId="@category.Id" 
-                   class="group flex flex-col items-center rounded-lg bg-white p-6 shadow-md transition-all hover:shadow-xl">
+                   class="category-item group flex flex-col items-center rounded-lg bg-white p-6 shadow-md transition-all hover:shadow-xl"
+                   data-category-id="@category.Id">
                     <img src="@(!string.IsNullOrEmpty(category.Image) ? category.Image : "/images/no-image.png")" 
                          alt="@category.Name" 
                          class="mb-4 h-20 w-20 rounded-full object-cover">
@@ -187,5 +188,127 @@
                 })
                 .fail(function () { /* ignore */ });
         });
+    </script>
+    <script>
+        // SignalR: Subscribe to Category changes from Razor Pages app
+        (function () {
+            function ensureSignalR() {
+                if (!window.signalR) {
+                    console.warn('SignalR not loaded on Home Index');
+                    return false;
+                }
+                return true;
+            }
+
+            function createCategoryElement(category) {
+                var categoryId = category.categoryId || category.id;
+                var name = category.name || '';
+                var image = category.image || '/images/no-image.png';
+                var url = '@Url.Action("Index", "Products", new { categoryId = "__ID__" })'.replace('__ID__', categoryId);
+                
+                var link = document.createElement('a');
+                link.href = url;
+                link.className = 'category-item group flex flex-col items-center rounded-lg bg-white p-6 shadow-md transition-all hover:shadow-xl';
+                link.setAttribute('data-category-id', categoryId);
+                
+                var img = document.createElement('img');
+                img.src = image;
+                img.alt = name;
+                img.className = 'mb-4 h-20 w-20 rounded-full object-cover';
+                
+                var h3 = document.createElement('h3');
+                h3.className = 'text-center text-sm font-semibold text-gray-800 group-hover:text-green-600';
+                h3.textContent = name;
+                
+                link.appendChild(img);
+                link.appendChild(h3);
+                
+                return link;
+            }
+
+            function connectCategoryHub() {
+                if (!ensureSignalR()) return;
+                
+                // Razor Pages base URL hosting the CategoryHub
+                var razorBase = 'https://localhost:7142'; // URL của Razor Pages app
+                var connection = new signalR.HubConnectionBuilder()
+                    .withUrl(razorBase + '/hubs/category', { withCredentials: true })
+                    .withAutomaticReconnect()
+                    .build();
+
+                connection.on('CategoryChanged', function (payload) {
+                    if (!payload) return;
+                    
+                    var container = document.getElementById('categories-container');
+                    if (!container) return;
+                    
+                    var categoryId = payload.categoryId || payload.id;
+                    var existingItems = container.querySelectorAll('.category-item[data-category-id="' + categoryId + '"]');
+                    
+                    if (payload.action === 'created') {
+                        // Chỉ thêm nếu category chưa tồn tại và danh sách chưa đủ 6 items
+                        if (existingItems.length === 0) {
+                            var currentItems = container.querySelectorAll('.category-item');
+                            if (currentItems.length < 6) {
+                                // Chỉ thêm nếu category đang active
+                                if (payload.isActive !== false) {
+                                    var newElement = createCategoryElement(payload);
+                                    container.appendChild(newElement);
+                                    
+                                    // Nếu đã có 6 items, ẩn item cuối cùng
+                                    var allItems = container.querySelectorAll('.category-item');
+                                    if (allItems.length > 6) {
+                                        allItems[allItems.length - 1].style.display = 'none';
+                                    }
+                                }
+                            }
+                        }
+                    } else if (payload.action === 'updated') {
+                        // Cập nhật category nếu đã tồn tại
+                        existingItems.forEach(function(item) {
+                            var img = item.querySelector('img');
+                            var h3 = item.querySelector('h3');
+                            if (img && payload.image) {
+                                img.src = payload.image;
+                            }
+                            if (h3 && payload.name) {
+                                h3.textContent = payload.name;
+                            }
+                            // Ẩn nếu category bị deactivate
+                            if (payload.isActive === false) {
+                                item.style.display = 'none';
+                            } else {
+                                item.style.display = '';
+                            }
+                        });
+                    } else if (payload.action === 'deleted') {
+                        // Xóa category khỏi danh sách
+                        existingItems.forEach(function(item) {
+                            item.remove();
+                        });
+                        
+                        // Hiển thị lại item đã bị ẩn nếu có
+                        var hiddenItems = container.querySelectorAll('.category-item[style*="display: none"]');
+                        if (hiddenItems.length > 0) {
+                            hiddenItems[0].style.display = '';
+                        }
+                    }
+                });
+
+                connection.start()
+                    .then(function () { 
+                        console.info('Connected to CategoryHub from MVC Home at ' + razorBase); 
+                    })
+                    .catch(function (err) { 
+                        console.error('Connect CategoryHub error', err); 
+                    });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', connectCategoryHub);
+            } else {
+                connectCategoryHub();
+            }
+        })();
     </script>
 }

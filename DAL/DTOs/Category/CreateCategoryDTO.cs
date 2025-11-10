@@ -16,9 +16,8 @@ namespace DAL.DTOs.Category
 
         public int? ParentId { get; set; }
 
-        [Required(ErrorMessage = "Hình ảnh là bắt buộc")]
         [MaxLength(255)]
-        public string Image { get; set; }
+        public string? Image { get; set; }
 
         [Required(ErrorMessage = "Mô tả là bắt buộc")]
         public string Description { get; set; }
