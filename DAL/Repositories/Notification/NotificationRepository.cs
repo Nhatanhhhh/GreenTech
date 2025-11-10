@@ -2,6 +2,7 @@ using DAL.Context;
 using DAL.Models;
 using DAL.Repositories.Notification.Interface;
 using Microsoft.EntityFrameworkCore;
+using NotificationModel = DAL.Models.Notification;
 
 namespace DAL.Repositories.Notification
 {
@@ -14,14 +15,17 @@ namespace DAL.Repositories.Notification
             _context = context;
         }
 
-        public async Task<Notification?> GetByIdAsync(int notificationId)
+        public async Task<NotificationModel?> GetByIdAsync(int notificationId)
         {
             return await _context
                 .Notifications.Include(n => n.User)
                 .FirstOrDefaultAsync(n => n.Id == notificationId);
         }
 
-        public async Task<IEnumerable<Notification>> GetByUserIdAsync(int userId, int? limit = null)
+        public async Task<IEnumerable<NotificationModel>> GetByUserIdAsync(
+            int userId,
+            int? limit = null
+        )
         {
             var query = _context
                 .Notifications.Where(n => n.UserId == userId)
@@ -29,13 +33,13 @@ namespace DAL.Repositories.Notification
 
             if (limit.HasValue)
             {
-                query = (IOrderedQueryable<Notification>)query.Take(limit.Value);
+                query = (IOrderedQueryable<NotificationModel>)query.Take(limit.Value);
             }
 
             return await query.ToListAsync();
         }
 
-        public async Task<IEnumerable<Notification>> GetUnreadByUserIdAsync(int userId)
+        public async Task<IEnumerable<NotificationModel>> GetUnreadByUserIdAsync(int userId)
         {
             return await _context
                 .Notifications.Where(n => n.UserId == userId && !n.IsRead)
@@ -48,14 +52,14 @@ namespace DAL.Repositories.Notification
             return await _context.Notifications.CountAsync(n => n.UserId == userId && !n.IsRead);
         }
 
-        public async Task<Notification> CreateAsync(Notification notification)
+        public async Task<NotificationModel> CreateAsync(NotificationModel notification)
         {
             _context.Notifications.Add(notification);
             await _context.SaveChangesAsync();
             return notification;
         }
 
-        public async Task<Notification> UpdateAsync(Notification notification)
+        public async Task<NotificationModel> UpdateAsync(NotificationModel notification)
         {
             _context.Notifications.Update(notification);
             await _context.SaveChangesAsync();

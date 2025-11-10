@@ -1,16 +1,17 @@
 using DAL.Models;
+using NotificationModel = DAL.Models.Notification;
 
 namespace BLL.Service.Notification.Interface
 {
     public interface INotificationService
     {
-        Task<IEnumerable<Notification>> GetNotificationsByUserIdAsync(
+        Task<IEnumerable<NotificationModel>> GetNotificationsByUserIdAsync(
             int userId,
             int? limit = null
         );
-        Task<IEnumerable<Notification>> GetUnreadNotificationsByUserIdAsync(int userId);
+        Task<IEnumerable<NotificationModel>> GetUnreadNotificationsByUserIdAsync(int userId);
         Task<int> GetUnreadCountByUserIdAsync(int userId);
-        Task<Notification> CreateNotificationAsync(
+        Task<NotificationModel> CreateNotificationAsync(
             int userId,
             string title,
             string message,

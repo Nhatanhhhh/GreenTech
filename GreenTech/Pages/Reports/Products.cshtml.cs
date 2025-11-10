@@ -64,7 +64,7 @@ namespace GreenTech.Pages.Reports
                     ProductName = g.Key.Name,
                     Sku = g.Key.Sku,
                     QuantitySold = g.Sum(oi => oi.Quantity),
-                    Revenue = g.Sum(oi => oi.Price * oi.Quantity),
+                    Revenue = g.Sum(oi => oi.UnitSellPrice * oi.Quantity),
                 })
                 .OrderByDescending(p => p.QuantitySold)
                 .Take(10)

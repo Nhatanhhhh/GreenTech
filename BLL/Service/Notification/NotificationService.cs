@@ -3,6 +3,7 @@ using DAL.Models;
 using DAL.Models.Enum;
 using DAL.Repositories.Notification.Interface;
 using Microsoft.Extensions.Logging;
+using NotificationModel = DAL.Models.Notification;
 
 namespace BLL.Service.Notification
 {
@@ -20,7 +21,7 @@ namespace BLL.Service.Notification
             _logger = logger;
         }
 
-        public async Task<IEnumerable<Notification>> GetNotificationsByUserIdAsync(
+        public async Task<IEnumerable<NotificationModel>> GetNotificationsByUserIdAsync(
             int userId,
             int? limit = null
         )
@@ -28,7 +29,9 @@ namespace BLL.Service.Notification
             return await _notificationRepository.GetByUserIdAsync(userId, limit);
         }
 
-        public async Task<IEnumerable<Notification>> GetUnreadNotificationsByUserIdAsync(int userId)
+        public async Task<IEnumerable<NotificationModel>> GetUnreadNotificationsByUserIdAsync(
+            int userId
+        )
         {
             return await _notificationRepository.GetUnreadByUserIdAsync(userId);
         }
@@ -38,7 +41,7 @@ namespace BLL.Service.Notification
             return await _notificationRepository.GetUnreadCountByUserIdAsync(userId);
         }
 
-        public async Task<Notification> CreateNotificationAsync(
+        public async Task<NotificationModel> CreateNotificationAsync(
             int userId,
             string title,
             string message,
@@ -47,7 +50,7 @@ namespace BLL.Service.Notification
             int? referenceId = null
         )
         {
-            var notification = new Notification
+            var notification = new NotificationModel
             {
                 UserId = userId,
                 Title = title,

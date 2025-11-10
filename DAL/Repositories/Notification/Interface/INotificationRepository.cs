@@ -1,16 +1,17 @@
 using DAL.Models;
 using DAL.Models.Enum;
+using NotificationModel = DAL.Models.Notification;
 
 namespace DAL.Repositories.Notification.Interface
 {
     public interface INotificationRepository
     {
-        Task<Notification?> GetByIdAsync(int notificationId);
-        Task<IEnumerable<Notification>> GetByUserIdAsync(int userId, int? limit = null);
-        Task<IEnumerable<Notification>> GetUnreadByUserIdAsync(int userId);
+        Task<NotificationModel?> GetByIdAsync(int notificationId);
+        Task<IEnumerable<NotificationModel>> GetByUserIdAsync(int userId, int? limit = null);
+        Task<IEnumerable<NotificationModel>> GetUnreadByUserIdAsync(int userId);
         Task<int> GetUnreadCountByUserIdAsync(int userId);
-        Task<Notification> CreateAsync(Notification notification);
-        Task<Notification> UpdateAsync(Notification notification);
+        Task<NotificationModel> CreateAsync(NotificationModel notification);
+        Task<NotificationModel> UpdateAsync(NotificationModel notification);
         Task<bool> MarkAsReadAsync(int notificationId);
         Task<bool> MarkAllAsReadAsync(int userId);
         Task<bool> DeleteAsync(int notificationId);

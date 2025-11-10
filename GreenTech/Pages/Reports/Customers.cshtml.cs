@@ -5,6 +5,7 @@ using GreenTech.Filters;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using RoleName = DAL.Models.Enum.RoleName;
 
 namespace GreenTech.Pages.Reports
 {
@@ -37,14 +38,14 @@ namespace GreenTech.Pages.Reports
             var customers = await _context
                 .Users.Where(u =>
                     !u.UserRoles.Any(ur =>
-                        ur.Role.Name == "ROLE_ADMIN" || ur.Role.Name == "ROLE_STAFF"
+                        ur.Role.RoleName == RoleName.ROLE_ADMIN || ur.Role.RoleName == RoleName.ROLE_STAFF
                     )
                 )
                 .ToListAsync();
 
             TotalCustomers = customers.Count;
             ActiveCustomers = customers.Count(c => c.Status == UserStatus.ACTIVE);
-            BannedCustomers = customers.Count(c => c.Status == UserStatus.BANNED);
+            BannedCustomers = customers.Count(c => c.Status == UserStatus.BLOCKED);
 
             var start = StartDate ?? DateTime.Now.AddMonths(-1);
             var end = EndDate ?? DateTime.Now;
@@ -80,7 +81,7 @@ namespace GreenTech.Pages.Reports
             var customers = await _context
                 .Users.Where(u =>
                     !u.UserRoles.Any(ur =>
-                        ur.Role.Name == "ROLE_ADMIN" || ur.Role.Name == "ROLE_STAFF"
+                        ur.Role.RoleName == RoleName.ROLE_ADMIN || ur.Role.RoleName == RoleName.ROLE_STAFF
                     )
                 )
                 .Include(u => u.UserRoles)
