@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using BLL.Service.Cloudinary.Interface;
 
 namespace GreenTech.Pages.Banners
 {
@@ -13,16 +14,20 @@ namespace GreenTech.Pages.Banners
     {
         private readonly IBannerService _bannerService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IFileStorageService _fileStorageService;
 
-        public CreateModel(IBannerService bannerService, IHttpContextAccessor httpContextAccessor)
+        public CreateModel(IBannerService bannerService
+        , IHttpContextAccessor httpContextAccessor
+        , IFileStorageService fileStorageService
+        )
         {
             _bannerService = bannerService;
             _httpContextAccessor = httpContextAccessor;
+            _fileStorageService = fileStorageService;
         }
 
         [BindProperty]
         public CreateBannerDTO Banner { get; set; } = new CreateBannerDTO();
-
         public SelectList Positions { get; set; } =
             new SelectList(
                 new List<SelectListItem>
@@ -32,7 +37,9 @@ namespace GreenTech.Pages.Banners
                     new SelectListItem { Value = "SIDEBAR", Text = "Sidebar" },
                     new SelectListItem { Value = "FOOTER", Text = "Footer" },
                     new SelectListItem { Value = "POPUP", Text = "Popup" },
-                }
+                },
+                "Value",
+                "Text"
             );
 
         public IActionResult OnGet()
@@ -42,6 +49,19 @@ namespace GreenTech.Pages.Banners
 
         public async Task<IActionResult> OnPostAsync()
         {
+
+            var file = Request.Form.Files["ImageFile"];
+
+            if (file == null || file.Length == 0)
+            {
+                ModelState.AddModelError("Banner.ImageUrl", "Vui lòng chọn ảnh để tải lên.");
+                return Page();
+            }
+
+            var imageUrl = await _fileStorageService.SaveFileAsync(file, "banners");
+
+            Banner.ImageUrl = imageUrl;
+
             if (!ModelState.IsValid)
             {
                 return Page();
