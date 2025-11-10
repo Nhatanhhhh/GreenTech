@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading;
+using GreenTech.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -73,7 +74,8 @@ namespace GreenTech.Filters
                         Console.WriteLine(
                             $"[AdminAuthorize] Session initialization failed: {ex.Message}"
                         );
-                        context.Result = new RedirectResult("https://localhost:7135/Auth/Login");
+                        var loginUrl = UrlHelper.GetLoginUrl(httpContext);
+                        context.Result = new RedirectResult(loginUrl);
                         return;
                     }
                 }
@@ -86,7 +88,8 @@ namespace GreenTech.Filters
                 if (!session.IsAvailable)
                 {
                     Console.WriteLine("[AdminAuthorize] Session became unavailable after read");
-                    context.Result = new RedirectResult("https://localhost:7135/Auth/Login");
+                    var loginUrl = UrlHelper.GetLoginUrl(httpContext);
+                    context.Result = new RedirectResult(loginUrl);
                     return;
                 }
             }
@@ -97,7 +100,8 @@ namespace GreenTech.Filters
                 Console.WriteLine($"[AdminAuthorize] Stack trace: {ex.StackTrace}");
 
                 // Redirect to login if session read fails
-                context.Result = new RedirectResult("https://localhost:7135/Auth/Login");
+                var loginUrl = UrlHelper.GetLoginUrl(httpContext);
+                context.Result = new RedirectResult(loginUrl);
                 return;
             }
 
@@ -105,7 +109,8 @@ namespace GreenTech.Filters
             if (string.IsNullOrEmpty(isAuthenticated))
             {
                 ClearSessionCookie(httpContext);
-                context.Result = new RedirectResult("https://localhost:7135/Auth/Login");
+                var loginUrl = UrlHelper.GetLoginUrl(httpContext);
+                context.Result = new RedirectResult(loginUrl);
                 return;
             }
 
@@ -113,15 +118,76 @@ namespace GreenTech.Filters
             if (isAuthenticated != "true")
             {
                 ClearSessionCookie(httpContext);
-                context.Result = new RedirectResult("https://localhost:7135/Auth/Login");
+                var loginUrl = UrlHelper.GetLoginUrl(httpContext);
+                context.Result = new RedirectResult(loginUrl);
                 return;
             }
 
-            // Check if user has admin role
-            if (string.IsNullOrEmpty(userRoles) || !userRoles.Contains("ROLE_ADMIN"))
+            // Check if user has admin or staff role
+            if (string.IsNullOrEmpty(userRoles))
             {
-                context.Result = new RedirectResult("https://localhost:7135/Home/Index");
+                var homeUrl = UrlHelper.GetHomeUrl(httpContext);
+                context.Result = new RedirectResult(homeUrl);
                 return;
+            }
+
+            var isAdmin = userRoles.Contains("ROLE_ADMIN");
+            var isStaff = userRoles.Contains("ROLE_STAFF");
+
+            // If not admin or staff, redirect to home
+            if (!isAdmin && !isStaff)
+            {
+                var homeUrl = UrlHelper.GetHomeUrl(httpContext);
+                context.Result = new RedirectResult(homeUrl);
+                return;
+            }
+
+            // If Staff, check if they can access this page
+            if (isStaff && !isAdmin)
+            {
+                var path = httpContext.Request.Path.Value ?? "";
+
+                // Block Dashboard (Index page) for Staff
+                if (
+                    path.Equals("/Index", StringComparison.OrdinalIgnoreCase)
+                    || path.Equals("/", StringComparison.OrdinalIgnoreCase)
+                )
+                {
+                    Console.WriteLine("[AdminAuthorize] Staff tried to access Dashboard");
+                    httpContext.Session.SetString(
+                        "ErrorMessage",
+                        "Bạn không có quyền truy cập trang Dashboard. Vui lòng sử dụng trang Quản lý đơn hàng."
+                    );
+                    context.Result = new RedirectResult("/Orders/Index");
+                    return;
+                }
+
+                // Blocked routes for Staff (only Admin can access)
+                var blockedRoutes = new[]
+                {
+                    "/Products",
+                    "/Categories",
+                    "/CouponTemplates",
+                    "/Suppliers",
+                    "/Users",
+                };
+
+                var isBlockedRoute = blockedRoutes.Any(route =>
+                    path.StartsWith(route, StringComparison.OrdinalIgnoreCase)
+                );
+
+                if (isBlockedRoute)
+                {
+                    Console.WriteLine(
+                        $"[AdminAuthorize] Staff tried to access blocked route: {path}"
+                    );
+                    httpContext.Session.SetString(
+                        "ErrorMessage",
+                        "Bạn không có quyền truy cập trang này. Chỉ Admin mới có quyền truy cập."
+                    );
+                    context.Result = new RedirectResult("/Orders/Index");
+                    return;
+                }
             }
         }
 

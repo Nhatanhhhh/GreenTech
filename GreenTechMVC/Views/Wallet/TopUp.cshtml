@@ -4,48 +4,330 @@
     ViewData["Title"] = "Nạp tiền vào ví";
 }
 
-<div class="max-w-2xl mx-auto mt-8 bg-white rounded-lg shadow p-6">
-    <h1 class="text-2xl font-semibold text-gray-900 mb-6">Nạp tiền vào ví</h1>
+<style>
+    /* TopUp Card Animation - GreenTech Theme */
+    .topup-card {
+        position: relative;
+        background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+        overflow: hidden;
+        animation: cardPulse 3s ease-in-out infinite;
+    }
 
-    <form asp-action="TopUp" asp-controller="Wallet" method="post" class="space-y-5">
-        @Html.AntiForgeryToken()
+    .topup-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg,
+                transparent 30%,
+                rgba(255, 255, 255, 0.1) 50%,
+                transparent 70%);
+        animation: shimmer 3s infinite;
+    }
 
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Số tiền (VND)</label>
-            <input asp-for="Amount" type="number" min="10000" step="1000" class="w-full border rounded-lg px-3 py-2" />
-            <span asp-validation-for="Amount" class="text-sm text-red-600"></span>
+    .topup-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.2) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
+        animation: sparkle 4s ease-in-out infinite;
+    }
+
+    @@keyframes shimmer {
+        0% {
+            transform: translateX(-100%) translateY(-100%) rotate(45deg);
+        }
+
+        100% {
+            transform: translateX(100%) translateY(100%) rotate(45deg);
+        }
+    }
+
+    @@keyframes cardPulse {
+
+        0%,
+        100% {
+            box-shadow: 0 20px 60px rgba(16, 185, 129, 0.4);
+        }
+
+        50% {
+            box-shadow: 0 20px 80px rgba(16, 185, 129, 0.6), 0 0 40px rgba(255, 255, 255, 0.3);
+        }
+    }
+
+    @@keyframes sparkle {
+
+        0%,
+        100% {
+            opacity: 0.3;
+        }
+
+        50% {
+            opacity: 0.6;
+        }
+    }
+
+    /* Icon Animation */
+    .topup-icon {
+        animation: float 3s ease-in-out infinite;
+        filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+    }
+
+    @@keyframes float {
+
+        0%,
+        100% {
+            transform: translateY(0px) rotate(0deg);
+        }
+
+        50% {
+            transform: translateY(-10px) rotate(5deg);
+        }
+    }
+
+    /* Form Card */
+    .form-card {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .form-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.05), transparent);
+        transition: left 0.5s;
+    }
+
+    .form-card:hover::before {
+        left: 100%;
+    }
+
+    /* Input Fields Animation */
+    .form-input {
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .form-input:focus {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    /* Submit Button Bling Effect */
+    .submit-btn {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .submit-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.5);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+
+    .submit-btn:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.5);
+    }
+
+    /* Sparkle Particles - Green */
+    .sparkle-green {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: #10b981;
+        border-radius: 50%;
+        animation: sparkleFloat 3s infinite;
+        opacity: 0;
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
+    }
+
+    @@keyframes sparkleFloat {
+        0% {
+            opacity: 0;
+            transform: translateY(0) scale(0);
+        }
+
+        10% {
+            opacity: 1;
+            transform: translateY(-20px) scale(1);
+        }
+
+        90% {
+            opacity: 1;
+            transform: translateY(-100px) scale(1);
+        }
+
+        100% {
+            opacity: 0;
+            transform: translateY(-120px) scale(0);
+        }
+    }
+
+    /* Background Pattern - Green */
+    .bg-pattern-green {
+        background-image:
+            radial-gradient(circle at 20% 20%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(5, 150, 105, 0.1) 0%, transparent 50%);
+    }
+
+    /* Label Animation */
+    .form-label {
+        transition: all 0.3s ease;
+    }
+
+    .form-input:focus+.form-label,
+    .form-input:not(:placeholder-shown)+.form-label {
+        color: #10b981;
+        transform: translateY(-2px);
+    }
+</style>
+
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 bg-pattern-green">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header with Icon -->
+        <div class="text-center mb-8">
+            <div class="inline-block mb-4">
+                <div
+                    class="w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto topup-icon shadow-lg">
+                    <i class="fas fa-wallet text-4xl text-green-300"></i>
+                </div>
+            </div>
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Nạp tiền vào ví</h1>
+            <p class="text-gray-600">Thêm tiền vào ví của bạn một cách an toàn và nhanh chóng</p>
         </div>
 
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Cổng thanh toán</label>
-            <select asp-for="Gateway" class="w-full border rounded-lg px-3 py-2">
-                @if (ViewBag.AvailableGateways != null)
-                {
-                    @foreach (var gateway in ViewBag.AvailableGateways)
-                    {
-                        <option value="@gateway.Value">@gateway.DisplayName</option>
-                    }
-                }
-                else
-                {
-                    <option value="VNPAY">VNPay</option>
-                    <option value="MOMO">MoMo</option>
-                }
-            </select>
-            <span asp-validation-for="Gateway" class="text-sm text-red-600"></span>
+        <!-- TopUp Info Card -->
+        <div class="topup-card rounded-3xl shadow-2xl p-6 mb-8 relative text-white">
+            <!-- Sparkle Particles -->
+            <div class="sparkle-green" style="left: 10%; top: 20%; animation-delay: 0s;"></div>
+            <div class="sparkle-green" style="left: 30%; top: 40%; animation-delay: 1s;"></div>
+            <div class="sparkle-green" style="left: 70%; top: 30%; animation-delay: 2s;"></div>
+            <div class="sparkle-green" style="left: 90%; top: 60%; animation-delay: 0.5s;"></div>
+            <div class="sparkle-green" style="left: 50%; top: 80%; animation-delay: 1.5s;"></div>
+
+            <div class="relative z-10 flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                        <i class="fas fa-coins text-3xl text-green-300"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-1">Nạp tiền nhanh chóng</h3>
+                        <p class="text-sm text-white/80">Hỗ trợ nhiều phương thức thanh toán</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="w-3 h-3 bg-green-300 rounded-full animate-pulse"></div>
+                    <p class="text-xs text-white/80 mt-1">Bảo mật cao</p>
+                </div>
+            </div>
         </div>
 
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
-            <input asp-for="Description" class="w-full border rounded-lg px-3 py-2" />
+        <!-- Form Card -->
+        <div class="form-card bg-white rounded-xl shadow-lg p-8 relative">
+            <form asp-action="TopUp" asp-controller="Wallet" method="post" class="space-y-6">
+                @Html.AntiForgeryToken()
+
+                <div>
+                    <label asp-for="Amount" class="form-label block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-money-bill-wave text-green-600 mr-2"></i>
+                        Số tiền (VND) <span class="text-red-500">*</span>
+                    </label>
+                    <input asp-for="Amount" type="number" min="10000" step="1000"
+                        placeholder="Nhập số tiền tối thiểu 10,000 VND"
+                        class="form-input w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-all" />
+                    <span asp-validation-for="Amount" class="text-sm text-red-600 mt-1 block"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Gateway" class="form-label block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-credit-card text-green-600 mr-2"></i>
+                        Cổng thanh toán <span class="text-red-500">*</span>
+                    </label>
+                    <select asp-for="Gateway"
+                        class="form-input w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-all">
+                        @if (ViewBag.AvailableGateways != null)
+                        {
+                            @foreach (var gateway in ViewBag.AvailableGateways)
+                            {
+                                <option value="@gateway.Value">@gateway.DisplayName</option>
+                            }
+                        }
+                        else
+                        {
+                            <option value="VNPAY">VNPay</option>
+                            <option value="MOMO">MoMo</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Gateway" class="text-sm text-red-600 mt-1 block"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Description" class="form-label block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-file-alt text-green-600 mr-2"></i>
+                        Mô tả
+                    </label>
+                    <input asp-for="Description" placeholder="Nhập mô tả giao dịch (nếu có)"
+                        class="form-input w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-all" />
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit"
+                        class="submit-btn w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-green-300 font-bold py-4 rounded-xl shadow-lg relative z-10 flex items-center justify-center space-x-2">
+                        <i class="fas fa-credit-card mr-2"></i>
+                        <span>Tiếp tục thanh toán</span>
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </form>
         </div>
 
-        <div class="pt-2">
-            <button type="submit"
-                class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg">Tiếp tục thanh
-                toán</button>
+        <!-- Info Section -->
+        <div class="mt-8 bg-white rounded-xl shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-info-circle text-green-600 mr-2"></i>
+                Thông tin thanh toán
+            </h3>
+            <div class="space-y-3 text-sm text-gray-600">
+                <div class="flex items-center justify-between">
+                    <span>Số tiền tối thiểu: 10,000 VND</span>
+                    <i class="fas fa-check-circle text-green-500"></i>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span>Giao dịch được xử lý an toàn và bảo mật</span>
+                    <i class="fas fa-check-circle text-green-500"></i>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span>Tiền sẽ được cộng vào ví ngay sau khi thanh toán thành công</span>
+                    <i class="fas fa-check-circle text-green-500"></i>
+                </div>
+            </div>
         </div>
-    </form>
+    </div>
 </div>
 
 @section Scripts {

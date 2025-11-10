@@ -61,9 +61,19 @@
                     <label asp-for="Province" class="block text-sm font-medium text-gray-700 mb-1 font-['Roboto']">
                         @Html.DisplayNameFor(m => m.Province) <span class="text-red-500">*</span>
                     </label>
-                    <input asp-for="Province" type="text" class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
-                                  focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
-                        placeholder="Ví dụ: Hà Nội">
+                    <select asp-for="Province" id="province-select"
+                        class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
+                                   focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white cursor-pointer"
+                        data-current-value="@Model.Province">
+                        @if (!string.IsNullOrEmpty(Model.Province))
+                        {
+                            <option value="@Model.Province" selected>@Model.Province</option>
+                        }
+                        else
+                        {
+                            <option value="">-- Tỉnh/Thành phố --</option>
+                        }
+                    </select>
                     <span asp-validation-for="Province" class="mt-1 text-xs text-red-600"></span>
                 </div>
 
@@ -71,9 +81,19 @@
                     <label asp-for="District" class="block text-sm font-medium text-gray-700 mb-1 font-['Roboto']">
                         @Html.DisplayNameFor(m => m.District) <span class="text-red-500">*</span>
                     </label>
-                    <input asp-for="District" type="text" class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
-                                  focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
-                        placeholder="Ví dụ: Quận Ba Đình">
+                    <select asp-for="District" id="district-select"
+                        class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
+                                   focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white cursor-pointer"
+                        data-current-value="@Model.District">
+                        @if (!string.IsNullOrEmpty(Model.District))
+                        {
+                            <option value="@Model.District" selected>@Model.District</option>
+                        }
+                        else
+                        {
+                            <option value="">-- Quận/Huyện --</option>
+                        }
+                    </select>
                     <span asp-validation-for="District" class="mt-1 text-xs text-red-600"></span>
                 </div>
 
@@ -81,9 +101,19 @@
                     <label asp-for="Ward" class="block text-sm font-medium text-gray-700 mb-1 font-['Roboto']">
                         @Html.DisplayNameFor(m => m.Ward) <span class="text-red-500">*</span>
                     </label>
-                    <input asp-for="Ward" type="text" class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
-                                  focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
-                        placeholder="Ví dụ: Phường Trúc Bạch">
+                    <select asp-for="Ward" id="ward-select"
+                        class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
+                                   focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm bg-white cursor-pointer"
+                        data-current-value="@Model.Ward">
+                        @if (!string.IsNullOrEmpty(Model.Ward))
+                        {
+                            <option value="@Model.Ward" selected>@Model.Ward</option>
+                        }
+                        else
+                        {
+                            <option value="">-- Phường/Xã --</option>
+                        }
+                    </select>
                     <span asp-validation-for="Ward" class="mt-1 text-xs text-red-600"></span>
                 </div>
 
@@ -117,4 +147,380 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    @* --- SCRIPT FOR VIETNAM ADDRESS API - PRELOAD WITH DB VALUES --- *@
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const provinceSelect = document.getElementById("province-select");
+            const districtSelect = document.getElementById("district-select");
+            const wardSelect = document.getElementById("ward-select");
+            
+            // Check if elements exist
+            if (!provinceSelect || !districtSelect || !wardSelect) {
+                console.error("Address select elements not found");
+                return;
+            }
+            
+            // Backend API endpoint - proxy through our server to avoid Mixed Content and SSL issues
+            const apiBaseUrl = "/api/address/";
+
+            // Store current values from DB (from data attributes to avoid JS injection)
+            const currentProvince = provinceSelect.getAttribute('data-current-value') || '';
+            const currentDistrict = districtSelect.getAttribute('data-current-value') || '';
+            const currentWard = wardSelect.getAttribute('data-current-value') || '';
+
+            // Helper function to fetch data from backend API proxy
+            // This avoids Mixed Content errors and SSL certificate issues
+            async function fetchApi(endpoint) {
+                try {
+                    const response = await fetch(apiBaseUrl + endpoint, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                        credentials: 'same-origin',
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    return data;
+                } catch (error) {
+                    // API failed - return null to use DB values
+                    // Silently fail - DB values will be displayed and form will still work
+                    console.warn('Address API request failed:', error);
+                    return null;
+                }
+            }
+
+            // Reset dropdown but keep DB value as option
+            function resetDropdown(selectElement, defaultText, dbValue) {
+                selectElement.innerHTML = '';
+                if (dbValue) {
+                    const dbOption = new Option(dbValue, dbValue, true, true);
+                    selectElement.add(dbOption);
+                } else {
+                    selectElement.innerHTML = `<option value="">-- ${defaultText} --</option>`;
+                }
+            }
+
+            // Find and select option by value (case-insensitive, fuzzy matching)
+            function selectOptionByValue(selectElement, value) {
+                if (!value) return false;
+                for (let i = 0; i < selectElement.options.length; i++) {
+                    const option = selectElement.options[i];
+                    // Exact match
+                    if (option.value.toLowerCase() === value.toLowerCase()) {
+                        selectElement.selectedIndex = i;
+                        return true;
+                    }
+                    // Fuzzy match (contains)
+                    if (option.value.toLowerCase().includes(value.toLowerCase()) ||
+                        value.toLowerCase().includes(option.value.toLowerCase())) {
+                        selectElement.selectedIndex = i;
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            // Load Provinces and pre-select current value
+            async function loadProvinces() {
+                const provinces = await fetchApi("provinces");
+                if (!provinces || !Array.isArray(provinces)) {
+                    // API failed - ensure DB value is available and selected
+                    if (currentProvince) {
+                        // Check if option already exists
+                        const existingOption = Array.from(provinceSelect.options).find(opt => opt.value === currentProvince);
+                        if (!existingOption) {
+                            const dbOption = new Option(currentProvince, currentProvince);
+                            dbOption.setAttribute("data-db-value", "true");
+                            provinceSelect.insertBefore(dbOption, provinceSelect.firstChild);
+                        }
+                        selectOptionByValue(provinceSelect, currentProvince);
+                    }
+                    // API failed but DB values are preserved - form will still work
+                    return;
+                }
+
+                // Sort provinces alphabetically
+                provinces.sort((a, b) => a.name.localeCompare(b.name));
+
+                // Clear existing options except DB value
+                const dbOptionValue = currentProvince;
+                provinceSelect.innerHTML = '';
+
+                // Add DB value first if exists (to ensure it's available)
+                if (dbOptionValue) {
+                    const dbOption = new Option(dbOptionValue, dbOptionValue);
+                    dbOption.setAttribute("data-db-value", "true");
+                    provinceSelect.add(dbOption);
+                }
+
+                // Add all provinces from API
+                provinces.forEach(province => {
+                    // Skip if it's the same as DB value to avoid duplicate
+                    if (province.name !== dbOptionValue) {
+                        const option = new Option(province.name, province.name);
+                        option.setAttribute("data-code", province.code);
+                        provinceSelect.add(option);
+                    } else {
+                        // Update DB option with code if found
+                        const dbOption = Array.from(provinceSelect.options).find(opt => opt.value === dbOptionValue);
+                        if (dbOption) {
+                            dbOption.setAttribute("data-code", province.code);
+                        }
+                    }
+                });
+
+                // Select current province if exists
+                if (currentProvince) {
+                    selectOptionByValue(provinceSelect, currentProvince);
+                    // Load districts for current province
+                    const selectedOption = provinceSelect.options[provinceSelect.selectedIndex];
+                    if (selectedOption) {
+                        const provinceCode = selectedOption.getAttribute("data-code");
+                        if (provinceCode) {
+                            await loadDistricts(provinceCode);
+                        } else {
+                            // If DB value not in API, still try to load districts from current province name
+                            await loadDistrictsForProvinceName(currentProvince);
+                        }
+                    }
+                }
+            }
+
+            // Load districts for province code
+            async function loadDistricts(provinceCode) {
+                if (!provinceCode) {
+                    // Ensure DB value is available even if no code
+                    if (currentDistrict) {
+                        const existingOption = Array.from(districtSelect.options).find(opt => opt.value === currentDistrict);
+                        if (!existingOption) {
+                            const dbOption = new Option(currentDistrict, currentDistrict);
+                            dbOption.setAttribute("data-db-value", "true");
+                            districtSelect.insertBefore(dbOption, districtSelect.firstChild);
+                        }
+                    }
+                    return;
+                }
+
+                const provinceData = await fetchApi(`provinces/${provinceCode}?depth=2`);
+                if (!provinceData || !provinceData.districts || !Array.isArray(provinceData.districts)) {
+                    // API failed - ensure DB value is available
+                    if (currentDistrict) {
+                        const existingOption = Array.from(districtSelect.options).find(opt => opt.value === currentDistrict);
+                        if (!existingOption) {
+                            const dbOption = new Option(currentDistrict, currentDistrict);
+                            dbOption.setAttribute("data-db-value", "true");
+                            districtSelect.insertBefore(dbOption, districtSelect.firstChild);
+                        }
+                        selectOptionByValue(districtSelect, currentDistrict);
+                    }
+                    return;
+                }
+
+                // Sort districts alphabetically
+                provinceData.districts.sort((a, b) => a.name.localeCompare(b.name));
+
+                // Clear and add all districts
+                const dbDistrictValue = currentDistrict;
+                districtSelect.innerHTML = '';
+
+                // Add DB value first if exists
+                if (dbDistrictValue) {
+                    const dbOption = new Option(dbDistrictValue, dbDistrictValue);
+                    dbOption.setAttribute("data-db-value", "true");
+                    districtSelect.add(dbOption);
+                }
+
+                // Add all districts from API
+                provinceData.districts.forEach(district => {
+                    // Skip if it's the same as DB value to avoid duplicate
+                    if (district.name !== dbDistrictValue) {
+                        const option = new Option(district.name, district.name);
+                        option.setAttribute("data-code", district.code);
+                        districtSelect.add(option);
+                    } else {
+                        // Update DB option with code if found
+                        const dbOption = Array.from(districtSelect.options).find(opt => opt.value === dbDistrictValue);
+                        if (dbOption) {
+                            dbOption.setAttribute("data-code", district.code);
+                        }
+                    }
+                });
+
+                // Select current district if exists
+                if (currentDistrict) {
+                    selectOptionByValue(districtSelect, currentDistrict);
+                    // Load wards for current district
+                    const selectedOption = districtSelect.options[districtSelect.selectedIndex];
+                    if (selectedOption) {
+                        const districtCode = selectedOption.getAttribute("data-code");
+                        if (districtCode) {
+                            await loadWards(districtCode);
+                        } else {
+                            // If DB value not in API, still try to load wards
+                            await loadWardsForDistrictName(currentDistrict);
+                        }
+                    }
+                }
+            }
+
+            // Fallback: Load districts by province name (when code not available)
+            async function loadDistrictsForProvinceName(provinceName) {
+                const provinces = await fetchApi("provinces");
+                if (!provinces) return;
+
+                const province = provinces.find(p =>
+                    p.name.toLowerCase().includes(provinceName.toLowerCase()) ||
+                    provinceName.toLowerCase().includes(p.name.toLowerCase())
+                );
+
+                if (province && province.code) {
+                    await loadDistricts(province.code);
+                }
+            }
+
+            // Load wards for district code
+            async function loadWards(districtCode) {
+                if (!districtCode) {
+                    // Ensure DB value is available even if no code
+                    if (currentWard) {
+                        const existingOption = Array.from(wardSelect.options).find(opt => opt.value === currentWard);
+                        if (!existingOption) {
+                            const dbOption = new Option(currentWard, currentWard);
+                            dbOption.setAttribute("data-db-value", "true");
+                            wardSelect.insertBefore(dbOption, wardSelect.firstChild);
+                        }
+                        selectOptionByValue(wardSelect, currentWard);
+                    }
+                    return;
+                }
+
+                const districtData = await fetchApi(`districts/${districtCode}?depth=2`);
+                if (!districtData || !districtData.wards || !Array.isArray(districtData.wards)) {
+                    // API failed - ensure DB value is available
+                    if (currentWard) {
+                        const existingOption = Array.from(wardSelect.options).find(opt => opt.value === currentWard);
+                        if (!existingOption) {
+                            const dbOption = new Option(currentWard, currentWard);
+                            dbOption.setAttribute("data-db-value", "true");
+                            wardSelect.insertBefore(dbOption, wardSelect.firstChild);
+                        }
+                        selectOptionByValue(wardSelect, currentWard);
+                    }
+                    return;
+                }
+
+                // Sort wards alphabetically
+                districtData.wards.sort((a, b) => a.name.localeCompare(b.name));
+
+                // Clear and add all wards
+                const dbWardValue = currentWard;
+                wardSelect.innerHTML = '';
+
+                // Add DB value first if exists
+                if (dbWardValue) {
+                    const dbOption = new Option(dbWardValue, dbWardValue);
+                    dbOption.setAttribute("data-db-value", "true");
+                    wardSelect.add(dbOption);
+                }
+
+                // Add all wards from API
+                districtData.wards.forEach(ward => {
+                    // Skip if it's the same as DB value to avoid duplicate
+                    if (ward.name !== dbWardValue) {
+                        const option = new Option(ward.name, ward.name);
+                        wardSelect.add(option);
+                    }
+                });
+
+                // Select current ward if exists
+                if (currentWard) {
+                    selectOptionByValue(wardSelect, currentWard);
+                }
+            }
+
+            // Fallback: Load wards by district name
+            async function loadWardsForDistrictName(districtName) {
+                // Try to find district code from all provinces
+                const provinces = await fetchApi("provinces");
+                if (!provinces) return;
+
+                for (const province of provinces) {
+                    const provinceData = await fetchApi(`provinces/${province.code}?depth=2`);
+                    if (provinceData && provinceData.districts) {
+                        const district = provinceData.districts.find(d =>
+                            d.name.toLowerCase().includes(districtName.toLowerCase()) ||
+                            districtName.toLowerCase().includes(d.name.toLowerCase())
+                        );
+
+                        if (district && district.code) {
+                            await loadWards(district.code);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // Event: Province selection changed
+            provinceSelect.addEventListener("change", async function () {
+                const selectedOption = this.options[this.selectedIndex];
+                const provinceCode = selectedOption.getAttribute("data-code");
+                const selectedValue = this.value;
+
+                // If user selects the same province as DB value, restore districts/wards
+                if (selectedValue === currentProvince) {
+                    // Restore original DB values
+                    if (provinceCode) {
+                        await loadDistricts(provinceCode);
+                    } else {
+                        await loadDistrictsForProvinceName(selectedValue);
+                    }
+                    return;
+                }
+
+                // Reset when province changes
+                resetDropdown(districtSelect, "Quận/Huyện", null);
+                resetDropdown(wardSelect, "Phường/Xã", null);
+
+                if (!provinceCode) {
+                    return;
+                }
+
+                await loadDistricts(provinceCode);
+            });
+
+            // Event: District selection changed
+            districtSelect.addEventListener("change", async function () {
+                const selectedOption = this.options[this.selectedIndex];
+                const districtCode = selectedOption.getAttribute("data-code");
+                const selectedValue = this.value;
+
+                // If user selects the same district as DB value, restore wards
+                if (selectedValue === currentDistrict) {
+                    if (districtCode) {
+                        await loadWards(districtCode);
+                    } else {
+                        await loadWardsForDistrictName(selectedValue);
+                    }
+                    return;
+                }
+
+                // Reset when district changes
+                resetDropdown(wardSelect, "Phường/Xã", null);
+
+                if (!districtCode) {
+                    return;
+                }
+
+                await loadWards(districtCode);
+            });
+
+            // Initial load
+            loadProvinces();
+        });
+    </script>
 }

@@ -102,6 +102,24 @@
             </div>
         </div>
 
+        <!-- Reviews Section -->
+        <div class="mt-12">
+            <div id="reviews-section" data-product-id="@(product?.Id ?? 0)">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Đánh giá từ khách hàng</h2>
+                    <div id="reviews-count" class="text-sm text-gray-500"></div>
+                </div>
+                <div id="reviews-list" class="space-y-6">
+                    <div class="text-center py-12">
+                        <div class="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-green-600 mb-4">
+                        </div>
+                        <p class="text-gray-500 text-lg">Đang tải đánh giá...</p>
+                    </div>
+                </div>
+                <div id="review-pagination" class="mt-8 flex justify-center"></div>
+            </div>
+        </div>
+
         <!-- Related Products -->
         @if (relatedProducts.Any())
         {
@@ -203,8 +221,278 @@ else
                 });
             }
 
-            // Initialize image gallery when page loads
             initImageGallery();
-        })();
+            })();
+
+        // Reviews functionality
+        const reviewPageSize = 10;
+
+        async function loadReviews(productId, page = 1) {
+            if (!productId || productId <= 0) return;
+
+            const reviewsList = document.getElementById('reviews-list');
+            const paginationDiv = document.getElementById('review-pagination');
+            const reviewsCountDiv = document.getElementById('reviews-count');
+
+            if (!reviewsList) return;
+
+            reviewsList.innerHTML = `
+                        <div class="text-center py-12">
+                            <div class="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-green-600 mb-4"></div>
+                            <p class="text-gray-500 text-lg">Đang tải đánh giá...</p>
+                        </div>
+                    `;
+
+            try {
+                const response = await fetch(`/Reviews/GetReviews?productId=${productId}&page=${page}&pageSize=${reviewPageSize}`);
+                if (!response.ok) throw new Error('Không thể tải đánh giá');
+
+                const data = await response.json();
+                const reviews = data?.Reviews || data?.reviews || [];
+                const totalCount = data?.TotalCount ?? data?.totalCount ?? 0;
+                const reviewsArray = Array.isArray(reviews) ? reviews : [];
+
+                if (reviewsCountDiv && totalCount > 0) {
+                    reviewsCountDiv.innerHTML = `<span class="font-semibold text-green-600">${totalCount}</span> đánh giá`;
+                }
+
+                renderReviews(reviewsArray, reviewsList);
+                renderPagination(data, paginationDiv, productId);
+            } catch (error) {
+                reviewsList.innerHTML = `
+                            <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                                <i class="fas fa-exclamation-triangle text-red-500 text-2xl mb-2"></i>
+                                <p class="text-red-600">${escapeHtml(error.message || 'Có lỗi xảy ra khi tải đánh giá')}</p>
+                                <button onclick="loadReviews(${productId}, ${page})" 
+                                    class="mt-3 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm">
+                                    Thử lại
+                                </button>
+                            </div>
+                        `;
+            }
+        }
+
+
+        function renderStars(rating) {
+            let html = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= Math.floor(rating)) {
+                    html += '<i class="fas fa-star text-yellow-400"></i>';
+                } else if (i === Math.ceil(rating) && rating % 1 !== 0) {
+                    html += '<i class="fas fa-star-half-alt text-yellow-400"></i>';
+                } else {
+                    html += '<i class="far fa-star text-gray-300"></i>';
+                }
+            }
+            return html;
+        }
+
+        function renderReviews(reviews, container) {
+            if (!container) return;
+
+            const reviewsArray = Array.isArray(reviews) ? reviews : [];
+
+            if (reviewsArray.length === 0) {
+                container.innerHTML = `
+                            <div class="bg-white rounded-lg shadow-md p-12 text-center">
+                                <i class="fas fa-comments text-6xl text-gray-300 mb-4"></i>
+                                <h3 class="text-xl font-bold text-gray-800 mb-2">Chưa có đánh giá nào</h3>
+                                <p class="text-gray-600">Sản phẩm này hiện chưa có đánh giá từ khách hàng.</p>
+                            </div>
+                        `;
+                return;
+            }
+
+            container.innerHTML = reviewsArray.map(review => {
+                const getValue = (pascal, camel, def = '') => review[pascal] ?? review[camel] ?? def;
+
+                const isAnonymous = getValue('IsAnonymous', 'isAnonymous', false);
+                const userName = isAnonymous ? 'Khách hàng ẩn danh' : getValue('UserName', 'userName', 'Khách hàng');
+                const userAvatar = getValue('UserAvatar', 'userAvatar', '');
+                const rating = getValue('Rating', 'rating', 0);
+                const content = getValue('Content', 'content', '');
+                const createdAt = getValue('CreatedAt', 'createdAt', '');
+
+                // Parse MediaUrls
+                let mediaUrls = [];
+                const mediaUrlsRaw = review.MediaUrls || review.mediaUrls;
+                if (mediaUrlsRaw) {
+                    mediaUrls = Array.isArray(mediaUrlsRaw)
+                        ? mediaUrlsRaw
+                        : (typeof mediaUrlsRaw === 'string' ? mediaUrlsRaw.split(',').map(u => u.trim()).filter(u => u) : []);
+                }
+
+                // Parse Replies
+                const replies = review.Replies || review.replies || [];
+                const repliesArray = Array.isArray(replies) ? replies : [];
+
+                // Render avatar logic:
+                // - Nếu ẩn danh: LUÔN hiển thị icon
+                // - Nếu không ẩn danh: hiển thị avatar nếu có, nếu không thì icon
+                let avatarHtml;
+                if (isAnonymous) {
+                    // Ẩn danh → luôn dùng icon
+                    avatarHtml = `<div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                        <i class="fa-regular fa-user text-gray-500 text-xl"></i>
+                    </div>`;
+                } else {
+                    // Không ẩn danh → kiểm tra avatar
+                    const avatarStr = String(userAvatar || '').trim();
+                    const isInvalidAvatar = !avatarStr || 
+                        avatarStr.includes('no-avatar') || 
+                        avatarStr === '/images/no-avatar.png' ||
+                        avatarStr.toLowerCase().includes('no-avatar.png');
+                    
+                    const hasValidAvatar = !isInvalidAvatar && 
+                        (avatarStr.startsWith('http://') || avatarStr.startsWith('https://') || (avatarStr.startsWith('/') && avatarStr.length > 1 && !avatarStr.includes('no-avatar')));
+                    
+                    if (hasValidAvatar) {
+                        // Có avatar hợp lệ → hiển thị avatar
+                        avatarHtml = `<img src="${escapeHtml(avatarStr)}" alt="${escapeHtml(userName)}" 
+                            class="w-12 h-12 rounded-full object-cover border-2 border-gray-300"
+                            onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center\\'><i class=\\'fa-regular fa-user text-gray-500 text-xl\\'></i></div>';">`;
+                    } else {
+                        // Không có avatar hợp lệ → hiển thị icon
+                        avatarHtml = `<div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                            <i class="fa-regular fa-user text-gray-500 text-xl"></i>
+                        </div>`;
+                    }
+                }
+
+                return `
+                    <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-all border border-gray-100">
+                        <div class="flex items-start gap-4">
+                            ${avatarHtml}
+                            <div class="flex-1">
+                                <div class="flex items-start justify-between mb-3 flex-wrap gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <h4 class="font-semibold text-gray-900">${escapeHtml(userName)}</h4>
+                                        ${isAnonymous ? '<span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Ẩn danh</span>' : ''}
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <div class="flex items-center gap-1">${renderStars(rating)}</div>
+                                        <span class="text-sm text-gray-500">${formatDate(createdAt)}</span>
+                                    </div>
+                                </div>
+                                ${content ? `<div class="mb-4 p-4 bg-gray-50 rounded-lg border-l-4 border-green-500">
+                                        <p class="text-gray-700 leading-relaxed whitespace-pre-wrap">${escapeHtml(content)}</p>
+                                    </div>` : ''}
+                                ${mediaUrls.length > 0 ? `<div class="mb-4 flex gap-3 flex-wrap">
+                                        ${mediaUrls.map(url => `<img src="${url}" alt="Review" 
+                                            class="w-28 h-28 object-cover rounded-lg border-2 border-gray-200 cursor-pointer hover:border-green-500" 
+                                            onclick="window.open('${url}', '_blank')" onerror="this.style.display='none'">`).join('')}
+                                    </div>` : ''}
+                                ${repliesArray.length > 0 ? `<div class="mt-4 pt-4 border-t border-gray-200">
+                                        <div class="mb-2 text-sm font-semibold text-gray-700">Phản hồi từ cửa hàng (${repliesArray.length})</div>
+                                        <div class="space-y-3">
+                                            ${repliesArray.map(reply => {
+                                    const rName = reply.UserName || reply.userName || 'Admin';
+                                    const rContent = reply.Content || reply.content || '';
+                                    const rDate = reply.CreatedAt || reply.createdAt || '';
+                                    const rRoles = reply.UserRoles || reply.userRoles || [];
+                                    const rolesArray = Array.isArray(rRoles) ? rRoles : [];
+                                    const isAdmin = rolesArray.includes('ROLE_ADMIN');
+                                    const isStaff = rolesArray.includes('ROLE_STAFF');
+                                    
+                                    return `<div class="flex items-start gap-3 pl-4 border-l-4 border-green-500 bg-green-50 rounded-r-lg p-4">
+                                                    <div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center">
+                                                        <i class="fas fa-user-tie text-white text-sm"></i>
+                                                    </div>
+                                                    <div class="flex-1">
+                                                        <div class="flex items-center gap-2 mb-2 flex-wrap">
+                                                            <span class="font-semibold text-sm text-gray-900">${escapeHtml(rName)}</span>
+                                                            ${isAdmin ? '<span class="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full font-medium">Admin</span>' : ''}
+                                                            ${isStaff ? '<span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">Staff</span>' : ''}
+                                                            <span class="text-xs text-gray-500">${formatDate(rDate)}</span>
+                                                        </div>
+                                                        <p class="text-sm text-gray-700 leading-relaxed">${escapeHtml(rContent)}</p>
+                                                    </div>
+                                                </div>`;
+                                }).join('')}
+                                        </div>
+                                    </div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                }).join('');
+            }
+
+            function renderPagination(data, container, productId) {
+                if (!container) return;
+
+                const getValue = (pascal, camel, def = 0) => data?.[pascal] ?? data?.[camel] ?? def;
+                const totalPages = getValue('TotalPages', 'totalPages');
+                const pageNumber = getValue('PageNumber', 'pageNumber', 1);
+                const hasPreviousPage = getValue('HasPreviousPage', 'hasPreviousPage', false);
+                const hasNextPage = getValue('HasNextPage', 'hasNextPage', false);
+
+                if (totalPages <= 1) {
+                    container.innerHTML = '';
+                    return;
+                }
+
+                let html = '<div class="flex gap-2 justify-center flex-wrap">';
+                if (hasPreviousPage) {
+                    html += `<button onclick="loadReviews(${productId}, ${pageNumber - 1})" 
+                        class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">Trước</button>`;
+                }
+                for (let i = 1; i <= totalPages; i++) {
+                    const activeClass = i === pageNumber ? 'bg-green-600 text-white' : 'border border-gray-300 hover:bg-gray-50';
+                    html += `<button onclick="loadReviews(${productId}, ${i})" 
+                        class="px-4 py-2 rounded-md ${activeClass}">${i}</button>`;
+                }
+                if (hasNextPage) {
+                    html += `<button onclick="loadReviews(${productId}, ${pageNumber + 1})" 
+                        class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">Sau</button>`;
+                }
+                html += '</div>';
+                container.innerHTML = html;
+            }
+
+            function formatDate(dateString) {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
+                const diffDays = Math.floor(diffMs / 86400000);
+
+                if (diffMins < 1) return 'Vừa xong';
+                if (diffMins < 60) return `${ diffMins } phút trước`;
+                if (diffHours < 24) return `${ diffHours } giờ trước`;
+                if (diffDays < 7) return `${ diffDays } ngày trước`;
+
+                return date.toLocaleDateString('vi-VN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // Load reviews when page is ready
+            @if (product != null && product.Id > 0)
+            {
+                <text>
+                    (function() {
+                        if (document.readyState === 'loading') {
+                            document.addEventListener('DOMContentLoaded', function() {
+                                loadReviews(@product.Id);
+                            });
+                        } else {
+                            // DOM already loaded, call immediately
+                            loadReviews(@product.Id);
+                        }
+                    })();
+                </text>
+            }
     </script>
 }

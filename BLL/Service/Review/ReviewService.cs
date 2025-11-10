@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Threading.Tasks;
+using BLL.Service.Cloudinary.Interface;
 using BLL.Service.Review.Interface;
 using DAL.DTOs.Review;
 using DAL.Models.Enum;
 using DAL.Repositories.Review.Interface;
-using ReviewModel = DAL.Models.Review;
 using Microsoft.AspNetCore.Http;
-using BLL.Service.Cloudinary.Interface;
+using ReviewModel = DAL.Models.Review;
 
 namespace BLL.Service.Review
 {
@@ -15,10 +15,15 @@ namespace BLL.Service.Review
         private readonly IReviewRepository _reviewRepository;
         private readonly IFileStorageService _fileStorageService;
 
-        public ReviewService(IReviewRepository reviewRepository, IFileStorageService fileStorageService)
+        public ReviewService(
+            IReviewRepository reviewRepository,
+            IFileStorageService fileStorageService
+        )
         {
-            _reviewRepository = reviewRepository ?? throw new ArgumentNullException(nameof(reviewRepository));
-            _fileStorageService = fileStorageService ?? throw new ArgumentNullException(nameof(fileStorageService));
+            _reviewRepository =
+                reviewRepository ?? throw new ArgumentNullException(nameof(reviewRepository));
+            _fileStorageService =
+                fileStorageService ?? throw new ArgumentNullException(nameof(fileStorageService));
         }
 
         public async Task<ReviewModel> CreateReviewAsync(CreateReviewDTO dto)
@@ -60,6 +65,7 @@ namespace BLL.Service.Review
         {
             return await _reviewRepository.GetAllReviewsAsync();
         }
+
         public async Task<string> UploadReviewMediaAsync(int reviewId, IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -80,6 +86,46 @@ namespace BLL.Service.Review
             await _reviewRepository.UpdateReviewAsync(review);
 
             return mediaUrl;
+        }
+
+        public async Task<ReviewPaginationDTO> GetReviewsByProductIdAsync(
+            int productId,
+            int pageNumber,
+            int pageSize,
+            int? currentUserId = null
+        )
+        {
+            var reviews = await _reviewRepository.GetReviewsByProductIdAsync(
+                productId,
+                pageNumber,
+                pageSize
+            );
+            var totalCount = await _reviewRepository.GetReviewsCountByProductIdAsync(productId);
+
+            return DAL.Utils.AutoMapper.AutoMapper.ToReviewPaginationDTO(
+                reviews,
+                totalCount,
+                pageNumber,
+                pageSize,
+                currentUserId
+            );
+        }
+
+        public async Task<ReviewStatisticsDTO> GetReviewStatisticsByProductIdAsync(int productId)
+        {
+            var reviews = await _reviewRepository.GetApprovedReviewsByProductIdAsync(productId);
+            return DAL.Utils.AutoMapper.AutoMapper.ToReviewStatisticsDTO(reviews);
+        }
+
+        public async Task<ReviewModel?> GetReviewByOrderItemIdAsync(int orderItemId)
+        {
+            return await _reviewRepository.GetReviewByOrderItemIdAsync(orderItemId);
+        }
+
+        public async Task<bool> CheckReviewExistsForOrderItemAsync(int orderItemId)
+        {
+            var review = await _reviewRepository.GetReviewByOrderItemIdAsync(orderItemId);
+            return review != null;
         }
     }
 }

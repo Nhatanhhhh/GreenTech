@@ -1,4 +1,4 @@
-
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BLL.Service.ReviewReply.Interface;
@@ -25,7 +25,7 @@ namespace BLL.Service.ReviewReply
                 UserId = dto.UserId,
                 Content = dto.Content,
                 CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
+                UpdatedAt = DateTime.Now,
             };
             return await _replyRepository.CreateReplyAsync(reply);
         }
@@ -38,6 +38,10 @@ namespace BLL.Service.ReviewReply
         public async Task<bool> DeleteReplyAsync(int replyId, int userId)
         {
             return await _replyRepository.DeleteReplyAsync(replyId, userId);
+        }
+        public async Task<ReviewReplyModel?> UpdateReplyAsync(int replyId, int userId, string content)
+        {
+            return await _replyRepository.UpdateReplyAsync(replyId, userId, content);
         }
     }
 }

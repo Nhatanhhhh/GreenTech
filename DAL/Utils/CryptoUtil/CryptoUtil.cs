@@ -75,7 +75,11 @@ namespace DAL.Utils.CryptoUtil
             string dataWithSalt = $"{password}{Convert.ToBase64String(salt)}";
 
             // Compute HMAC-SHA512
-            string hmacHash = HMacBase64Encode(HMACSHA512, key, dataWithSalt);
+            string? hmacHash = HMacBase64Encode(HMACSHA512, key, dataWithSalt);
+            if (hmacHash == null)
+            {
+                throw new InvalidOperationException("Failed to generate password hash");
+            }
 
             // Return salt:hash format
             return $"{Convert.ToBase64String(salt)}:{hmacHash}";
@@ -114,7 +118,11 @@ namespace DAL.Utils.CryptoUtil
             string dataWithSalt = $"{providedPassword}{Convert.ToBase64String(salt)}";
 
             // Compute HMAC-SHA512
-            string computedHash = HMacBase64Encode(HMACSHA512, key, dataWithSalt);
+            string? computedHash = HMacBase64Encode(HMACSHA512, key, dataWithSalt);
+            if (computedHash == null)
+            {
+                return false;
+            }
 
             return storedHash == computedHash;
         }
@@ -157,15 +165,33 @@ namespace DAL.Utils.CryptoUtil
         /// <param name="key"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        private static byte[] HMacEncode(string algorithm, string key, string data)
+        private static byte[]? HMacEncode(string algorithm, string key, string data)
         {
             try
             {
-                using (var hmac = HMAC.Create(algorithm))
+                HMAC? hmac = null;
+                if (algorithm == HMACSHA512)
                 {
-                    if (hmac == null)
-                        return null;
+                    hmac = new HMACSHA512();
+                }
+                else if (algorithm == HMACSHA256)
+                {
+                    hmac = new HMACSHA256();
+                }
+                else if (algorithm == HMACSHA1)
+                {
+                    hmac = new HMACSHA1();
+                }
+                else if (algorithm == HMACMD5)
+                {
+                    hmac = new HMACMD5();
+                }
 
+                if (hmac == null)
+                    return null;
+
+                using (hmac)
+                {
                     var keyBytes = UTF8.GetBytes(key);
                     var dataBytes = UTF8.GetBytes(data);
                     hmac.Key = keyBytes;
@@ -185,9 +211,9 @@ namespace DAL.Utils.CryptoUtil
         /// <param name="key"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        public static string HMacBase64Encode(string algorithm, string key, string data)
+        public static string? HMacBase64Encode(string algorithm, string key, string data)
         {
-            byte[] hmacEncodeBytes = HMacEncode(algorithm, key, data);
+            byte[]? hmacEncodeBytes = HMacEncode(algorithm, key, data);
             return hmacEncodeBytes != null ? Convert.ToBase64String(hmacEncodeBytes) : null;
         }
 
@@ -198,9 +224,9 @@ namespace DAL.Utils.CryptoUtil
         /// <param name="key"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        public static string HMacHexStringEncode(string algorithm, string key, string data)
+        public static string? HMacHexStringEncode(string algorithm, string key, string data)
         {
-            byte[] hmacEncodeBytes = HMacEncode(algorithm, key, data);
+            byte[]? hmacEncodeBytes = HMacEncode(algorithm, key, data);
             return hmacEncodeBytes != null ? ByteArrayToHexString(hmacEncodeBytes) : null;
         }
 
@@ -408,7 +434,11 @@ namespace DAL.Utils.CryptoUtil
             }
 
             // Generate HMAC signature
-            string hmacSignature = HMacBase64Encode(HMACSHA512, key, encodedPayload);
+            string? hmacSignature = HMacBase64Encode(HMACSHA512, key, encodedPayload);
+            if (hmacSignature == null)
+            {
+                throw new InvalidOperationException("Failed to generate password reset token");
+            }
 
             // Return token: encodedPayload:hmacSignature
             return $"{encodedPayload}:{hmacSignature}";
@@ -444,8 +474,8 @@ namespace DAL.Utils.CryptoUtil
             }
 
             // Verify HMAC signature
-            string computedHmac = HMacBase64Encode(HMACSHA512, key, encodedPayload);
-            if (computedHmac != providedHmac)
+            string? computedHmac = HMacBase64Encode(HMACSHA512, key, encodedPayload);
+            if (computedHmac == null || computedHmac != providedHmac)
                 return (false, null, 0);
 
             try

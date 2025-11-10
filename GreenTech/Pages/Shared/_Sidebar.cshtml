@@ -1,3 +1,37 @@
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    // Check user role - declare early for use in logo/brand
+    var userRoles = HttpContextAccessor.HttpContext?.Session.GetString("UserRoles") ?? "";
+    var isAdmin = !string.IsNullOrEmpty(userRoles) && userRoles.Contains("ROLE_ADMIN");
+    var isStaff = !string.IsNullOrEmpty(userRoles) && userRoles.Contains("ROLE_STAFF") && !isAdmin;
+    
+    var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+    var isDashboard = currentPage == "/Index";
+    var isProducts = currentPage.StartsWith("/Products");
+    var isCategories = currentPage.StartsWith("/Categories");
+    var isSuppliers = currentPage.StartsWith("/Suppliers");
+    var isBlogs = currentPage.StartsWith("/Blogs");
+    var isBanners = currentPage.StartsWith("/Banners");
+    var isCouponTemplates = currentPage.StartsWith("/CouponTemplates");
+    var isOrders = currentPage.StartsWith("/Orders");
+    var isUsers = currentPage.StartsWith("/Users");
+    var isReviews = currentPage.StartsWith("/Reviews");
+    var isProfile = currentPage.StartsWith("/Profile");
+        
+    string GetActiveClass(string pagePath) {
+        if (currentPage.StartsWith(pagePath))
+            return "bg-green-50 text-green-700 font-semibold border-l-4 border-green-500";
+        return "text-gray-700 hover:bg-gray-100 hover:text-gray-900 font-medium";
+    }
+    
+    string GetIconClass(string pagePath) {
+        if (currentPage.StartsWith(pagePath))
+            return "text-green-600";
+        return "text-gray-400 group-hover:text-gray-600";
+    }
+}
+
 <!-- Mobile Sidebar Overlay -->
 <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden"></div>
 
@@ -13,7 +47,7 @@
             </div>
             <div>
                 <h1 class="text-xl font-bold text-gray-900">GreenTech</h1>
-                <p class="text-xs text-gray-500">Admin Dashboard</p>
+                <p class="text-xs text-gray-500">@(isStaff ? "Staff Panel" : "Admin Dashboard")</p>
             </div>
         </div>
         <!-- Close button for mobile -->
@@ -25,83 +59,72 @@
     </div>
 
     <!-- Navigation -->
-    @{
-        var currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
-        var isDashboard = currentPage == "/Index";
-        var isProducts = currentPage.StartsWith("/Products");
-        var isCategories = currentPage.StartsWith("/Categories");
-        var isSuppliers = currentPage.StartsWith("/Suppliers");
-        var isBlogs = currentPage.StartsWith("/Blogs");
-        var isBanners = currentPage.StartsWith("/Banners");
-        var isCouponTemplates = currentPage.StartsWith("/CouponTemplates");
-        var isOrders = currentPage.StartsWith("/Orders");
-        
-        string GetActiveClass(string pagePath) {
-            if (currentPage.StartsWith(pagePath))
-                return "bg-green-50 text-green-700 font-semibold border-l-4 border-green-500";
-            return "text-gray-700 hover:bg-gray-100 hover:text-gray-900 font-medium";
-        }
-        
-        string GetIconClass(string pagePath) {
-            if (currentPage.StartsWith(pagePath))
-                return "text-green-600";
-            return "text-gray-400 group-hover:text-gray-600";
-        }
-    }
     <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-        <!-- Dashboard -->
-        <div class="space-y-1">
-            <a asp-area="" asp-page="/Index" class="flex items-center gap-3 px-3 py-2.5 @GetActiveClass("/Index") rounded-lg transition-colors">
-                <svg class="w-5 h-5 @GetIconClass("/Index")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
-                </svg>
-                <span>Dashboard</span>
-            </a>
-        </div>
+        <!-- Dashboard - Only for Admin -->
+        @if (isAdmin)
+        {
+            <div class="space-y-1">
+                <a asp-area="" asp-page="/Index" class="flex items-center gap-3 px-3 py-2.5 @GetActiveClass("/Index") rounded-lg transition-colors">
+                    <svg class="w-5 h-5 @GetIconClass("/Index")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+        }
 
         <!-- Management Section -->
+        @if (isAdmin)
+        {
+            <div class="space-y-1">
+                <h3 class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quản lý</h3>
+                
+                <!-- Products - Admin only -->
+                <a asp-page="/Products/Index" class="flex items-center gap-3 px-3 py-2.5 @GetActiveClass("/Products") rounded-lg transition-colors group">
+                    <svg class="w-5 h-5 @GetIconClass("/Products")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    <span>Sản phẩm</span>
+                </a>
+
+                <!-- Categories - Admin only -->
+                <a asp-page="/Categories/Index" class="flex items-center gap-3 px-3 py-2.5 @GetActiveClass("/Categories") rounded-lg transition-colors group">
+                    <svg class="w-5 h-5 @GetIconClass("/Categories")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                    <span>Danh mục</span>
+                </a>
+
+                <!-- Suppliers - Admin only -->
+                <a asp-page="/Suppliers/Index" class="flex items-center gap-3 px-3 py-2.5 @GetActiveClass("/Suppliers") rounded-lg transition-colors group">
+                    <svg class="w-5 h-5 @GetIconClass("/Suppliers")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                    <span>Nhà cung cấp</span>
+                </a>
+
+                <!-- Coupon Templates - Admin only -->
+                <a asp-page="/CouponTemplates/Index" class="flex items-center gap-3 px-3 py-2.5 @GetActiveClass("/CouponTemplates") rounded-lg transition-colors group">
+                    <svg class="w-5 h-5 @GetIconClass("/CouponTemplates")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                    </svg>
+                    <span>Template Coupon</span>
+                </a>
+            </div>
+        }
+
+        <!-- Orders - Available for both Admin and Staff -->
         <div class="space-y-1">
-            <h3 class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Quản lý</h3>
-            
-            <!-- Products -->
-            <a asp-page="/Products/Index" class="flex items-center gap-3 px-3 py-2.5 @GetActiveClass("/Products") rounded-lg transition-colors group">
-                <svg class="w-5 h-5 @GetIconClass("/Products")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                </svg>
-                <span>Sản phẩm</span>
-            </a>
-
-            <!-- Categories -->
-            <a asp-page="/Categories/Index" class="flex items-center gap-3 px-3 py-2.5 @GetActiveClass("/Categories") rounded-lg transition-colors group">
-                <svg class="w-5 h-5 @GetIconClass("/Categories")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                </svg>
-                <span>Danh mục</span>
-            </a>
-
-            <!-- Suppliers -->
-            <a asp-page="/Suppliers/Index" class="flex items-center gap-3 px-3 py-2.5 @GetActiveClass("/Suppliers") rounded-lg transition-colors group">
-                <svg class="w-5 h-5 @GetIconClass("/Suppliers")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                </svg>
-                <span>Nhà cung cấp</span>
-            </a>
-
-            <!-- Orders -->
+            @if (isAdmin)
+            {
+                <h3 class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Đơn hàng</h3>
+            }
             <a asp-page="/Orders/Index" class="flex items-center gap-3 px-3 py-2.5 @GetActiveClass("/Orders") rounded-lg transition-colors group">
                 <svg class="w-5 h-5 @GetIconClass("/Orders")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                 </svg>
                 <span>Đơn hàng</span>
-            </a>
-
-            <!-- Coupon Templates -->
-            <a asp-page="/CouponTemplates/Index" class="flex items-center gap-3 px-3 py-2.5 @GetActiveClass("/CouponTemplates") rounded-lg transition-colors group">
-                <svg class="w-5 h-5 @GetIconClass("/CouponTemplates")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                </svg>
-                <span>Template Coupon</span>
             </a>
         </div>
 
@@ -126,40 +149,45 @@
             </a>
 
             <!-- Reviews -->
-            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-gray-100 hover:text-gray-900 font-medium rounded-lg transition-colors group">
-                <svg class="w-5 h-5 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <a asp-page="/Reviews/Index" class="flex items-center gap-3 px-3 py-2.5 @GetActiveClass("/Reviews") rounded-lg transition-colors group">
+                <svg class="w-5 h-5 @GetIconClass("/Reviews")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
                 </svg>
                 <span>Đánh giá</span>
             </a>
         </div>
 
-        <!-- System Section -->
-        <div class="space-y-1">
-            <h3 class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Hệ thống</h3>
-            
-            <!-- Users -->
-            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-gray-100 hover:text-gray-900 font-medium rounded-lg transition-colors group">
-                <svg class="w-5 h-5 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                </svg>
-                <span>Người dùng</span>
-            </a>
+        <!-- System Section - Admin only -->
+        @if (isAdmin)
+        {
+            <div class="space-y-1">
+                <h3 class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Hệ thống</h3>
+                
+                <!-- Users -->
+                <a asp-page="/Users/Index" class="flex items-center gap-3 px-3 py-2.5 @GetActiveClass("/Users") rounded-lg transition-colors group">
+                    <svg class="w-5 h-5 @GetIconClass("/Users")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                    </svg>
+                    <span>Người dùng</span>
+                </a>
+            </div>
+        }
 
-            <!-- Settings -->
-            <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-gray-100 hover:text-gray-900 font-medium rounded-lg transition-colors group">
-                <svg class="w-5 h-5 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        <!-- Profile Section - Available for both Admin and Staff -->
+        <div class="space-y-1">
+            <h3 class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tài khoản</h3>
+            
+            <!-- Profile -->
+            <a asp-page="/Profile/Index" class="flex items-center gap-3 px-3 py-2.5 @GetActiveClass("/Profile") rounded-lg transition-colors group">
+                <svg class="w-5 h-5 @GetIconClass("/Profile")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                 </svg>
-                <span>Cài đặt</span>
+                <span>Thông tin cá nhân</span>
             </a>
         </div>
     </nav>
 
     <!-- User Profile Section -->
-    @using Microsoft.AspNetCore.Http
-    @inject IHttpContextAccessor HttpContextAccessor
     @{
         var sidebarUserName = HttpContextAccessor.HttpContext?.Session.GetString("UserName") ?? "Khách";
         var sidebarUserEmail = HttpContextAccessor.HttpContext?.Session.GetString("UserEmail") ?? "guest@greentech.com";

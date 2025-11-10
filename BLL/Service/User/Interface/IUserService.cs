@@ -12,5 +12,12 @@ namespace BLL.Service.User.Interface
         Task<bool> VerifyOTPAsync(VerifyOTPDTO verifyOTPDTO);
         Task ResetPasswordAsync(ResetPasswordDTO resetPasswordDTO);
         Task<string> UploadAvatarAsync(int userId, IFormFile avatarFile);
+        Task<(IEnumerable<UserResponseDTO> Users, int TotalCount)> GetAllUsersAsync(
+            UserQueryParamsDTO queryParams
+        );
+        Task<UserResponseDTO> GetUserDetailsAsync(int userId);
+        Task<UserResponseDTO> BlockUserAsync(int userId);
+        Task<UserResponseDTO> UnblockUserAsync(int userId);
+        Task<UserResponseDTO> ChangeUserRoleAsync(int userId, string roleName);
     }
 }

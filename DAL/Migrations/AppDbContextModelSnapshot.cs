@@ -1823,7 +1823,6 @@ namespace DAL.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Content")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("content");
 
@@ -1840,7 +1839,6 @@ namespace DAL.Migrations
                         .HasColumnName("is_anonymous");
 
                     b.Property<string>("MediaUrls")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("media_urls");
 

@@ -41,7 +41,11 @@ public class AuthController : Controller
             {
                 var userResponse = await _authService.LoginAsync(model);
 
-                if (userResponse.Roles.Contains(RoleName.ROLE_ADMIN.ToString()))
+                // Check if user is Admin or Staff - redirect to Razor Pages app
+                if (
+                    userResponse.Roles.Contains(RoleName.ROLE_ADMIN.ToString())
+                    || userResponse.Roles.Contains(RoleName.ROLE_STAFF.ToString())
+                )
                 {
                     // Get user ID from session
                     var userId = HttpContext.Session.GetInt32("UserId") ?? 0;
@@ -49,8 +53,8 @@ public class AuthController : Controller
                     var userName = HttpContext.Session.GetString("UserName") ?? "";
                     var userRoles = HttpContext.Session.GetString("UserRoles") ?? "";
 
-                    // Build admin app URL with session data
-                    var adminAppUrl = "https://localhost:7142/Auth/SyncSession";
+                    // Build Razor Pages app URL with session data
+                    var adminAppUrl = "http://localhost:5174/Auth/SyncSession";
                     var redirectUrl =
                         $"{adminAppUrl}?userId={userId}&email={Uri.EscapeDataString(userEmail)}&userName={Uri.EscapeDataString(userName)}&roles={Uri.EscapeDataString(userRoles)}";
 
@@ -140,7 +144,7 @@ public class AuthController : Controller
         // Notify RazorPages app to clear session (logout synchronization)
         try
         {
-            var adminAppUrl = "https://localhost:7142/Auth/ClearSession";
+            var adminAppUrl = "http://localhost:5174/Auth/ClearSession";
             var httpClient = _httpClientFactory.CreateClient();
             httpClient.Timeout = TimeSpan.FromSeconds(5); // Short timeout
 

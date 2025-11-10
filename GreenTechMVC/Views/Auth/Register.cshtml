@@ -51,7 +51,7 @@
                         Mật khẩu <span class="text-red-500 ml-1">*</span>
                     </label>
                     <div class="relative">
-                        <input asp-for="Password" type="password" class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
+                        <input asp-for="Password" type="password" autocomplete="new-password" class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
                                       focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm pr-10"
                             placeholder="********">
                         <span class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
@@ -69,7 +69,7 @@
                         Xác nhận mật khẩu <span class="text-red-500 ml-1">*</span>
                     </label>
                     <div class="relative">
-                        <input asp-for="ConfirmPassword" type="password" class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
+                        <input asp-for="ConfirmPassword" type="password" autocomplete="new-password" class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400
                                       focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm pr-10"
                             placeholder="********">
                         <span class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
@@ -273,22 +273,43 @@
         });
     </script>
 
-    @* --- SCRIPT FOR VIETNAM ADDRESS API --- *@
+    @* --- SCRIPT FOR VIETNAM ADDRESS API - USING BACKEND PROXY --- *@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const provinceSelect = document.getElementById("province-select");
             const districtSelect = document.getElementById("district-select");
             const wardSelect = document.getElementById("ward-select");
-            const apiHost = "https://provinces.open-api.vn/api/";
+            
+            // Check if elements exist
+            if (!provinceSelect || !districtSelect || !wardSelect) {
+                console.error("Address select elements not found");
+                return;
+            }
+            
+            // Backend API endpoint - proxy through our server to avoid Mixed Content and SSL issues
+            const apiBaseUrl = "/api/address/";
 
-            // Helper function to fetch data
+            // Helper function to fetch data from backend API proxy
+            // This avoids Mixed Content errors and SSL certificate issues
             async function fetchApi(endpoint) {
                 try {
-                    const response = await fetch(apiHost + endpoint);
-                    if (!response.ok) throw new Error("Network response was not ok");
-                    return await response.json();
+                    const response = await fetch(apiBaseUrl + endpoint, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                        credentials: 'same-origin',
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    return data;
                 } catch (error) {
-                    console.error("Failed to fetch API:", error);
+                    // API failed - silently fail to allow form to still work
+                    console.warn('Address API request failed:', error);
                     return null;
                 }
             }
@@ -301,8 +322,12 @@
 
             // Load Provinces
             async function loadProvinces() {
-                const provinces = await fetchApi("p/");
-                if (!provinces) return;
+                const provinces = await fetchApi("provinces");
+                if (!provinces || !Array.isArray(provinces)) {
+                    // API failed - show error message or keep form functional
+                    console.warn("Failed to load provinces. Please refresh the page.");
+                    return;
+                }
 
                 // Sort provinces alphabetically
                 provinces.sort((a, b) => a.name.localeCompare(b.name));
@@ -324,8 +349,11 @@
 
                 if (!provinceCode) return;
 
-                const provinceData = await fetchApi(`p/${provinceCode}?depth=2`);
-                if (!provinceData || !provinceData.districts) return;
+                const provinceData = await fetchApi(`provinces/${provinceCode}?depth=2`);
+                if (!provinceData || !provinceData.districts || !Array.isArray(provinceData.districts)) {
+                    console.warn("Failed to load districts for province:", provinceCode);
+                    return;
+                }
 
                 // Sort districts alphabetically
                 provinceData.districts.sort((a, b) => a.name.localeCompare(b.name));
@@ -347,8 +375,11 @@
 
                 if (!districtCode) return;
 
-                const districtData = await fetchApi(`d/${districtCode}?depth=2`);
-                if (!districtData || !districtData.wards) return;
+                const districtData = await fetchApi(`districts/${districtCode}?depth=2`);
+                if (!districtData || !districtData.wards || !Array.isArray(districtData.wards)) {
+                    console.warn("Failed to load wards for district:", districtCode);
+                    return;
+                }
 
                 // Sort wards alphabetically
                 districtData.wards.sort((a, b) => a.name.localeCompare(b.name));

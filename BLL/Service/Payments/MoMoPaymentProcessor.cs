@@ -48,13 +48,13 @@ namespace BLL.Service.Payments
             if (!Uri.TryCreate(redirectUrl, UriKind.Absolute, out var redirectUri))
             {
                 throw new InvalidOperationException(
-                    "MOMO_REDIRECT_URL is missing or not an absolute URL. Set it to a valid https URL, e.g. https://localhost:7135/Wallet/Return"
+                    "MOMO_REDIRECT_URL is missing or not an absolute URL. Set it to a valid http URL, e.g. http://localhost:5045/Wallet/Return"
                 );
             }
             if (!Uri.TryCreate(ipnUrl, UriKind.Absolute, out var ipnUri))
             {
                 throw new InvalidOperationException(
-                    "MOMO_IPN_URL is missing or not an absolute URL. Set it to a publicly reachable https URL or your dev return endpoint."
+                    "MOMO_IPN_URL is missing or not an absolute URL. Set it to a publicly reachable http URL or your dev return endpoint, e.g. http://localhost:5045/Wallet/Return"
                 );
             }
             var extraData = string.Empty; // base64 if any custom data; keep empty for now
@@ -65,11 +65,9 @@ namespace BLL.Service.Payments
             var rawSignature =
                 $"accessKey={accessKey}&amount={(long)decimal.Truncate(amount)}&extraData={extraData}&ipnUrl={ipnUrl}&orderId={orderId}&orderInfo={orderInfo}&partnerCode={partnerCode}&redirectUrl={redirectUrl}&requestId={requestId}&requestType={requestType}";
 
-            var signature = CryptoUtil.HMacHexStringEncode(
-                CryptoUtil.HMACSHA256,
-                secretKey,
-                rawSignature
-            );
+            var signature =
+                CryptoUtil.HMacHexStringEncode(CryptoUtil.HMACSHA256, secretKey, rawSignature)
+                ?? throw new InvalidOperationException("Failed to generate MoMo signature");
 
             var payload = new
             {

@@ -1,3 +1,4 @@
+using GreenTech.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -31,7 +32,20 @@ namespace GreenTech.Pages.Auth
             if (string.IsNullOrEmpty(verifyAuth) || verifyAuth != "true")
             {
                 // Session was not saved correctly
-                return Redirect("https://localhost:7135/Auth/Login");
+                var loginUrl = UrlHelper.GetLoginUrl(HttpContext);
+                return Redirect(loginUrl);
+            }
+
+            // Redirect based on role
+            // Staff redirects to Orders page, Admin redirects to Dashboard
+            var isStaff =
+                !string.IsNullOrEmpty(roles)
+                && roles.Contains("ROLE_STAFF")
+                && !roles.Contains("ROLE_ADMIN");
+
+            if (isStaff)
+            {
+                return RedirectToPage("/Orders/Index");
             }
 
             return RedirectToPage("/Index");
