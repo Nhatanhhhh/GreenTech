@@ -2,6 +2,8 @@
 using DAL.DTOs.Banner;
 using DAL.Repositories.Banner.Interface;
 using DAL.Utils.AutoMapper;
+using Microsoft.AspNetCore.Http;
+using BLL.Service.Cloudinary.Interface;
 
 namespace BLL.Service.Banner
 {
@@ -9,7 +11,7 @@ namespace BLL.Service.Banner
     {
         private readonly IBannerRepository _bannerRepository;
 
-        public BannerService(IBannerRepository bannerRepository)
+        public BannerService(IBannerRepository bannerRepository, IFileStorageService fileStorageService)
         {
             _bannerRepository = bannerRepository;
         }

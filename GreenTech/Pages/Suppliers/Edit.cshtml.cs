@@ -1,8 +1,10 @@
 using BLL.Service.Supplier.Interface;
 using DAL.DTOs.Supplier;
 using GreenTech.Filters;
+using GreenTech.Hubs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.SignalR;
 
 namespace GreenTech.Pages.Suppliers
 {
@@ -10,10 +12,12 @@ namespace GreenTech.Pages.Suppliers
     public class EditModel : PageModel
     {
         private readonly ISupplierService _supplierService;
+        private readonly IHubContext<SupplierHub> _supplierHubContext;
 
-        public EditModel(ISupplierService supplierService)
+        public EditModel(ISupplierService supplierService, IHubContext<SupplierHub> supplierHubContext)
         {
             _supplierService = supplierService;
+            _supplierHubContext = supplierHubContext;
         }
 
         [BindProperty]
@@ -54,7 +58,25 @@ namespace GreenTech.Pages.Suppliers
 
             try
             {
-                await _supplierService.UpdateSupplierAsync(id, Supplier);
+                var updated = await _supplierService.UpdateSupplierAsync(id, Supplier);
+                
+                // Gửi SignalR notification đến tất cả admin đang kết nối
+                await _supplierHubContext.Clients.All.SendAsync("SupplierChanged", new
+                {
+                    action = "updated",
+                    supplierId = updated.Id,
+                    name = updated.Name,
+                    code = updated.Code,
+                    contactPerson = updated.ContactPerson,
+                    phone = updated.Phone,
+                    email = updated.Email,
+                    address = updated.Address,
+                    taxCode = updated.TaxCode,
+                    paymentTerms = updated.PaymentTerms,
+                    isActive = updated.IsActive,
+                    updatedAt = updated.UpdatedAt
+                });
+                
                 return RedirectToPage("./Index");
             }
             catch (KeyNotFoundException ex)

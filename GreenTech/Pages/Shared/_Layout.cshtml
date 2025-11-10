@@ -190,3 +190,31 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+
+<script>
+    // 1️⃣ Kết nối đến hub
+    const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/hubs/notification")
+    .build();
+
+
+    // 2️⃣ Lắng nghe sự kiện
+    connection.on("ReceiveNotification", (message, type) => {
+        // Hiển thị thông báo toast
+        console.log("📩 Thông báo:", message, "Loại:", type);
+        showToast(message, type); // hoặc alert(message)
+    });
+
+    // 3️⃣ Bắt đầu kết nối
+    connection.start().catch(err => console.error(err.toString()));
+
+    // (optional) hàm toast nhỏ
+    function showToast(msg, type) {
+        const div = document.createElement("div");
+        div.className = "fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow";
+        div.innerText = msg;
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 5000);
+    }
+</script>

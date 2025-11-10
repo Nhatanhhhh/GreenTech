@@ -4,6 +4,7 @@ using GreenTech.Filters;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using BLL.Service.Cloudinary.Interface;
 
 namespace GreenTech.Pages.Banners
 {
@@ -11,34 +12,33 @@ namespace GreenTech.Pages.Banners
     public class EditModel : PageModel
     {
         private readonly IBannerService _bannerService;
+        private readonly IFileStorageService _fileStorageService;
 
-        public EditModel(IBannerService bannerService)
+        public EditModel(IBannerService bannerService, IFileStorageService fileStorageService)
         {
             _bannerService = bannerService;
+            _fileStorageService = fileStorageService;
         }
 
         [BindProperty]
         public UpdateBannerDTO Banner { get; set; }
 
-        public SelectList Positions { get; set; } =
-            new SelectList(
-                new List<SelectListItem>
-                {
-                    new SelectListItem { Value = "HEADER", Text = "Header" },
-                    new SelectListItem { Value = "HOME_SLIDER", Text = "Home Slider" },
-                    new SelectListItem { Value = "SIDEBAR", Text = "Sidebar" },
-                    new SelectListItem { Value = "FOOTER", Text = "Footer" },
-                    new SelectListItem { Value = "POPUP", Text = "Popup" },
-                }
-            );
+        public SelectList Positions { get; set; } = new SelectList(
+            new[]
+            {
+                new { Value = "HEADER", Text = "Header" },
+                new { Value = "HOME_SLIDER", Text = "Home Slider" },
+                new { Value = "SIDEBAR", Text = "Sidebar" },
+                new { Value = "FOOTER", Text = "Footer" },
+                new { Value = "POPUP", Text = "Popup" },
+            },
+            "Value", "Text"
+        );
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
             var banner = await _bannerService.GetByIdAsync(id);
-            if (banner == null)
-            {
-                return NotFound();
-            }
+            if (banner == null) return NotFound();
 
             Banner = new UpdateBannerDTO
             {
@@ -58,26 +58,34 @@ namespace GreenTech.Pages.Banners
 
         public async Task<IActionResult> OnPostAsync(int id)
         {
-            if (!ModelState.IsValid)
+            // if (!ModelState.IsValid)
+            //     return Page();
+
+            var existing = await _bannerService.GetByIdAsync(id);
+            if (existing == null)
             {
+                ModelState.AddModelError(string.Empty, "Không tìm thấy banner cần cập nhật.");
                 return Page();
             }
 
+            var file = Request.Form.Files["ImageFile"];
+            if (file != null && file.Length > 0)
+            {
+                // Upload ảnh mới
+                var imageUrl = await _fileStorageService.SaveFileAsync(file, "banners");
+                Banner.ImageUrl = imageUrl;
+            }
+            else
+            {
+                // Giữ nguyên ảnh cũ nếu không chọn ảnh mới
+                Banner.ImageUrl = existing.ImageUrl;
+            }
+     // if (!ModelState.IsValid)
+            //     return Page();
             try
             {
-                var result = await _bannerService.UpdateAsync(id, Banner);
-                if (result == null)
-                {
-                    ModelState.AddModelError(string.Empty, "Không tìm thấy banner cần cập nhật.");
-                    return Page();
-                }
-
+                await _bannerService.UpdateAsync(id, Banner);
                 return RedirectToPage("./Index");
-            }
-            catch (ArgumentException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-                return Page();
             }
             catch (Exception)
             {
