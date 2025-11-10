@@ -176,7 +176,29 @@ namespace GreenTech.Pages.Products
 
             try
             {
-                await _productService.UpdateProductAsync(Id, Product);
+                // Get uploaded files
+                var mainImage = Request.Form.Files["MainImage"];
+                var additionalImages = Request.Form.Files.GetFiles("AdditionalImages");
+
+                IFormFile? mainImageFile = null;
+                if (mainImage != null && mainImage.Length > 0)
+                {
+                    mainImageFile = mainImage;
+                }
+
+                List<IFormFile>? additionalImagesList = null;
+                if (additionalImages != null && additionalImages.Count > 0)
+                {
+                    additionalImagesList = additionalImages.Where(f => f.Length > 0).ToList();
+                }
+
+                await _productService.UpdateProductAsync(
+                    Id,
+                    Product,
+                    mainImageFile,
+                    additionalImagesList
+                );
+                TempData["SuccessMessage"] = "Cập nhật sản phẩm thành công!";
                 return RedirectToPage("./Index");
             }
             catch (KeyNotFoundException)

@@ -12,7 +12,7 @@ namespace DAL.DTOs.Product
         [StringLength(255, ErrorMessage = "Tên sản phẩm không được dài quá 255 ký tự.")]
         public string Name { get; set; }
 
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
 
         [StringLength(500)]
         public string ShortDescription { get; set; }
@@ -41,7 +41,7 @@ namespace DAL.DTOs.Product
         public decimal? Weight { get; set; }
 
         [StringLength(100)]
-        public string Dimensions { get; set; }
+        public string Dimensions { get; set; } = string.Empty;
 
         [StringLength(500)]
         public string Tags { get; set; }
